@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+env/
+.env
+
+# Docker & DB
+menu_generator_data/
+
+
+# IDE
+.vscode/
+
+# my files
+My_stuff/
+website_v0/
+website_v1/
+my_flask_app/
+main.py
+menu.py
+recipes.py
+categories.py
