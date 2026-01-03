@@ -1,0 +1,191 @@
+:root {
+    --bg-dark: #1a0033;
+    --bg-medium: #2b0059;
+    --accent-purple: #5d3f9b;
+    --bright-purple: #8c53d1;
+    --text-pink: #ff66b2;
+    --input-bg: #4b2b7f;
+}
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: var(--bg-dark);
+    color: white;
+}
+
+/* --- Navigation Header --- */
+header {
+    background-color: var(--bg-medium);
+    padding: 10px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--accent-purple);
+}
+
+.logo-section { display: flex; align-items: center; gap: 10px; }
+.header-profile { font-size: 0.9em; color: var(--text-pink); }
+
+/* --- Layout --- */
+.app-container { display: flex; min-height: 100vh; }
+
+.sidebar {
+    width: 260px;
+    background-color: var(--bg-dark);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.main-content {
+    flex-grow: 1;
+    padding: 40px;
+    background-color: var(--bg-medium);
+}
+
+/* --- Navigation Buttons --- */
+.nav-btn {
+    background: var(--accent-purple);
+    color: white;
+    padding: 15px;
+    border-radius: 30px;
+    text-decoration: none;
+    text-align: center;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.nav-btn:hover { background: var(--bright-purple); }
+
+/* --- Menu Cards (Phase 2) --- */
+.meal-card {
+    background: var(--input-bg);
+    padding: 20px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: 80px 1fr 200px;
+    align-items: center;
+    gap: 15px;
+}
+
+.time-badge {
+    background: var(--bright-purple);
+    padding: 10px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.action-group { display: flex; flex-direction: column; gap: 8px; }
+.action-btn {
+    background: var(--accent-purple);
+    border: none;
+    color: white;
+    padding: 5px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.8em;
+}
+
+/* --- Form Elements --- */
+.form-box {
+    background: var(--accent-purple);
+    padding: 40px;
+    border-radius: 30px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.input-field {
+    width: 100%;
+    background: var(--bg-dark);
+    border: none;
+    padding: 15px;
+    border-radius: 15px;
+    color: white;
+    margin-bottom: 15px;
+    box-sizing: border-box;
+}
+
+.submit-btn {
+    background: var(--text-pink);
+    border: none;
+    color: white;
+    padding: 15px 40px;
+    border-radius: 25px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* Container to keep everything centered and neat */
+.profile-form-container {
+    max-width: 500px;
+    margin: 20px auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Base style for ALL inputs (select and date) */
+.custom-input {
+    width: 100%;
+    background-color: #1a0033; /* Dark purple background */
+    color: white;
+    border: none;
+    padding: 15px 25px;
+    border-radius: 50px; /* Full pill shape */
+    font-size: 1rem;
+    box-sizing: border-box;
+    cursor: pointer;
+    
+    /* Reset browser default appearance */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+
+    /* Custom dropdown arrow icon */
+    background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="white"><path d="M1 4l5 5 5-5z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 25px center;
+}
+
+/* Align labels and inputs consistently */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Specific fix for the Birthday row */
+.inline-group {
+    flex-direction: row; /* Puts label next to input */
+    justify-content: center;
+}
+
+/* Force the calendar icon and date text to be white */
+.date-input {
+    color-scheme: dark; 
+    flex-grow: 1;
+    background-position: right 25px center; /* Position for the calendar icon */
+}
+
+/* Ensure the submit button matches the width and theme */
+.submit-btn {
+    background-color: #ff66b2; /* Pink theme */
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 50px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: transform 0.2s;
+}
+
+.submit-btn:hover {
+    transform: scale(1.02);
+}

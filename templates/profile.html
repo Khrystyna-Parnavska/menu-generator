@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Menu</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <header>
+        <div class="logo-section">
+            <div class="icon">🍳</div>
+            <span>Menu Generator</span>
+        </div>
+        <div class="header-profile"><a href="signup.html" style="color:var(--text-pink);">Sign up </a> 
+                                    <a href="signin.html" style="color:var(--text-pink);">Log in </a> 
+                                    <a href="profile.html" style="color:var(--text-pink);">Profile</a></div>
+    </header>
+
+    <div class="app-container">
+        <div class="sidebar">
+            <a href="menu.html" class="nav-btn">My Daily Menu</a>
+            <a href="preferences.html" class="nav-btn">Preferences</a>
+            <a href="#" class="nav-btn">Explore</a>
+            <a href="#" class="nav-btn">Statistics</a>
+            <a href="profile.html" class="nav-btn">Profile</a>
+            <a href="signin.html" style="color:var(--text-pink); text-align:center;">Sign in</a>
+        </div>
+
+    <main class="main-content">
+    <div class="form-box" style="margin-top: 50px; text-align: center;">
+        <h2>Welcome!</h2>
+        <p>Add more information for us to know you better</p>
+        
+        <form action="/save-profile" method="POST">
+            <div class="profile-form-container">
+                <div class="form-group">
+                    <label for="country">Country</label>
+                    <select id="country" name="country" class="custom-input">
+                        <option value="uk">United Kingdom</option>
+                        <option value="usa">United States</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group inline-group">
+                    <label for="birthday">Birthday:</label>
+                    <input type="date" id="birthday" name="birthday" class="custom-input date-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="gender">Gender</label>
+                    <select id="gender" name="gender" class="custom-input">
+                        <option value="non-binary">Non-binary</option>
+                        <option value="female">Female</option>
+                        <option value="male">Male</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button type="submit" class="submit-btn" style="width:100%; margin-bottom: 10px;">Save</button>
+        </form> <a href="preferences.html" style="color:var(--text-pink); font-size: 0.9em;">Go to preferences</a>
+        </div>
+        </main>
+    </div>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <body>
+    <header>
+        <div class="logo-section">
+            <div class="icon">🍳</div>
+            <span>Menu Generator</span>
+        </div>
+        <div class="header-profile"><a href="signup.html" style="color:var(--text-pink);">Sign up </a> 
+                                    <a href="signin.html" style="color:var(--text-pink);">Log in </a> 
+                                    <a href="profile.html" style="color:var(--text-pink);">Profile</a></div>
+    </header>
+
+    <div class="app-container">
+        <div class="sidebar">
+            <a href="menu.html" class="nav-btn">My Daily Menu</a>
+            <a href="preferences.html" class="nav-btn">Preferences</a>
+            <a href="#" class="nav-btn">Explore</a>
+            <a href="#" class="nav-btn">Statistics</a>
+            <a href="profile.html" class="nav-btn">Profile</a>
+            <a href="signin.html" style="color:var(--text-pink); text-align:center;">Sign in</a>
+        </div>
+        <main class="main-content">
+        {% block body %}{% endblock %}
+        </main>
+    </div>
+</body>
+</html>
