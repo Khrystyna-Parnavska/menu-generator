@@ -1,5 +1,5 @@
 import csv
-from db_connector import create_connection
+from .db_connector import create_connection
 
 
 class BaseModel:
@@ -81,29 +81,40 @@ class BaseModel:
         """
         db = create_connection()
         cursor = db.cursor()
-        
-        # We use self.columns which you mentioned you store in your model
-        columns = self.columns[1:]  # Skip 'id' assuming it's auto-increment
-        columns_str = ", ".join(columns)  # Skip 'id' assuming it's auto-increment
-        placeholders = ", ".join(["%s"] * len(columns))
-        sql = f"INSERT INTO {self.table_name} ({columns_str}) VALUES ({placeholders})"
 
         try:
             with open(file_path, mode='r', encoding=encoding) as f:
-                # DictReader uses the first row of the CSV as keys
                 reader = csv.DictReader(f, delimiter=delimiter)
-                
+                # Clean headers to avoid hidden space issues
+                csv_headers = [name.strip() for name in reader.fieldnames]
+                reader.fieldnames = csv_headers
+
+                # 1. FIND THE INTERSECTION
+                # We only use columns that are both in your Model AND in the CSV
+                # (Excluding 'id' because it's auto-increment)
+                cols_to_use = [col for col in self.columns if col in csv_headers and col != 'id']
+                    
+                if not cols_to_use:
+                    print(f"❌ Error: No matching columns found between Model and CSV.")
+                    return 
+
+                # 2. DYNAMICALLY BUILD THE SQL
+                columns_str = ", ".join(cols_to_use)
+                placeholders = ", ".join(["%s"] * len(cols_to_use))
+                sql = f"INSERT INTO {self.table_name} ({columns_str}) VALUES ({placeholders})"
+
                 rows_to_insert = []
                 for row in reader:
-                    # Extract only the values that match our model's columns
-                    values = tuple(row[col] for col in columns)
+                    # 3. EXTRACT ONLY THE NEEDED DATA
+                    # row.get(col) handles cases where a row might be missing a value
+                    values = tuple(row.get(col).strip() if row.get(col) else None for col in cols_to_use)
                     rows_to_insert.append(values)
-                
-                # executemany is MUCH faster than running a loop of single inserts
-                cursor.executemany(sql, rows_to_insert)
-                
-                db.commit()
-                print(f"✅ Successfully imported {cursor.rowcount} rows into {self.table_name}")
+                    
+                if rows_to_insert:
+                    cursor.executemany(sql, rows_to_insert)
+                    db.commit()
+                    print(f"✅ Successfully imported {len(rows_to_insert)} rows into {self.table_name}")
+                    print(f"Columns used: {cols_to_use}")
 
         except Exception as e:
             print(f"❌ CSV Import Error: {e}")
@@ -112,7 +123,7 @@ class BaseModel:
             cursor.close()
             db.close()
     
-
+# TODO: AUTOMATE COLUMNS NAME FETCHING FROM THE DB SCHEMA
 class MealsModel(BaseModel):
     """Model for the 'Meals' table."""
     def __init__(self):
@@ -155,6 +166,13 @@ class RecipesModel(BaseModel):
                                      'youtube', 
                                      'rating', 
                                      'created_at'])
+        
+class CategoriesModel(BaseModel):
+    """Model for the 'Categories' table."""
+    def __init__(self):
+        super().__init__('Categories', ['id', 'name'])
+
+# TODO : Add other models as needed
 
 if __name__ == "__main__":    # Example usage
     pass

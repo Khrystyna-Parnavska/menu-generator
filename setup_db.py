@@ -1,6 +1,7 @@
 import os
 from database.db_connector import create_connection
-from database.models import MealsModel, RecipesModel
+from database.models import MealsModel, RecipesModel, CategoriesModel
+import pandas as pd
 
 def run_schema( path='database', schema_file_name='schema.sql'):
     # 1. Path to your schema file
@@ -48,9 +49,13 @@ meals_dict = [
 ]
 
 
-def populate_meals():
-    meals_model = MealsModel()
-
+def populate_meals(meals_model: MealsModel):
+    '''
+    Populate the Meals table with predefined meal data.
+    Args:
+        meals_model: The MealsModel instance.
+    '''
+    print('Populating Meals table...')
     for meal in meals_dict:
         if list(meal.keys()) == meals_model.columns[1:]:
             try:
@@ -62,16 +67,67 @@ def populate_meals():
     print('meals insertion attempt finished')
 
 
+def add_test_category(categories_model: CategoriesModel):
+    """Add a test category to the Categories table.
+    Args:
+        categories_model: The CategoriesModel instance.
+    """
+    categories_model.insert({'name': 'test'})
+    print("Inserted test category.")
+
+
+def populate_basic_recipes(recipes_model: RecipesModel, meals_model: MealsModel, categories_model: CategoriesModel, path: str):
+    """Populate the Recipes table from a CSV file.
+    Args:
+        recipes_model: The RecipesModel instance.
+        meals_model: The MealsModel instance.
+        categories_model: The CategoriesModel instance.
+        path: Path to the CSV file containing recipe data.
+    """
+    test_recipes = pd.read_csv(path, delimiter=';', encoding='utf-8-sig')
+
+    meals = []
+    for meal in meals_model.get_all():
+        id = meal['id']
+        name = meal['name']
+        meals.append((id, name))
+
+
+    def get_meal_id(meal_name):
+        for meal in meals:
+            if meal[1] == meal_name:
+                return meal[0]
+        return None
+    
+
+    test_recipes['meal_id'] = test_recipes['meal_name'].apply(get_meal_id)
+    
+    test_id = None
+    for category in categories_model.get_all():
+        if category['name'] == 'test':
+            test_id = category['id']
+            break
+    test_recipes['category_id'] = test_id
+
+    test_recipes.drop(columns=['meal_name'], inplace=True)
+    test_recipes.to_csv('data/recipes_test_processed.csv', index=False, sep=',', encoding='utf-8-sig')
+
+    recipes_model.populate_from_csv('data/recipes_test_processed.csv', delimiter=',', encoding='utf-8-sig')
+    print("Inserted test recipes.")
+
+        
+
 recipes_path = os.path.join('data', 'recipes_test.csv')
 
 
-def populate_basic_recipes(path:str=recipes_path):
-    recipes_model = RecipesModel()
-    recipes_model.populate_from_csv(path, delimiter=';', encoding='utf-8-sig')
-
-
 if __name__ == "__main__":
+
     run_schema()
-    populate_meals()
-    populate_basic_recipes()
+    meals_model = MealsModel()
+    recipes_model = RecipesModel()
+    categories_model = CategoriesModel()
+
+    populate_meals(meals_model)
+    add_test_category(categories_model)
+    populate_basic_recipes(recipes_model, meals_model, categories_model, recipes_path)
     

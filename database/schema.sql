@@ -24,13 +24,13 @@ CREATE TABLE `Recipes`(
     `category_id` SMALLINT UNSIGNED NOT NULL,
     `n_portions` SMALLINT UNSIGNED NOT NULL,
     `prep_time` TIME NOT NULL,
-    `cooking_time` TIME NULL COMMENT 'if added by user, specifies user id',
+    `cooking_time` TIME NOT NULL ,
     `area` TEXT NULL,
     `thumb` TEXT NULL,
     `source_url` TEXT NULL,
     `youtube` TEXT NULL,
     `rating` SMALLINT UNSIGNED NOT NULL,
-    `created_at` TIMESTAMP NOT NULL
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE TABLE `Ingredients`(
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -50,7 +50,7 @@ CREATE TABLE `Users`(
     `email` TEXT NOT NULL,
     `role_id` SMALLINT UNSIGNED NOT NULL,
     `password_hash` BIGINT UNSIGNED NOT NULL,
-    `created_at` TIMESTAMP NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `is_active` BOOLEAN NOT NULL,
     `country_id` SMALLINT UNSIGNED NOT NULL,
     `age_full_years` SMALLINT UNSIGNED NOT NULL,
@@ -85,17 +85,17 @@ CREATE TABLE `User_favorit_recipes`(
 CREATE TABLE `Created_menu`(
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `user_id` BIGINT UNSIGNED NOT NULL,
-    `created_at` TIMESTAMP NOT NULL,
-    `submitted_at` TIMESTAMP NOT NULL
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `submitted_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE TABLE `Meals`(
     `id` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `Name` VARCHAR(50) NOT NULL COMMENT 'Breakfast, Lunch, Dinner, Snack_morning, Snack_afternoon, Snack_evening',
+    `name` VARCHAR(50) NOT NULL COMMENT 'Breakfast, Lunch, Dinner, Snack_morning, Snack_afternoon, Snack_evening',
     `default_time` TIME NOT NULL
 );
 CREATE TABLE `Categories`(
     `id` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `Name` TEXT NOT NULL
+    `name` TEXT NOT NULL
 );
 CREATE TABLE `Countries`(
     `id` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -109,7 +109,7 @@ CREATE TABLE `Menu_meals`(
     `meal_time` TIME NOT NULL,
     `regenerated_times` BIGINT UNSIGNED NOT NULL,
     `if_picked_manually` BOOLEAN NOT NULL,
-    `submitted_at` TIMESTAMP NOT NULL
+    `submitted_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 ALTER TABLE

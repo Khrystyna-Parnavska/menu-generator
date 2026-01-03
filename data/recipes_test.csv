@@ -1,55 +1,55 @@
-﻿name;meal_id
-Borshch own;5
-Pasta with ragu;5
-Pasta with pesto sause;5
-Pasta with mushrooms;5
-Smashed potatoes with meatballs;5
-Plov;5
-Bean soup;5
-Buckweat with meatballs;5
-Ramen with chicken;5
-Lasagna;5
-Meatballs with rice and smashed potatoes;5
-Meatballs with rice and plain pasta;5
-Rice with Mexican-style beans;5
-Rice with fried paprica, chicken and aubergine;5
-Meatballs with plain pasta;5
-Granola with yougurt;1
-Pancakes with jam;1
-Pancakes with maple syrup ;1
-Pancakes with honey;1
-Bread biscuits with butter and jam;1
-Bread biscuits with butter and maple syrup;1
-Bread biscuits with butter and honey;1
-Sandwich with ham, cheese, salad, tomatoes and cucumber;3
-Sandwich with avocado, butter and salmon;3
-Sandwich with avocado, cream cheese and salmon;3
-Sandwich with tuna, cream cheese, cucumber;3
-Orange;2
-Banana;2
-Apple;2
-Persimmon;2
-1 digestive cracker with butter;2
-1 small cinnamon bun;2
-1 knäckebröd with butter and ham;2
-1 knäckebröd with 1 tablespoon of peanutbutter;2
-1 wasa sandwich;4
-1 drickvarg 330 ml;4
-0.5dl nuts;4
-fruitsalad with 0.5 banana, 0.5 appole and 0.5 cottage cheese;4
-1 risifrutti;4
-1 hotdog with bread;4
-1 portion of overnight oats;4
-1 ice-cream cone;4
-1 slice of bread with butter, ham or cheese and 1 glass of milk;4
-2dl yougurt 3% with 0.5dl grannola/musli and 0.5 banana;4
-2 slices of bread with butter and cheese or ham;4
-1 knäckebröd with butter, 0.5 smashed avocado ;4
-Orange;6
-Banana;6
-Apple;6
-Persimmon;6
-1 digestive cracker with butter;6
-1 small cinnamon bun;6
-1 knäckebröd with butter and ham;6
-1 knäckebröd with 1 tablespoon of peanutbutter;6
+﻿name;external_id;country_id;meal_name;meal_id;category_id;n_portions;prep_time;cooking_time;area;thumb;source_url;youtube;rating;created_at
+Borshch own;;;Dinner;;;1;1;1;;;;;10;
+Pasta with ragu;;;Dinner;;;1;1;1;;;;;10;
+Pasta with pesto sause;;;Dinner;;;1;1;1;;;;;10;
+Pasta with mushrooms;;;Dinner;;;1;1;1;;;;;10;
+Smashed potatoes with meatballs;;;Dinner;;;1;1;1;;;;;10;
+Plov;;;Dinner;;;1;1;1;;;;;10;
+Bean soup;;;Dinner;;;1;1;1;;;;;10;
+Buckweat with meatballs;;;Dinner;;;1;1;1;;;;;10;
+Ramen with chicken;;;Dinner;;;1;1;1;;;;;10;
+Lasagna;;;Dinner;;;1;1;1;;;;;10;
+Meatballs with rice and smashed potatoes;;;Dinner;;;1;1;1;;;;;10;
+Meatballs with rice and plain pasta;;;Dinner;;;1;1;1;;;;;10;
+Rice with Mexican-style beans;;;Dinner;;;1;1;1;;;;;10;
+Rice with fried paprica, chicken and aubergine;;;Dinner;;;1;1;1;;;;;10;
+Meatballs with plain pasta;;;Dinner;;;1;1;1;;;;;10;
+Granola with yougurt;;;Breakfast;;;1;1;1;;;;;10;
+Pancakes with jam;;;Breakfast;;;1;1;1;;;;;10;
+Pancakes with maple syrup ;;;Breakfast;;;1;1;1;;;;;10;
+Pancakes with honey;;;Breakfast;;;1;1;1;;;;;10;
+Bread biscuits with butter and jam;;;Breakfast;;;1;1;1;;;;;10;
+Bread biscuits with butter and maple syrup;;;Breakfast;;;1;1;1;;;;;10;
+Bread biscuits with butter and honey;;;Breakfast;;;1;1;1;;;;;10;
+Sandwich with ham, cheese, salad, tomatoes and cucumber;;;Lunch;;;1;1;1;;;;;10;
+Sandwich with avocado, butter and salmon;;;Lunch;;;1;1;1;;;;;10;
+Sandwich with avocado, cream cheese and salmon;;;Lunch;;;1;1;1;;;;;10;
+Sandwich with tuna, cream cheese, cucumber;;;Lunch;;;1;1;1;;;;;10;
+Orange;;;Morning Snack;;;1;1;1;;;;;10;
+Banana;;;Morning Snack;;;1;1;1;;;;;10;
+Apple;;;Morning Snack;;;1;1;1;;;;;10;
+Persimmon;;;Morning Snack;;;1;1;1;;;;;10;
+1 digestive cracker with butter;;;Morning Snack;;;1;1;1;;;;;10;
+1 small cinnamon bun;;;Morning Snack;;;1;1;1;;;;;10;
+1 knäckebröd with butter and ham;;;Morning Snack;;;1;1;1;;;;;10;
+1 knäckebröd with 1 tablespoon of peanutbutter;;;Morning Snack;;;1;1;1;;;;;10;
+1 wasa sandwich;;;Afternoon Snack;;;1;1;1;;;;;10;
+1 drickvarg 330 ml;;;Afternoon Snack;;;1;1;1;;;;;10;
+0.5dl nuts;;;Afternoon Snack;;;1;1;1;;;;;10;
+fruitsalad with 0.5 banana, 0.5 appole and 0.5 cottage cheese;;;Afternoon Snack;;;1;1;1;;;;;10;
+1 risifrutti;;;Afternoon Snack;;;1;1;1;;;;;10;
+1 hotdog with bread;;;Afternoon Snack;;;1;1;1;;;;;10;
+1 portion of overnight oats;;;Afternoon Snack;;;1;1;1;;;;;10;
+1 ice-cream cone;;;Afternoon Snack;;;1;1;1;;;;;10;
+1 slice of bread with butter, ham or cheese and 1 glass of milk;;;Afternoon Snack;;;1;1;1;;;;;10;
+2dl yougurt 3% with 0.5dl grannola/musli and 0.5 banana;;;Afternoon Snack;;;1;1;1;;;;;10;
+2 slices of bread with butter and cheese or ham;;;Afternoon Snack;;;1;1;1;;;;;10;
+1 knäckebröd with butter, 0.5 smashed avocado ;;;Afternoon Snack;;;1;1;1;;;;;10;
+Orange;;;Evening Snack;;;1;1;1;;;;;10;
+Banana;;;Evening Snack;;;1;1;1;;;;;10;
+Apple;;;Evening Snack;;;1;1;1;;;;;10;
+Persimmon;;;Evening Snack;;;1;1;1;;;;;10;
+1 digestive cracker with butter;;;Evening Snack;;;1;1;1;;;;;10;
+1 small cinnamon bun;;;Evening Snack;;;1;1;1;;;;;10;
+1 knäckebröd with butter and ham;;;Evening Snack;;;1;1;1;;;;;10;
+1 knäckebröd with 1 tablespoon of peanutbutter;;;Evening Snack;;;1;1;1;;;;;10;
