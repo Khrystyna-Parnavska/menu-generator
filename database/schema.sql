@@ -8,10 +8,10 @@ DROP TABLE IF EXISTS `Ingredients`;
 DROP TABLE IF EXISTS `Users`;
 DROP TABLE IF EXISTS `Restrictions`;
 DROP TABLE IF EXISTS `User_roles`;
-DROP TABLE IF EXISTS `Created_menu`;
 DROP TABLE IF EXISTS `Meals`;
 DROP TABLE IF EXISTS `Countries`;
 DROP TABLE IF EXISTS `Categories`;
+DROP TABLE IF EXISTS `Menus`;
 
 
 
@@ -51,11 +51,11 @@ CREATE TABLE `Users`(
     `role_id` SMALLINT UNSIGNED NOT NULL,
     `password_hash` BIGINT UNSIGNED NOT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `is_active` BOOLEAN NOT NULL,
-    `country_id` SMALLINT UNSIGNED NOT NULL,
-    `age_full_years` SMALLINT UNSIGNED NOT NULL,
-    `birth_date` DATE NOT NULL,
-    `gender` VARCHAR(10) NOT NULL
+    `is_active` BOOLEAN DEFAULT TRUE,
+    `country_id` SMALLINT UNSIGNED NULL,
+    `age_full_years` SMALLINT UNSIGNED NULL,
+    `birth_date` DATE NULL,
+    `gender` VARCHAR(10) NULL
 );
 CREATE TABLE `Restrictions`(
     `id` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -75,14 +75,15 @@ CREATE TABLE `Ingredient_restrictions`(
 );
 CREATE TABLE `User_roles`(
     `id` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `Name` VARCHAR(50) NOT NULL
+    `name` VARCHAR(50) NOT NULL,
+    `description` TEXT NOT NULL
 );
 CREATE TABLE `User_favorit_recipes`(
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `user_id` BIGINT UNSIGNED NOT NULL,
     `recipe_id` BIGINT UNSIGNED NOT NULL
 );
-CREATE TABLE `Created_menu`(
+CREATE TABLE `Menus`(
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `user_id` BIGINT UNSIGNED NOT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -102,7 +103,7 @@ CREATE TABLE `Countries`(
     `name` TEXT NOT NULL
 );
 CREATE TABLE `Menu_meals`(
-    `id` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `menu_id` BIGINT UNSIGNED NOT NULL,
     `meal_id` SMALLINT UNSIGNED NOT NULL,
     `recipe_id` BIGINT UNSIGNED NOT NULL,
@@ -137,7 +138,7 @@ ALTER TABLE
 ALTER TABLE
     `Ingredient_restrictions` ADD CONSTRAINT `ingredient_restrictions_ingredient_id_foreign` FOREIGN KEY(`ingredient_id`) REFERENCES `Ingredients`(`id`);
 ALTER TABLE
-    `Menu_meals` ADD CONSTRAINT `menu_meals_menu_id_foreign` FOREIGN KEY(`menu_id`) REFERENCES `Created_menu`(`id`);
+    `Menu_meals` ADD CONSTRAINT `menu_meals_menu_id_foreign` FOREIGN KEY(`menu_id`) REFERENCES `Menus`(`id`);
 ALTER TABLE
     `Menu_meals` ADD CONSTRAINT `menu_meals_meal_id_foreign` FOREIGN KEY(`meal_id`) REFERENCES `Meals`(`id`);
 ALTER TABLE
