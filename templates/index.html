@@ -1,31 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Daily Menu App</title>
-    <link rel="stylesheet" href="..static/styles.css">
-</head>
-<body>
-    <div class="app-container">
-    <div class="sidebar">
-        <a href="menu.html" class="nav-button">My Daily Menu</a>
-        <a href="preferences.html" class="nav-button">Preferences</a>
-        <a href="#" class="nav-button">Explore</a>
-        <a href="#" class="nav-button">Statistics</a>
-        
-        <div class="profile-section nav-button">
-            <div class="profile-circle"></div>
-            <span>Profile</span>
-        </div>
-        
-        <a href="#" class="nav-button settings">Settings</a>
-        <a href="#" class="sign-out">Sign out</a>
-        
-        <div class="main-content">
-            <p>Welcome! Here you can generate your daily personalized menu.</p>
+{% extends "base.html" %}
+{% block head %}
+    <title>Home</title>
+{% endblock %}
+
+{% block body %}
+    <div class="main-content">
+        <h2 style="text-align: center;">Welcome! Here you can generate your daily personalized menu.</h2>
+        <form class="centered-content" action="{{ url_for('menu') }}">
             <button class="generate-button">Generate Menu</button>
-        </div>
+        </form>
     </div>
-</body>
-</html>
+{% endblock %} 

@@ -1,67 +1,58 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Menu</title>
-    <link rel="stylesheet" href="../static/styles.css">
-</head>
+{% extends "base.html" %}
+{% block head %}
+    <title>Menu</title>
+{% endblock %}
 
-<body>
-    <header>
-        <div class="logo-section">
-            <div class="icon">🍳</div>
-            <span>Menu Generator</span>
-        </div>
-        <div class="header-profile"><a href="signup.html" style="color:var(--text-pink);">Sign up </a> 
-                                    <a href="signin.html" style="color:var(--text-pink);">Log in </a> 
-                                    <a href="profile.html" style="color:var(--text-pink);">Profile</a></div>
-    </header>
+{% block body %}
+    <h3 style="text-align: center;">Choose meals to add:</h3>
+    <form action="{{ url_for('init_plan') }}" method="POST">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 30px;">
+            {% for meal in all_meals %}
+            <label><input type="checkbox" name="meals" value="{{ meal['name'] }}" checked> {{ meal['name'] }}</label>
+            {% endfor %}
+        </div> 
+        <button type="submit" class="submit-btn">Generate Draft</button>  
+    </form>
+    {% if error %}
+    <p style="color:red; text-align:center;">{{ error }}</p>
+    {% endif %}
 
-    <div class="app-container">
-        <div class="sidebar">
-            <a href="menu.html" class="nav-btn">My Daily Menu</a>
-            <a href="preferences.html" class="nav-btn">Preferences</a>
-            <a href="#" class="nav-btn">Explore</a>
-            <a href="#" class="nav-btn">Statistics</a>
-            <a href="profile.html" class="nav-btn">Profile</a>
-            <a href="signin.html" style="color:var(--text-pink); text-align:center;">Sign in</a>
-        </div>
-
-        <main class="main-content">
-            <section id="selection">
-                <h3>Choose meals you want to add:</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 30px;">
-                    <label><input type="checkbox" name="meals" value="breakfast" checked> Breakfast</label>
-                    <label><input type="checkbox" name="meals" value="snack_morning" checked> Morning Snack</label>
-                    <label><input type="checkbox" name="meals" value="lunch" checked> Lunch</label>
-                    <label><input type="checkbox" name="meals" value="snack_afternoon" checked> Afternoon Snack</label>
-                    <label><input type="checkbox" name="meals" value="dinner" checked> Dinner</label>
-                    <label><input type="checkbox" name="meals" value="evening_snack" checked> Evening Snack</label>
+    {% if menu_meals %}
+    <section id="draft" style="margin-top: 40px;">
+        <h2 style="text-align: center;">Your Generated Draft</h2>
+        <form action="/submit-final-menu" method="POST">
+            
+            {% for meal_entry in menu_meals %}
+            <div class="meal-card">
+                <div class="time-badge" style="background: none; padding: 0;">
+                <input type="time" 
+                    name="meal_time_{{ meal_entry['id'] }}" 
+                    value="{{ meal_entry['meal_time'] }}" 
+                    class="custom-input"
+                    step="60" 
+                    style="width: 100px; padding: 5px; border-radius: 8px;">
+            </div>
+                
+                <div>
+                    <strong>{{ meal_entry['meal_type'] }}: {{ meal_entry['recipe_name'] }}</strong><br>
+                    
+                    <label style="font-size: 0.8em;">
+                        <input type="hidden" name="meal_ids[]" value="{{ meal_entry['id'] }}">
+                        <input type="checkbox" name="leftover_{{ meal_entry['id'] }}"> Use leftovers later
+                    </label>
                 </div>
-                <button class="submit-btn" onclick="document.getElementById('draft').style.display='block'">Generate Draft</button>
-            </section>
 
-            <section id="draft" style="display:none; margin-top: 40px;">
-                <form action="/submit-final-menu" method="POST">
-                    <div class="meal-card">
-                        <div class="time-badge">07:00</div>
-                        <div>
-                            <strong>Breakfast: Avocado Toast</strong><br>
-                            <label style="font-size: 0.8em;">
-                                <input type="checkbox" name="leftover_breakfast"> Use leftovers later
-                            </label>
-                        </div>
-                        <div class="action-group">
-                            <button type="button" class="action-btn">Regenerate</button>
-                            <button type="button" class="action-btn">Choose Manually</button>
-                        </div>
-                    </div>
+                <div class="action-group">
+                    <button type="button" class="action-btn">Regenerate</button>
+                    <button type="button" class="action-btn">Choose Manually</button>
+                </div>
+            </div>
+            {% endfor %}
 
-                    <button type="submit" class="submit-btn" style="width:100%">Submit Menu</button>
-                </form>
-            </section>
-        </main>
-    </div>
-</body>
-</html>
+            <button type="submit" class="submit-btn" style="width:100%">Submit Menu</button>
+        </form>
+    </section>
+{% endif %}
+{% endblock %}
+
+
