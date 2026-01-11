@@ -1,6 +1,6 @@
 import os
 from database.db_connector import create_connection
-from database.models import MealsModel, RecipesModel, CategoriesModel
+from database.models import MealsModel, RecipesModel, CategoriesModel, UsersModel, UserRolesModel
 import pandas as pd
 
 def run_schema( path='database', schema_file_name='schema.sql'):
@@ -48,6 +48,15 @@ meals_dict = [
     {'name': 'Evening Snack', 'default_time': '21:00:00'}
 ]
 
+test_user = {'user_name': 'test_user', 
+             'email': 'test@example.com', 
+             'role_id': None, 
+             'password_hash': 123456789, 
+             'is_active': True, 
+             'country_id': None, 
+             'age_full_years': None, 
+             'birth_date': None}
+
 
 def populate_meals(meals_model: MealsModel):
     '''
@@ -75,7 +84,7 @@ def add_test_category(categories_model: CategoriesModel):
     categories_model.insert({'name': 'test'})
     print("Inserted test category.")
 
-
+#TODO: MAKE THIS FUNCTION MORE GENERIC
 def populate_basic_recipes(recipes_model: RecipesModel, meals_model: MealsModel, categories_model: CategoriesModel, path: str):
     """Populate the Recipes table from a CSV file.
     Args:
@@ -126,8 +135,16 @@ if __name__ == "__main__":
     meals_model = MealsModel()
     recipes_model = RecipesModel()
     categories_model = CategoriesModel()
+    users_model = UsersModel()
+    user_roles_model = UserRolesModel()
 
     populate_meals(meals_model)
     add_test_category(categories_model)
     populate_basic_recipes(recipes_model, meals_model, categories_model, recipes_path)
+
+    #test user
+    user_roles_model.insert({'name': 'test_role', 'description': 'Test role'})
+    test_role_id = user_roles_model.run_query("SELECT id FROM User_roles WHERE name = %s", ('test_role',))[0]['id']
+    test_user['role_id'] = test_role_id
+    users_model.insert(test_user)
     
