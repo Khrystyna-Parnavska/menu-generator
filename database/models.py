@@ -8,8 +8,13 @@ class BaseModel:
     def __init__(self, table_name, columns):
         self.table_name = table_name
         self.columns = columns # List of column names in the table
-    def run_query(self, query, params=None):
-        """Run a given SQL query with optional parameters."""
+    def run_query(self, query, params:tuple = None):
+        """
+        Run a given SQL query with optional parameters.
+        Args:
+            query (str): The SQL query to execute.
+            params (tuple, optional): Parameters for the SQL query. Defaults to None.
+        Returns: The result of the query, if inserting, returns last inserted ID."""
         db = create_connection()
         if db:
             cursor = db.cursor(dictionary=True)
@@ -18,17 +23,23 @@ class BaseModel:
                 if query.strip().upper().startswith("SELECT"):
                     results = cursor.fetchall()
                 else:
-                    results = None
+                    # COMMIT the changes so they are visible to other queries
                     db.commit()
+                    # RETURN the last inserted ID for Foreign Key use
+                    results = cursor.lastrowid
                 return results
             except Exception as e:
                 print(f"Query Error: {e}")
                 return None
             finally:
+                print(f"query executed: {query}")
+                print(f"with params: {params}")
+                print('Closing connection')
+                print('-'*20)
                 cursor.close()
                 db.close()
         else:
-            print("No database db available.")
+            print("No database available.")
             return None
         
     def delete_all(self):
@@ -131,14 +142,15 @@ class MealsModel(BaseModel):
 
 
 class MenuModel(BaseModel):
-    """Model for the 'Menu' table."""
+    """Model for the 'Menus' table."""
     def __init__(self):
-        super().__init__('Menu', ['id', 'user_id', 'created_at', 'submitted_at'])
+        super().__init__('Menus', ['id', 'user_id', 'created_at', 'submitted_at'])
+
 
 class MenuMealsModel(BaseModel):
-    """Model for the 'MenuMeals' table."""
+    """Model for the 'Menu_meals' table."""
     def __init__(self):
-        super().__init__('MenuMeals', ['id', 
+        super().__init__('Menu_meals', ['id', 
                                        'menu_id', 
                                        'meal_id', 
                                        'recipe_id', 
@@ -172,6 +184,24 @@ class CategoriesModel(BaseModel):
     def __init__(self):
         super().__init__('Categories', ['id', 'name'])
 
+class UsersModel(BaseModel):
+    """Model for the 'Users' table."""
+    def __init__(self):
+        super().__init__('Users', ['id', 
+                                   'username', 
+                                   'email', 
+                                   'role_id', 
+                                   'password_hash', 
+                                   'created_at', 
+                                   'is_active', 
+                                   'country_id', 
+                                   'age_full_years', 
+                                   'birth_date',])
+
+class UserRolesModel(BaseModel):
+    """Model for the 'User_roles' table."""
+    def __init__(self):
+        super().__init__('User_roles', ['id', 'name', 'description'])
 # TODO : Add other models as needed
 
 if __name__ == "__main__":    # Example usage
