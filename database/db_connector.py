@@ -22,3 +22,9 @@ def create_connection():
         print(f"Error: {e}")
         return None
     
+if __name__ == "__main__":
+    conn = create_connection()
+
+    if conn:
+        print("You can now use the connection object to interact with the database.")
+        conn.close()
