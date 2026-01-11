@@ -175,7 +175,7 @@ header {
 
 /* Ensure the submit button matches the width and theme */
 .submit-btn {
-    background-color: #ff66b2; /* Pink theme */
+    background-color: var(--text-pink); /* Pink theme */
     color: white;
     border: none;
     padding: 15px;
@@ -188,4 +188,25 @@ header {
 
 .submit-btn:hover {
     transform: scale(1.02);
+}
+
+/* Page 1 Specifics */
+.generate-button {
+    background-color: var(--text-pink);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 20px;
+    text-align: center;
+}
+
+.centered-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
 }
