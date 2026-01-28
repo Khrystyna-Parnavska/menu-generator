@@ -4,53 +4,69 @@
 {% endblock %}
 
 {% block body %}
+
     <h3 style="text-align: center;">Choose meals to add:</h3>
     <form action="{{ url_for('init_plan') }}" method="POST">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 30px;">
             {% for meal in all_meals %}
             <label><input type="checkbox" name="meals" value="{{ meal['name'] }}" checked> {{ meal['name'] }}</label>
             {% endfor %}
-        </div> 
-        <button type="submit" class="submit-btn">Generate Draft</button>  
+        </div>
+        {% if not success_message %} 
+            <button type="submit" class="submit-btn">Generate Draft</button> 
+        {% endif %}
     </form>
+
     {% if error %}
     <p style="color:red; text-align:center;">{{ error }}</p>
+    {% endif %}
+
+    {% if success_message %}
+        <div style="background-color: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; border: 1px solid #c3e6cb;">
+            {{ success_message }}
+        </div>
     {% endif %}
 
     {% if menu_meals %}
     <section id="draft" style="margin-top: 40px;">
         <h2 style="text-align: center;">Your Generated Draft</h2>
-        <form action="/submit-final-menu" method="POST">
-            
+
+        <form id="final-menu-form" action="/submit-final-menu" method="POST">
+            <input type="hidden" name="menu_id" value="{{ menu_id }}">
+
             {% for meal_entry in menu_meals %}
-            <div class="meal-card">
-                <div class="time-badge" style="background: none; padding: 0;">
-                <input type="time" 
-                    name="meal_time_{{ meal_entry['id'] }}" 
-                    value="{{ meal_entry['meal_time'] }}" 
-                    class="custom-input"
-                    step="60" 
-                    style="width: 100px; padding: 5px; border-radius: 8px;">
-            </div>
-                
-                <div>
-                    <strong>{{ meal_entry['meal_type'] }}: {{ meal_entry['recipe_name'] }}</strong><br>
-                    
+            <div class="meal-card" style="display: flex; align-items: center; gap: 15px;">
+    
+                <div class="time-badge">
+                    <input type="time" name="meal_time_{{ meal_entry['meal_id'] }}" value="{{ meal_entry['meal_time'] }}" class="custom-input">
+                </div>
+
+                <div style="flex: 0 0 40%;">
+                    <strong><p style="margin: 0;">{{ meal_entry['meal_type'] }}: {{ meal_entry['recipe_name'] }}</p></strong>
+                </div>
+
+                <div style="flex: 0 0 15%;">
                     <label style="font-size: 0.8em;">
-                        <input type="hidden" name="meal_ids[]" value="{{ meal_entry['id'] }}">
-                        <input type="checkbox" name="leftover_{{ meal_entry['id'] }}"> Use leftovers later
+                        <input type="checkbox" name="leftover_{{ meal_entry['meal_id'] }}" value="1"> Use leftovers later
                     </label>
                 </div>
 
-                <div class="action-group">
-                    <button type="button" class="action-btn">Regenerate</button>
-                    <button type="button" class="action-btn">Choose Manually</button>
+                <div class="action-group" style="flex: 0 0 15%;">
+                    <button type="submit" form="regen-{{ loop.index }}" class="action-btn" style="width: 100%;">Regenerate</button>
                 </div>
+
             </div>
             {% endfor %}
 
-            <button type="submit" class="submit-btn" style="width:100%">Submit Menu</button>
+            {% if not success_message %} 
+                <button type="submit" class="submit-btn" style="width:100%">Submit Menu</button>
+            {% endif %}
         </form>
+
+        {% for meal_entry in menu_meals %}
+        <form id="regen-{{ loop.index }}" action="{{ url_for('regenerate_meal', meal_id=loop.index0) }}" method="POST" style="display:none;"></form>
+        {% endfor %}
+
     </section>
 {% endif %}
 {% endblock %}
