@@ -36,9 +36,13 @@
 
             {% for meal_entry in menu_meals %}
             <div class="meal-card" style="display: flex; align-items: center; gap: 15px;">
+                <input type="hidden" name="meal_id[]" value="{{ meal_entry['meal_id'] }}">
+                <input type="hidden" name="recipe_id[]" value="{{ meal_entry['recipe_id'] }}">
+                <input type="hidden" name="regenerated_times[]" value="{{ meal_entry['regenerated_times'] }}">
+                <input type="hidden" name="if_picked_manually[]" value="{{ meal_entry['if_picked_manually'] }}">
     
                 <div class="time-badge">
-                    <input type="time" name="meal_time_{{ meal_entry['meal_id'] }}" value="{{ meal_entry['meal_time'] }}" class="custom-input">
+                    <input type="time" name="meal_time[]" value="{{ meal_entry['meal_time'] }}" class="custom-input">
                 </div>
 
                 <div style="flex: 0 0 40%;">
@@ -53,7 +57,15 @@
 
                 <div class="action-group" style="flex: 0 0 15%;">
                     <button type="submit" form="regen-{{ loop.index }}" class="action-btn" style="width: 100%;">Regenerate</button>
+
+                    <a href="{{ url_for('manual_search', meal_index=loop.index0) }}" 
+                        class="action-btn" 
+                        style="text-decoration: none; text-align: center; font-size: 0.8em; background-color: var(--bg-purple);">
+                        Pick Manually
+                    </a>
                 </div>
+
+                
 
             </div>
             {% endfor %}
