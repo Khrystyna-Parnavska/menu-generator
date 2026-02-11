@@ -96,7 +96,11 @@ def populate_basic_recipes(recipes_model: RecipesModel, meals_model: MealsModel,
     test_recipes = pd.read_csv(path, delimiter=';', encoding='utf-8-sig')
 
     meals = []
-    for meal in meals_model.get_all():
+    meals_data = meals_model.get_all()
+    if meals_data is None or not isinstance(meals_data, list):
+        print("Warning: No meals data retrieved from database.")
+        return
+    for meal in meals_data:
         id = meal['id']
         name = meal['name']
         meals.append((id, name))

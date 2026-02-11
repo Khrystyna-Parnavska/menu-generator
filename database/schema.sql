@@ -87,7 +87,7 @@ CREATE TABLE `Menus`(
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `user_id` BIGINT UNSIGNED NOT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `submitted_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    `submitted_at` TIMESTAMP NULL
 );
 CREATE TABLE `Meals`(
     `id` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -108,8 +108,9 @@ CREATE TABLE `Menu_meals`(
     `meal_id` SMALLINT UNSIGNED NOT NULL,
     `recipe_id` BIGINT UNSIGNED NOT NULL,
     `meal_time` TIME NOT NULL,
+    `is_leftover_plan` BOOLEAN DEFAULT FALSE,
     `regenerated_times` BIGINT UNSIGNED NOT NULL,
-    `if_picked_manually` BOOLEAN NOT NULL,
+    `if_picked_manually` BOOLEAN DEFAULT FALSE,
     `submitted_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

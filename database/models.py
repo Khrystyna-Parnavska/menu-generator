@@ -8,7 +8,7 @@ class BaseModel:
     def __init__(self, table_name, columns):
         self.table_name = table_name
         self.columns = columns # List of column names in the table
-    def run_query(self, query, params:tuple = None):
+    def run_query(self, query, params:tuple = ()):
         """
         Run a given SQL query with optional parameters.
         Args:
@@ -26,7 +26,7 @@ class BaseModel:
                     # COMMIT the changes so they are visible to other queries
                     db.commit()
                     # RETURN the last inserted ID for Foreign Key use
-                    results = cursor.lastrowid
+                    results = cursor.lastrowid # int
                 return results
             except Exception as e:
                 print(f"Query Error: {e}")
@@ -91,7 +91,8 @@ class BaseModel:
         defined in the child class (e.g., self.columns).
         """
         db = create_connection()
-        cursor = db.cursor()
+        if db:
+            cursor = db.cursor()
 
         try:
             with open(file_path, mode='r', encoding=encoding) as f:
