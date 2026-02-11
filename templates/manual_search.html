@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <title>Manual Recipe Search</title> 
+{% endblock %}
+
+{% block body %}
+<div class="selection-container" style="padding: 20px;">
+    <h2 style="text-align: center;">Pick a Recipe</h2>
+
+    <form method="GET" style="display: flex; gap: 10px; margin-bottom: 30px; justify-content: center;">
+        <input type="text" name="search" placeholder="Search recipes..." value="{{ search_query }}" class="custom-input" style="width: 300px;">
+        
+        <select name="category" class="custom-input">
+            <option value="">All Categories</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}">{{ cat.name }}</option>
+            {% endfor %}
+        </select>
+        
+        <button type="submit" class="action-btn">Filter</button>
+    </form>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;">
+        {% for recipe in recipes %}
+        <div class="meal-card" style="text-align: center; display: block; padding: 15px;">
+            {% if recipe.thumb %}
+                <img src="{{ recipe.thumb }}" style="width: 100%; border-radius: 8px; margin-bottom: 10px;">
+            {% endif %}
+            <h4>{{ recipe.name }}</h4>
+            <p>Prep: {{ recipe.prep_time }}</p>
+            
+            <form action="{{ url_for('select_recipe', meal_index=meal_index, recipe_id=recipe.id) }}" method="POST">
+                <button type="submit" class="submit-btn" style="width: 100%; font-size: 0.9em;">Select This</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div> 
+    
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="{{ url_for('menu') }}" style="color: var(--text-pink);">Back to Menu</a>
+    </div>
+</div>
+{% endblock %}
