@@ -1,33 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Menu</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
+{% extends "base.html" %}
 
-<body>
-    <header>
-        <div class="logo-section">
-            <div class="icon">🍳</div>
-            <span>Menu Generator</span>
-        </div>
-        <div class="header-profile"><a href="signup.html" style="color:var(--text-pink);">Sign up </a> 
-                                    <a href="signin.html" style="color:var(--text-pink);">Log in </a> 
-                                    <a href="profile.html" style="color:var(--text-pink);">Profile</a></div>
-    </header>
+{% block head %}<title>Preferences - Menu Generator</title>{% endblock %}
 
-    <div class="app-container">
-        <div class="sidebar">
-            <a href="menu.html" class="nav-btn">My Daily Menu</a>
-            <a href="preferences.html" class="nav-btn">Preferences</a>
-            <a href="#" class="nav-btn">Explore</a>
-            <a href="#" class="nav-btn">Statistics</a>
-            <a href="profile.html" class="nav-btn">Profile</a>
-            <a href="signin.html" style="color:var(--text-pink); text-align:center;">Sign in</a>
-        </div>
-
+{% block body %}
+<div class="container">
     <main class="main-content">
         <div class="form-box">
             <h3>Choose your restrictions:</h3>
@@ -45,6 +21,5 @@
             <button class="submit-btn">Save Preferences</button>
         </div>
     </main>
-    </div>
-</body>
-</html>
+</div>
+{% endblock %}

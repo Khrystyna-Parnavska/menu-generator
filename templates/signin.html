@@ -1,38 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Menu</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-
-<body>
-    <header>
-        <div class="logo-section">
-            <div class="icon">🍳</div>
-            <span>Menu Generator</span>
-        </div>
-       <div class="header-profile"><a href="signup.html" style="color:var(--text-pink);">Sign up </a> 
-                                    <a href="signin.html" style="color:var(--text-pink);">Log in </a> 
-                                    <a href="profile.html" style="color:var(--text-pink);">Profile</a></div>
-    </header>
-
-    <div class="app-container">
-        <div class="sidebar">
-            <a href="menu.html" class="nav-btn">My Daily Menu</a>
-            <a href="preferences.html" class="nav-btn">Preferences</a>
-            <a href="#" class="nav-btn">Explore</a>
-            <a href="#" class="nav-btn">Statistics</a>
-            <a href="profile.html" class="nav-btn">Profile</a>
-            <a href="signin.html" style="color:var(--text-pink); text-align:center;">Sign in</a>
-        </div>
-
+{% extends "base.html" %}
+{% block head %}<title>Sign In - Menu Generator</title>{% endblock %}
+{% block body %}
+    <div class="container">
         <main class="main-content">
             <div class="form-box" style="margin-top: 50px;">
                 <h2 style="text-align: center;">Sign in</h2>
                 
-                <form action="/login" method="POST">
+                <form action="{{ url_for('signin') }}" method="POST">
                     <label for="email">email address</label>
                     <input type="email" id="email" name="email" class="input-field" placeholder="yourname@example.com" required> [cite: 176]
                     
@@ -44,10 +18,9 @@
 
                 <p style="text-align: center; font-size: 0.8em; margin-top: 20px;">
                     Don't have an account? 
-                    <a href="signup.html" style="color:var(--text-pink)">Sign up log in profile</a> [cite: 184]
+                    <a href="{{ url_for('signup') }}" style="color:var(--text-pink)">Sign up</a>
                 </p>
             </div>
         </main>
     </div>
-</body>
-</html>
+{% endblock %}
