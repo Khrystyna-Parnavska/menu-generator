@@ -185,6 +185,18 @@ class CategoriesModel(BaseModel):
     def __init__(self):
         super().__init__('Categories', ['id', 'name'])
 
+class CountriesModel(BaseModel):
+    """Model for the 'Countries' table."""
+    def __init__(self):
+        super().__init__('Countries', ['id', 'name'])
+
+
+class IngredientsModel(BaseModel):
+    """Model for the 'Ingredients' table."""
+    def __init__(self):
+        super().__init__('Ingredients', ['id', 'name'])
+
+
 class UsersModel(BaseModel):
     """Model for the 'Users' table."""
     def __init__(self):

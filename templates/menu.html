@@ -29,46 +29,51 @@
 
     {% if menu_meals %}
     <section id="draft" style="margin-top: 40px;">
-        <h2 style="text-align: center;">Your Generated Draft</h2>
+        <h2 style="text-align: center;">Your Generated Menu</h2>
 
         <form id="final-menu-form" action="{{ url_for('submit_final_menu') }}" method="POST">
             <input type="hidden" name="menu_id" value="{{ menu_id }}">
 
             {% for meal_entry in menu_meals %}
-            <div class="meal-card" style="display: flex; align-items: center; gap: 15px;">
-                <input type="hidden" name="meal_id[]" value="{{ meal_entry['meal_id'] }}">
-                <input type="hidden" name="recipe_id[]" value="{{ meal_entry['recipe_id'] }}">
-                <input type="hidden" name="regenerated_times[]" value="{{ meal_entry['regenerated_times'] }}">
-                <input type="hidden" name="if_picked_manually[]" value="{{ meal_entry['if_picked_manually'] }}">
-    
-                <div class="time-badge">
-                    <input type="time" name="meal_time[]" value="{{ meal_entry['meal_time'] }}" class="custom-input">
-                </div>
+<div class="menu-row-card">
+    <input type="hidden" name="meal_id[]" value="{{ meal_entry['meal_id'] }}">
+    <input type="hidden" name="recipe_id[]" value="{{ meal_entry['recipe_id'] }}">
+    <input type="hidden" name="regenerated_times[]" value="{{ meal_entry['regenerated_times'] }}">
+    <input type="hidden" name="if_picked_manually[]" value="{{ meal_entry['if_picked_manually'] }}">
 
-                <div style="flex: 0 0 40%;">
-                    <strong><p style="margin: 0;">{{ meal_entry['meal_type'] }}: {{ meal_entry['recipe_name'] }}</p></strong>
-                </div>
+    <div class="menu-time-container">
+        <div class="time-badge" style="padding: 5px;">
+            <input type="time" name="meal_time[]" value="{{ meal_entry['meal_time'] }}" 
+                   class="custom-input" style="padding: 5px 10px; font-size: 0.9em;">
+        </div>
+    </div>
 
-                <div style="flex: 0 0 15%;">
-                    <label style="font-size: 0.8em;">
-                        <input type="checkbox" name="leftover_{{ meal_entry['meal_id'] }}" value="1"> Use leftovers later
-                    </label>
-                </div>
+    <div class="menu-info">
+        <span style="color: var(--text-pink); font-size: 0.8em; font-weight: bold; text-transform: uppercase;">
+            {{ meal_entry['meal_type'] }}
+        </span>
+        <strong style="font-size: 1.1em; display: block; margin-top: 4px;">
+            {{ meal_entry['recipe_name'] }}
+        </strong>
+    </div>
 
-                <div class="action-group" style="flex: 0 0 15%;">
-                    <button type="submit" form="regen-{{ loop.index }}" class="action-btn" style="width: 100%;">Regenerate</button>
+    <div style="flex-shrink: 0; width: 130px;">
+        <label style="font-size: 0.8em; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+            <input type="checkbox" name="leftover_{{ meal_entry['meal_id'] }}" value="1">  Use
+            leftovers later
+        </label>
+    </div>
 
-                    <a href="{{ url_for('manual_search', meal_index=loop.index0) }}" 
-                        class="action-btn" 
-                        style="text-decoration: none; text-align: center; font-size: 0.8em; background-color: var(--bg-purple);">
-                        Pick Manually
-                    </a>
-                </div>
-
-                
-
-            </div>
-            {% endfor %}
+    <div class="action-group" style="flex-shrink: 0; width: 120px;">
+        <button type="submit" form="regen-{{ loop.index }}" class="action-btn">Regenerate</button>
+        <a href="{{ url_for('manual_search', meal_index=loop.index0) }}" 
+           class="action-btn" 
+           style="text-decoration: none; text-align: center; background-color: var(--bright-purple);">
+           Pick Manually
+        </a>
+    </div>
+</div>
+{% endfor %}
 
             {% if not success_message %} 
                 <button type="submit" class="submit-btn" style="width:100%">Submit Menu</button>

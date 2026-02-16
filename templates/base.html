@@ -22,7 +22,7 @@
         <div class="sidebar">
             <a href="{{ url_for('menu') }}" class="nav-btn">My Daily Menu</a>
             <a href="{{ url_for('preferences') }}" class="nav-btn">Preferences</a>
-            <a href="#" class="nav-btn">Explore</a>
+            <a href="{{ url_for('manual_search', meal_index=-1) }}" class="nav-btn">Explore</a>
             <a href="#" class="nav-btn">Statistics</a>
             <a href="{{ url_for('profile') }}" class="nav-btn">Profile</a>
             <a href="{{ url_for('signin') }}" style="color:var(--text-pink); text-align:center;">Sign in</a>

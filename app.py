@@ -9,6 +9,7 @@ menu_model = m.MenuModel()
 menu_meals_model = m.MenuMealsModel()
 users_model = m.UsersModel()
 recipe_model = m.RecipesModel()
+ing_model = m.IngredientsModel()
 
 meals_from_db = meal_model.get_all()
 
@@ -238,22 +239,30 @@ def submit_final_menu():
                            success_message="Menu finalized and saved!")
 
 
-@app.route('/manual-search/<int:meal_index>')
+@app.route('/manual-search/<int(signed=True):meal_index>')
 def manual_search(meal_index):
-    # Get search and category filters from the URL
+    print('**'*20)
+    print(f'meal_index: {meal_index}')
+    print('**'*20)
     search_query = request.args.get('search', '')
     category_id = request.args.get('category')
-    
-    # Base query for recipes matching the specific meal type (Breakfast, Lunch, etc.)
     draft = session.get('menu_draft', [])
-    if not draft or meal_index >= len(draft):
-        return redirect(url_for('menu'))
-    
-    meal_type_id = draft[meal_index]['meal_id']
-    
-    query = "SELECT * FROM Recipes WHERE meal_id = %s"
-    params = [meal_type_id]
-    
+
+    # Initialize base query
+    if meal_index == -1:
+        # General "Explore" mode: show all recipes
+        query = "SELECT * FROM Recipes WHERE 1=1"
+        params = []
+    else:
+        # Specific meal selection mode
+        if not draft or meal_index >= len(draft):
+            return redirect(url_for('menu'))
+        
+        meal_type_id = draft[meal_index]['meal_id']
+        query = "SELECT * FROM Recipes WHERE meal_id = %s"
+        params = [meal_type_id]
+
+    # Apply filters
     if search_query:
         query += " AND name LIKE %s"
         params.append(f"%{search_query}%")
@@ -286,6 +295,91 @@ def select_recipe(meal_index, recipe_id):
         session['menu_draft'] = draft
     return redirect(url_for('menu'))
 
+
+@app.route('/recipe/<int:recipe_id>')
+def recipe_details(recipe_id):
+    recipe = recipe_model.run_query("SELECT * FROM Recipes WHERE id = %s", (recipe_id,))[0]
+    
+    # Ensure the triple quotes are closed correctly
+    query = """
+        SELECT i.name, ri.measure, ri.units 
+        FROM Recipes_ingredients ri 
+        JOIN Ingredients i ON ri.ingredient_id = i.id 
+        WHERE ri.recipe_id = %s 
+        ORDER BY ri.order_index ASC
+    """
+    ingredients = recipe_model.run_query(query, (recipe_id,))
+    meal_index = request.args.get('meal_index', -1, type=int)
+
+    return render_template('recipe_details.html', 
+                           recipe=recipe, 
+                           ingredients=ingredients, 
+                           meal_index=meal_index)
+
+# TODO -fix and finish add_recipe route
+# TODO - fix the fact that if you add a new recipe, it doesn't show up in the manual search until you regenerate the menu (because the new recipe is not in the session draft)
+# TODO - Add error handling for edge cases (e.g., empty ingredient name, database errors)
+@app.route('/add-recipe', methods=['GET', 'POST'])
+def add_recipe():
+    if request.method == 'POST':
+        # 1. Get main recipe data
+        name = request.form.get('name')
+        thumb = request.form.get('thumb')
+        meal_id = request.form.get('meal_id')
+        prep = request.form.get('prep_time')
+        cook = request.form.get('cooking_time')
+        cat_id = request.form.get('category_id')
+        country_id = request.form.get('country_id')
+        area = request.form.get('area')
+          
+        # 2. Insert into Recipes table
+        recipe_query = """
+            INSERT INTO Recipes (name, country_id, meal_id, category_id, n_portions, prep_time, cooking_time, area, thumb, rating, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 5, NOW())
+        """
+        recipe_model.run_query(recipe_query, (name, country_id, meal_id, cat_id, 1, prep, cook, area, thumb,))
+        
+        # Get the ID of the recipe we just created
+        new_recipe_id = recipe_model.run_query("SELECT LAST_INSERT_ID() as id")[0]['id']
+        
+        # Get ingredient lists from form
+        ing_names = request.form.getlist('ing_name[]')
+        ing_measures = request.form.getlist('ing_measure[]')
+        ing_units = request.form.getlist('ing_unit[]')
+
+        for i in range(len(ing_names)):
+            name = ing_names[i].strip()
+            if not name: continue
+
+            # 1. Check if ingredient already exists
+            existing = ing_model.run_query("SELECT id FROM Ingredients WHERE name = %s", (name,))
+            
+            if existing:
+                ing_id = existing[0]['id']
+            else:
+                # 2. If it doesn't exist, create it
+                ing_model.run_query("INSERT INTO Ingredients (name) VALUES (%s)", (name,))
+                ing_id = ing_model.run_query("SELECT LAST_INSERT_ID() as id")[0]['id']
+            
+            # TODO FIX THIS, WRONG MODEL
+            # 3. Link the ingredient to the recipe
+            recipe_model.run_query("""
+                INSERT INTO Recipes_ingredients (recipe_id, ingredient_id, measure, units, order_index)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (new_recipe_id, ing_id, ing_measures[i], ing_units[i], i))
+
+        return redirect(url_for('manual_search', meal_index=-1))
+
+    # GET logic
+    categories = recipe_model.run_query("SELECT * FROM Categories")
+    meals = recipe_model.run_query("SELECT * FROM Meals")
+    # Fetch all ingredients to populate the datalist
+    all_ingredients = recipe_model.run_query("SELECT name FROM Ingredients ORDER BY name ASC")
+    
+    return render_template('add_recipe.html', 
+                           categories=categories, 
+                           meals=meals, 
+                           all_ingredients=all_ingredients)
 
 @app.route('/signin')
 def signin():

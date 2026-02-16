@@ -1,6 +1,6 @@
 import os
 from database.db_connector import create_connection
-from database.models import MealsModel, RecipesModel, CategoriesModel, UsersModel, UserRolesModel
+from database.models import MealsModel, RecipesModel, CategoriesModel, UsersModel, UserRolesModel, CountriesModel
 import pandas as pd
 
 def run_schema( path='database', schema_file_name='schema.sql'):
@@ -84,6 +84,16 @@ def add_test_category(categories_model: CategoriesModel):
     categories_model.insert({'name': 'test'})
     print("Inserted test category.")
 
+
+def add_test_coutry(countries_model: CountriesModel):
+    """Add a test country to the Countries table.
+    Args:
+        countries_model: The CountriesModel instance.
+    """
+    countries_model.insert({'name': 'test'})
+    print("Inserted test country.")
+
+
 #TODO: MAKE THIS FUNCTION MORE GENERIC
 def populate_basic_recipes(recipes_model: RecipesModel, meals_model: MealsModel, categories_model: CategoriesModel, path: str):
     """Populate the Recipes table from a CSV file.
@@ -141,9 +151,11 @@ if __name__ == "__main__":
     categories_model = CategoriesModel()
     users_model = UsersModel()
     user_roles_model = UserRolesModel()
+    countries_model = CountriesModel()
 
     populate_meals(meals_model)
     add_test_category(categories_model)
+    add_test_coutry(countries_model)
     populate_basic_recipes(recipes_model, meals_model, categories_model, recipes_path)
 
     #test user

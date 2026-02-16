@@ -10,7 +10,7 @@
 
     <form method="GET" style="display: flex; gap: 10px; margin-bottom: 30px; justify-content: center;">
         <input type="text" name="search" placeholder="Search recipes..." value="{{ search_query }}" class="custom-input" style="width: 300px;">
-        
+        <input type="hidden" name="meal_index" value="{{ meal_index }}">
         <select name="category" class="custom-input">
             <option value="">All Categories</option>
             {% for cat in categories %}
@@ -21,22 +21,38 @@
         <button type="submit" class="action-btn">Filter</button>
     </form>
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;">
         {% for recipe in recipes %}
-        <div class="meal-card" style="text-align: center; display: block; padding: 15px;">
+        <div class="meal-card">
             {% if recipe.thumb %}
-                <img src="{{ recipe.thumb }}" style="width: 100%; border-radius: 8px; margin-bottom: 10px;">
+                <img src="{{ recipe.thumb }}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;">
+            {% else %}
+                <div style="width: 100%; height: 150px; background: var(--bg-dark); border-radius: 8px; margin-bottom: 10px;"></div>
             {% endif %}
-            <h4>{{ recipe.name }}</h4>
-            <p>Prep: {{ recipe.prep_time }}</p>
-            
-            <form action="{{ url_for('select_recipe', meal_index=meal_index, recipe_id=recipe.id) }}" method="POST">
-                <button type="submit" class="submit-btn" style="width: 100%; font-size: 0.9em;">Select This</button>
-            </form>
+
+            <div class="recipe-info">
+                <h4 class="recipe-name">{{ recipe.name }}</h4>
+                <p style="margin-top: auto; color: var(--text-pink);">Prep: {{ recipe.prep_time }}</p>
+            </div>
+
+            <a href="{{ url_for('recipe_details', recipe_id=recipe.id, meal_index=meal_index) }}" class="submit-btn" style="display:block; text-decoration:none; text-align: center; padding: 10px;">View Details</a>
+                
+            <div style="width: 100%; margin-top: 10px;">
+                {% if meal_index != -1 %}
+                    <form action="{{ url_for('select_recipe', meal_index=meal_index, recipe_id=recipe.id) }}" method="POST">
+                        <button type="submit" class="submit-btn" style="width: 100%; padding: 10px;">Select for Menu</button>
+                    </form>
+                {% endif %}
+                        
+            </div>
         </div>
-        {% endfor %}
+    {% endfor %}
     </div> 
-    
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+    <a href="{{ url_for('add_recipe') }}" class="action-btn" style="text-decoration: none; background-color: var(--bright-purple);">
+        + Add New Recipe
+    </a>
+</div>
     <div style="text-align: center; margin-top: 30px;">
         <a href="{{ url_for('menu') }}" style="color: var(--text-pink);">Back to Menu</a>
     </div>

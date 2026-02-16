@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <title>Add New Recipe</title>
+{% endblock %}
+
+{% block body %}
+<div class="selection-container" style="max-width: 900px; margin: 0 auto; padding: 20px;">
+    <h2 style="text-align: center; color: var(--text-pink);">Create New Recipe</h2>
+    
+    <form action="{{ url_for('add_recipe') }}" method="POST" class="meal-card" style="display: block; padding: 30px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+            <div class="form-group">
+                <label>Recipe Name</label>
+                <input type="text" name="name" class="custom-input" required style="width: 100%;">
+            </div>
+            <div class="form-group">
+                <label>Thumbnail URL</label>
+                <input type="text" name="thumb" class="custom-input" placeholder="https://..." style="width: 100%;">
+            </div>
+            <div class="form-group">
+                <label>Meal Type</label>
+                <select name="meal_id" class="custom-input" style="width: 100%;">
+                    {% for meal in meals %}
+                    <option value="{{ meal.id }}">{{ meal.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Preparation Time</label>
+                <input type="time" name="prep_time" class="custom-input" required style="width: 100%;">
+            </div>
+            <div class="form-group">
+                <label>Cooking Time</label>
+                <input type="time" name="cooking_time" class="custom-input" required style="width: 100%;">
+            </div>
+            <div class="form-group">
+                <label>Category</label>
+                <select name="category_id" class="custom-input" style="width: 100%;">
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Country</label>
+                <select name="country_id" class="custom-input" style="width: 100%;">
+                    {% for country in countries %}
+                    <option value="{{ country.id }}">{{ country.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Meal Type</label>
+                <select name="meal_id" class="custom-input" style="width: 100%;">
+                    {% for meal in meals %}
+                    <option value="{{ meal.id }}">{{ meal.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+                <label>Area</label>
+                <input type="text" name="area " class="custom-input" required style="width: 100%;">
+            </div>
+        <h3 style="border-bottom: 2px solid var(--bright-purple); padding-bottom: 10px;">Ingredients</h3>
+        <div id="ingredient-list" style="margin-top: 15px;">
+            <div class="ingredient-row" style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <input type="text" name="ing_name[]" placeholder="Ingredient" class="custom-input" style="flex: 2;">
+                <input type="number" name="ing_measure[]" placeholder="Amt" class="custom-input" style="flex: 0.5;">
+                <input type="text" name="ing_unit[]" placeholder="Unit (g, ml, pcs)" class="custom-input" style="flex: 1;">
+            </div>
+        </div>
+        <button type="button" onclick="addIngredient()" class="action-btn" style="margin-bottom: 30px; background: var(--accent-purple);">+ Add Another Ingredient</button>
+
+        <button type="submit" class="submit-btn" style="width: 100%;">Save Recipe</button>
+    </form>
+</div>
+
+<script>
+function addIngredient() {
+    const container = document.getElementById('ingredient-list');
+    const newRow = document.createElement('div');
+    newRow.className = 'ingredient-row';
+    newRow.style = 'display: flex; gap: 10px; margin-bottom: 10px;';
+    newRow.innerHTML = `
+        <input type="text" name="ing_name[]" placeholder="Ingredient" class="custom-input" style="flex: 2;">
+        <input type="number" name="ing_measure[]" placeholder="Amt" class="custom-input" style="flex: 0.5;">
+        <input type="text" name="ing_unit[]" placeholder="Unit" class="custom-input" style="flex: 1;">
+    `;
+    container.appendChild(newRow);
+}
+</script>
+{% endblock %}

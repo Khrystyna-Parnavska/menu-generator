@@ -59,16 +59,72 @@ header {
 
 .nav-btn:hover { background: var(--bright-purple); }
 
-/* --- Menu Cards (Phase 2) --- */
 .meal-card {
     background: var(--input-bg);
     padding: 20px;
     border-radius: 20px;
-    margin-bottom: 20px;
-    display: grid;
-    grid-template-columns: 80px 1fr 200px;
+    display: flex; /* Changed from display: block or grid */
+    flex-direction: column;
+    justify-content:间-between; 
     align-items: center;
     gap: 15px;
+    min-height: 350px; /* Set a consistent height for all cards */
+}
+
+/* Create a container for the text to handle the 3-line limit */
+.recipe-info {
+    flex-grow: 1; /* This pushes the button to the bottom */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+}
+
+.recipe-name {
+    margin-bottom: 10px;
+    font-size: 1.1em;
+    font-weight: bold;
+    color: white;
+    /* Fix to exactly 3 lines with ellipsis if too long */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;  
+    overflow: hidden;
+    min-height: 4.2em; /* Ensures cards with 1 line still take up 3 lines of space */
+}
+
+/* Specific layout for the Menu page to make cards thin and wide */
+.menu-row-card {
+    background: var(--input-bg);
+    padding: 15px 25px;
+    border-radius: 20px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.menu-thumb {
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: var(--bg-dark); /* Fallback if no image */
+    flex-shrink: 0;
+}
+
+.menu-info {
+    flex: 1; /* Takes up remaining space */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.menu-time-container {
+    flex-shrink: 0;
+    width: 120px;
 }
 
 .time-badge {
