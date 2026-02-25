@@ -36,7 +36,17 @@
             </div>
 
             <a href="{{ url_for('recipe_details', recipe_id=recipe.id, meal_index=meal_index) }}" class="submit-btn" style="display:block; text-decoration:none; text-align: center; padding: 10px;">View Details</a>
-                
+        
+           {% if recipe.id in favorite_ids %}
+                <form action="{{ url_for('remove_favorite', recipe_id=recipe.id) }}" method="POST">
+                    <button type="submit" class="submit-btn" style="width: 100%; padding: 10px;">Remove from Favorites</button>
+                </form>
+            {% else %}  
+                <form action="{{ url_for('add_favorite', recipe_id=recipe.id) }}" method="POST">
+                        <button type="submit" class="submit-btn" style="width: 100%; padding: 10px;">Add to Favorites</button>
+                </form>
+            {% endif %}
+
             <div style="width: 100%; margin-top: 10px;">
                 {% if meal_index != -1 %}
                     <form action="{{ url_for('select_recipe', meal_index=meal_index, recipe_id=recipe.id) }}" method="POST">

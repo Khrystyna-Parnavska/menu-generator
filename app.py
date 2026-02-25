@@ -3,6 +3,8 @@ from flask_scss import Scss
 import database.models as m
 import random
 from datetime import datetime, timedelta, date, timezone
+import os
+from werkzeug.utils import secure_filename
 
 meal_model = m.MealsModel()
 menu_model = m.MenuModel()
@@ -10,6 +12,7 @@ menu_meals_model = m.MenuMealsModel()
 users_model = m.UsersModel()
 recipe_model = m.RecipesModel()
 ing_model = m.IngredientsModel()
+favorites_recipes_model = m.FavoritesRecipesModel()
 
 meals_from_db = meal_model.get_all()
 
@@ -17,6 +20,9 @@ app = Flask(__name__)
 app.secret_key = 'your_super_secret_random_string_here'
 
 Scss(app, static_dir='static', asset_dir='assets')
+
+UPLOAD_FOLDER = 'static/uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
 def generate_meal(meal_id):
@@ -102,7 +108,21 @@ def fetch_today_menu(user_id):
     return draft_meals, menu_id, success_message
 
 
+def fetch_favorites(user_id, return_ids_only=False):
+    query = """
+        SELECT r.*
+        FROM Recipes r
+        JOIN User_favorite_recipes f ON r.id = f.recipe_id
+        WHERE f.user_id = %s
+    """
+    results = favorites_recipes_model.run_query(query, (user_id,))
+    if return_ids_only:
+        return [recipe['id'] for recipe in results]
+    return results
+
+
 user_id = fetch_user('test_user')
+# session['user_id'] = user_id
 
 
 @app.route('/')
@@ -161,12 +181,11 @@ def init_plan():
         
     else:
         # 2. Create a new menu and get its ID
-        menu_id = menu_model.insert({'user_id': user_id})
+        menu_id = menu_model.insert({'user_id': session.get('user_id')})
 
         menu_meals = generate_menu(menu_id, selected_names)
 
     session['menu_draft'] = menu_meals
-
     return render_template('menu.html', 
                            menu_meals=menu_meals, 
                            all_meals=meals_from_db,
@@ -241,9 +260,7 @@ def submit_final_menu():
 
 @app.route('/manual-search/<int(signed=True):meal_index>')
 def manual_search(meal_index):
-    print('**'*20)
-    print(f'meal_index: {meal_index}')
-    print('**'*20)
+    favorite_ids = fetch_favorites(user_id, return_ids_only=True)
     search_query = request.args.get('search', '')
     category_id = request.args.get('category')
     draft = session.get('menu_draft', [])
@@ -278,7 +295,8 @@ def manual_search(meal_index):
                            recipes=recipes, 
                            categories=categories, 
                            meal_index=meal_index,
-                           search_query=search_query)
+                           search_query=search_query,
+                           favorite_ids=favorite_ids)
 
 @app.route('/select-recipe/<int:meal_index>/<int:recipe_id>', methods=['POST'])
 def select_recipe(meal_index, recipe_id):
@@ -298,9 +316,10 @@ def select_recipe(meal_index, recipe_id):
 
 @app.route('/recipe/<int:recipe_id>')
 def recipe_details(recipe_id):
+    favorite_ids = fetch_favorites(user_id, return_ids_only=True)
     recipe = recipe_model.run_query("SELECT * FROM Recipes WHERE id = %s", (recipe_id,))[0]
     
-    # Ensure the triple quotes are closed correctly
+
     query = """
         SELECT i.name, ri.measure, ri.units 
         FROM Recipes_ingredients ri 
@@ -314,7 +333,8 @@ def recipe_details(recipe_id):
     return render_template('recipe_details.html', 
                            recipe=recipe, 
                            ingredients=ingredients, 
-                           meal_index=meal_index)
+                           meal_index=meal_index,
+                           favorite_ids=favorite_ids)
 
 # TODO -fix and finish add_recipe route
 # TODO - fix the fact that if you add a new recipe, it doesn't show up in the manual search until you regenerate the menu (because the new recipe is not in the session draft)
@@ -324,23 +344,47 @@ def add_recipe():
     if request.method == 'POST':
         # 1. Get main recipe data
         name = request.form.get('name')
-        thumb = request.form.get('thumb')
         meal_id = request.form.get('meal_id')
         prep = request.form.get('prep_time')
         cook = request.form.get('cooking_time')
+        description = request.form.get('description')
         cat_id = request.form.get('category_id')
+        n_portions = request.form.get('n_portions')
         country_id = request.form.get('country_id')
-        area = request.form.get('area')
+        file = request.files.get('thumb_file')
+        thumb_url = request.form.get('thumb_url')
+    
+        final_thumb_path = thumb_url # Default to the URL
+
+        # 2. If a file exists and has a filename, save it
+        if file and file.filename != '':
+            filename = secure_filename(file.filename)
+            # Ensure the directory exists
+            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+            
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(file_path)
+            
+            # This is the path you will store in your Database
+            final_thumb_path = f"/{UPLOAD_FOLDER}/{filename}"
+
+        if not n_portions:
+            n_portions = 1
+
           
         # 2. Insert into Recipes table
         recipe_query = """
-            INSERT INTO Recipes (name, country_id, meal_id, category_id, n_portions, prep_time, cooking_time, area, thumb, rating, created_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 5, NOW())
+            INSERT INTO Recipes (name, country_id, meal_id, category_id, n_portions, prep_time, cooking_time, description, thumb, rating, created_by_user_id, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 5, %s, NOW())
         """
-        recipe_model.run_query(recipe_query, (name, country_id, meal_id, cat_id, 1, prep, cook, area, thumb,))
         
-        # Get the ID of the recipe we just created
-        new_recipe_id = recipe_model.run_query("SELECT LAST_INSERT_ID() as id")[0]['id']
+        # Execute the query and get the new recipe ID
+        new_recipe_id = recipe_model.run_query(recipe_query, (name, country_id, meal_id, cat_id, n_portions, prep, cook, description, final_thumb_path, user_id))
+        
+        favorites_recipes_model.insert({
+            'user_id': user_id,
+            'recipe_id': new_recipe_id
+        })
         
         # Get ingredient lists from form
         ing_names = request.form.getlist('ing_name[]')
@@ -348,7 +392,7 @@ def add_recipe():
         ing_units = request.form.getlist('ing_unit[]')
 
         for i in range(len(ing_names)):
-            name = ing_names[i].strip()
+            name = ing_names[i].strip().title() 
             if not name: continue
 
             # 1. Check if ingredient already exists
@@ -356,10 +400,12 @@ def add_recipe():
             
             if existing:
                 ing_id = existing[0]['id']
+                print(f"Found existing ingredient '{name}' with ID {ing_id}")
             else:
                 # 2. If it doesn't exist, create it
-                ing_model.run_query("INSERT INTO Ingredients (name) VALUES (%s)", (name,))
-                ing_id = ing_model.run_query("SELECT LAST_INSERT_ID() as id")[0]['id']
+                
+                ing_id = ing_model.run_query("INSERT INTO Ingredients (name) VALUES (%s)", (name,))
+                print(f"Created new ingredient '{name}' with ID {ing_id}")
             
             # TODO FIX THIS, WRONG MODEL
             # 3. Link the ingredient to the recipe
@@ -380,6 +426,42 @@ def add_recipe():
                            categories=categories, 
                            meals=meals, 
                            all_ingredients=all_ingredients)
+
+
+@app.route('/favorites')
+def favorites():
+    favorites = fetch_favorites(user_id)
+    return render_template('favorites.html', favorites=favorites)
+
+
+@app.route('/add-favorite/<int:recipe_id>', methods=['POST'])
+def add_favorite(recipe_id):
+    # In a real app, you would check if the user is logged in and get their user_id
+
+    # Insert into User_favorite_recipes table
+    query = """
+        INSERT INTO User_favorite_recipes (user_id, recipe_id)
+        VALUES (%s, %s)
+    """
+    favorites_recipes_model.run_query(query, (user_id, recipe_id))
+    
+    return redirect(request.referrer or url_for('manual_search', meal_index=-1))
+
+
+@app.route('/remove-favorite/<int:recipe_id>', methods=['POST'])
+def remove_favorite(recipe_id):
+    # In a real app, you would check if the user is logged in and get their user_id
+
+    # Remove from User_favorite_recipes table
+    query = """
+        DELETE FROM User_favorite_recipes
+        WHERE user_id = %s AND recipe_id = %s
+    """
+    favorites_recipes_model.run_query(query, (user_id, recipe_id))
+    
+    return redirect(request.referrer or url_for('manual_search', meal_index=-1))
+
+
 
 @app.route('/signin')
 def signin():

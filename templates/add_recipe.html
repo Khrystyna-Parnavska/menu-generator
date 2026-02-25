@@ -14,10 +14,34 @@
                 <label>Recipe Name</label>
                 <input type="text" name="name" class="custom-input" required style="width: 100%;">
             </div>
+
             <div class="form-group">
-                <label>Thumbnail URL</label>
-                <input type="text" name="thumb" class="custom-input" placeholder="https://..." style="width: 100%;">
+                <label>Thumbnail</label>
+                
+                <input type="text" name="thumb_url" class="custom-input" 
+                    placeholder="Paste image URL here..." style="width: 100%; margin-bottom: 10px;">
+                
+                <p style="font-size: 0.8em; margin: 5px 0;">— OR —</p>
+                
+                <input type="file" name="thumb_file" class="custom-input" 
+                    accept="image/*" style="width: 100%; padding: 10px;">
             </div>
+            
+            <div class="form-group">
+                <label>Preparation Time</label>
+                <input type="time" name="prep_time" class="custom-input" required style="width: 100%;">
+            </div>
+
+            <div class="form-group">
+                <label>Cooking Time</label>
+                <input type="time" name="cooking_time" class="custom-input" required style="width: 100%;">
+            </div>
+
+            <div class="form-group">
+                <label>Number of portions</label>
+                <input type="number" name="n_portions" class="custom-input" required style="width: 100%;">
+            </div>
+
             <div class="form-group">
                 <label>Meal Type</label>
                 <select name="meal_id" class="custom-input" style="width: 100%;">
@@ -26,14 +50,7 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="form-group">
-                <label>Preparation Time</label>
-                <input type="time" name="prep_time" class="custom-input" required style="width: 100%;">
-            </div>
-            <div class="form-group">
-                <label>Cooking Time</label>
-                <input type="time" name="cooking_time" class="custom-input" required style="width: 100%;">
-            </div>
+
             <div class="form-group">
                 <label>Category</label>
                 <select name="category_id" class="custom-input" style="width: 100%;">
@@ -50,19 +67,9 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="form-group">
-                <label>Meal Type</label>
-                <select name="meal_id" class="custom-input" style="width: 100%;">
-                    {% for meal in meals %}
-                    <option value="{{ meal.id }}">{{ meal.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+            
         </div>
-        <div class="form-group">
-                <label>Area</label>
-                <input type="text" name="area " class="custom-input" required style="width: 100%;">
-            </div>
+       
         <h3 style="border-bottom: 2px solid var(--bright-purple); padding-bottom: 10px;">Ingredients</h3>
         <div id="ingredient-list" style="margin-top: 15px;">
             <div class="ingredient-row" style="display: flex; gap: 10px; margin-bottom: 10px;">
@@ -72,6 +79,16 @@
             </div>
         </div>
         <button type="button" onclick="addIngredient()" class="action-btn" style="margin-bottom: 30px; background: var(--accent-purple);">+ Add Another Ingredient</button>
+
+        <div class="form-group">
+            <label>Description</label>
+            <textarea 
+                name="description" 
+                class="custom-input description-box" 
+                required 
+                placeholder="Enter recipe instructions or details here..."
+            ></textarea>
+        </div>
 
         <button type="submit" class="submit-btn" style="width: 100%;">Save Recipe</button>
     </form>

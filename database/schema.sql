@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS `User_favorit_recipes`;
+DROP TABLE IF EXISTS `User_favorite_recipes`;
 DROP TABLE IF EXISTS `Ingredient_restrictions`;
 DROP TABLE IF EXISTS `Recipes_ingredients`;
 DROP TABLE IF EXISTS `Menu_meals`; 
@@ -25,11 +25,13 @@ CREATE TABLE `Recipes`(
     `n_portions` SMALLINT UNSIGNED NOT NULL,
     `prep_time` TIME NOT NULL,
     `cooking_time` TIME NOT NULL ,
+    `description` TEXT NULL,
     `area` TEXT NULL,
     `thumb` TEXT NULL,
     `source_url` TEXT NULL,
     `youtube` TEXT NULL,
     `rating` SMALLINT UNSIGNED NOT NULL,
+    `created_by_user_id` BIGINT UNSIGNED NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE TABLE `Ingredients`(
@@ -78,10 +80,11 @@ CREATE TABLE `User_roles`(
     `name` VARCHAR(50) NOT NULL,
     `description` TEXT NOT NULL
 );
-CREATE TABLE `User_favorit_recipes`(
+CREATE TABLE `User_favorite_recipes`(
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `user_id` BIGINT UNSIGNED NOT NULL,
-    `recipe_id` BIGINT UNSIGNED NOT NULL
+    `recipe_id` BIGINT UNSIGNED NOT NULL,
+    `added_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE TABLE `Menus`(
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -114,10 +117,11 @@ CREATE TABLE `Menu_meals`(
     `submitted_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+
 ALTER TABLE
     `Ingredient_restrictions` ADD CONSTRAINT `ingredient_restrictions_restriction_id_foreign` FOREIGN KEY(`restriction_id`) REFERENCES `Restrictions`(`id`);
 ALTER TABLE
-    `User_favorit_recipes` ADD CONSTRAINT `user_favorit_recipes_recipe_id_foreign` FOREIGN KEY(`recipe_id`) REFERENCES `Recipes`(`id`);
+    `User_favorite_recipes` ADD CONSTRAINT `user_favorite_recipes_recipe_id_foreign` FOREIGN KEY(`recipe_id`) REFERENCES `Recipes`(`id`);
 ALTER TABLE
     `User_restrictions` ADD CONSTRAINT `user_restrictions_restriction_id_foreign` FOREIGN KEY(`restriction_id`) REFERENCES `Restrictions`(`id`);
 ALTER TABLE
@@ -129,7 +133,7 @@ ALTER TABLE
 ALTER TABLE
     `Recipes` ADD CONSTRAINT `recipes_country_id_foreign` FOREIGN KEY(`country_id`) REFERENCES `Countries`(`id`);
 ALTER TABLE
-    `User_favorit_recipes` ADD CONSTRAINT `user_favorit_recipes_user_id_foreign` FOREIGN KEY(`user_id`) REFERENCES `Users`(`id`);
+    `User_favorite_recipes`  ADD CONSTRAINT `user_favorit_recipes_user_id_foreign` FOREIGN KEY(`user_id`) REFERENCES `Users`(`id`);
 ALTER TABLE
     `Recipes_ingredients` ADD CONSTRAINT `recipes_ingredients_ingredient_id_foreign` FOREIGN KEY(`ingredient_id`) REFERENCES `Ingredients`(`id`);
 ALTER TABLE

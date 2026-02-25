@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <title>My Favorite Recipes</title>
+{% endblock %}
+
+{% block body %}
+
+<div class="selection-container" style="max-width: 900px; margin: 0 auto; padding: 20px;">
+    <h2 style="text-align: center; color: var(--text-pink);">My Favorite Recipes</h2>
+    
+    {% if favorites %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;">
+        {% for recipe in favorites %}
+        <div class="meal-card">
+            {% if recipe.thumb %}
+                <img src="{{ recipe.thumb }}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;">
+            {% else %}
+                <div style="width: 100%; height: 150px; background: var(--bg-dark); border-radius: 8px; margin-bottom: 10px;"></div>
+            {% endif %}
+
+            <div class="recipe-info">
+                <h4 class="recipe-name">{{ recipe.name }}</h4>
+                <p style="margin-top: auto; color: var(--text-pink);">Prep: {{ recipe.prep_time }}</p>
+            </div>
+
+            <a href="{{ url_for('recipe_details', recipe_id=recipe.id, meal_index=meal_index) }}" class="submit-btn" style="display:block; text-decoration:none; text-align: center; padding: 10px;">View Details</a>
+            <form action="{{ url_for('remove_favorite', recipe_id=recipe.id) }}" method="POST">
+                <button type="submit" class="submit-btn" style="width: 100%; padding: 10px;">Remove from Favorites</button>
+            </form>
+                
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p style="text-align: center; font-size: 1.2em;">You haven't added any favorite recipes yet.</p>
+    {% endif %}
+
+</div>
+
+{% endblock %}

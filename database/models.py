@@ -215,6 +215,12 @@ class UserRolesModel(BaseModel):
     """Model for the 'User_roles' table."""
     def __init__(self):
         super().__init__('User_roles', ['id', 'name', 'description'])
+
+
+class FavoritesRecipesModel(BaseModel):
+    """Model for the 'User_favorite_recipes' table."""
+    def __init__(self):
+        super().__init__('User_favorite_recipes', ['id', 'user_id', 'recipe_id', 'added_at'])
 # TODO : Add other models as needed
 
 if __name__ == "__main__":    # Example usage

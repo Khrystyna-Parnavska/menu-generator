@@ -1,6 +1,6 @@
 import os
 from database.db_connector import create_connection
-from database.models import MealsModel, RecipesModel, CategoriesModel, UsersModel, UserRolesModel, CountriesModel
+from database.models import FavoritesRecipesModel, MealsModel, RecipesModel, CategoriesModel, UsersModel, UserRolesModel, CountriesModel
 import pandas as pd
 
 def run_schema( path='database', schema_file_name='schema.sql'):
@@ -152,6 +152,7 @@ if __name__ == "__main__":
     users_model = UsersModel()
     user_roles_model = UserRolesModel()
     countries_model = CountriesModel()
+    favorites_recipes_model = FavoritesRecipesModel()
 
     populate_meals(meals_model)
     add_test_category(categories_model)

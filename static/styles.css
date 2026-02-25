@@ -266,3 +266,35 @@ header {
     align-items: center;
     gap: 20px;
 }
+
+.description-box {
+    scrollbar-width: thin;
+    scrollbar-color: var(--bright-purple) transparent;
+    overflow-y: auto;
+    font-size: 1.05em;
+    line-height: 1.6;
+    color: #e0e0e0; /* Slightly softer white for long reading */
+}
+
+/* For Chrome/Safari */
+.description-box::-webkit-scrollbar {
+    width: 6px;
+}
+.description-box::-webkit-scrollbar-thumb {
+    background-color: var(--bright-purple);
+    border-radius: 10px;
+}
+
+textarea.custom-input {
+    background-color: var(--input-bg);
+    border: 1px solid var(--accent-purple);
+    color: white;
+    border-radius: 8px;
+    font-family: inherit;
+    line-height: 1.4;
+}
+
+textarea.custom-input[readonly] {
+    border-style: dashed; /* Shows it's a display box */
+    opacity: 0.9;
+}
