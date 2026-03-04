@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="selection-container" style="max-width: 600px; margin: 100px auto; text-align: center; padding: 40px;">
+    <div style="font-size: 8rem; color: var(--text-pink); text-shadow: 0 0 20px var(--text-pink); line-height: 1;">
+        404
+    </div>
+    <h2 style="color: white; margin-top: 20px;">Whoops! This recipe is missing an ingredient.</h2>
+    <p style="color: #e0e0e0; font-size: 1.1em; opacity: 0.8; margin-bottom: 30px;">
+        Specifically, the page you're looking for. It's not in the pantry, it's not in the fridge... we might have accidentally eaten it.
+    </p>
+    
+    <div class="meal-card" style="padding: 20px; background: var(--bg-medium); border: 2px dashed var(--accent-purple);">
+        <p style="font-style: italic;">"I searched everywhere for <code>{{ request.path }}</code> and all I found was this lint."</p>
+    </div>
+
+    <div style="margin-top: 40px;">
+        <a href="{{ url_for('menu') }}" class="submit-btn" style="text-decoration: none; display: inline-block;">
+            Take me back to the Menu
+        </a>
+    </div>
+</div>
+{% endblock %}

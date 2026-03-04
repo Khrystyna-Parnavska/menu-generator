@@ -159,8 +159,8 @@ if __name__ == "__main__":
     add_test_category(categories_model)
     add_test_coutry(countries_model)
     # populate_basic_recipes(recipes_model, meals_model, categories_model, recipes_path)
-    recipes_model.populate_from_csv('data\Recipes_db_1.csv', 'Recipes', delimiter=';', encoding='utf-8-sig')
-    # recipe_ingredients_model.populate_from_csv('data\Recipes_ingredients_db.csv', 'Recipes_Ingredients', delimiter=',', encoding='utf-8-sig')
+    recipes_model.populate_from_csv(os.path.join('data', 'Recipes_db_1.csv'), 'Recipes', delimiter=';', encoding='utf-8-sig')
+    # recipe_ingredients_model.populate_from_csv(os.path.join('data', 'Recipes_ingredients_db.csv'), 'Recipes_Ingredients', delimiter=',', encoding='utf-8-sig')
 
     #test user
     user_roles_model.insert({'name': 'user', 'description': 'Test role'})

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="selection-container" style="max-width: 600px; margin: 100px auto; text-align: center; padding: 40px;">
+    <div style="font-size: 8rem; color: var(--bright-purple); text-shadow: 0 0 20px var(--bright-purple); line-height: 1;">
+        500
+    </div>
+    <h2 style="color: var(--text-pink); margin-top: 20px;">The server just burnt the toast.</h2>
+    <p style="color: #e0e0e0; font-size: 1.1em; opacity: 0.8; margin-bottom: 30px;">
+        Our internal logic hit a snag. It's not you, it's us. The code is currently screaming into a pillow.
+    </p>
+    
+    <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; border-left: 4px solid var(--text-pink); text-align: left; font-family: monospace;">
+        <span style="color: var(--text-pink);">[SYSTEM_STATUS]:</span> Excessive smoke detected in the backend. 
+    </div>
+
+    <div style="margin-top: 40px;">
+        <a href="{{ url_for('menu') }}" class="submit-btn" style="text-decoration: none; display: inline-block; background: var(--accent-purple);">
+            Try refreshing or go home
+        </a>
+    </div>
+</div>
+{% endblock %}

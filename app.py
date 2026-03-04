@@ -15,7 +15,6 @@ from werkzeug.utils import secure_filename
 
 UPLOAD_FOLDER = 'static/uploads'
 
-
 meal_model = m.MealsModel()
 menu_model = m.MenuModel()
 menu_meals_model = m.MenuMealsModel()
@@ -28,13 +27,13 @@ favorites_recipes_model = m.FavoritesRecipesModel()
 
 app = Flask(__name__)
 
-app.secret_key = 'your_super_secret_random_string_here'
+app.secret_key = os.getenv('app_key')
 
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'your-email@gmail.com'
-app.config['MAIL_PASSWORD'] = 'your-app-password' # Not your regular password!
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT'))
+app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS').lower() == 'true'
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD') # Not your regular password!
 
 mail = Mail(app)
 
@@ -104,12 +103,6 @@ def generate_menu(menu_id:int, selected_meals:list):
             # Format as "HH:MM" (e.g., 07:00)
         meal['meal_time'] = f"{hours:02}:{minutes:02}"
     return draft_menu_meals
-
-#def fetch_user(user_name):
-#    """Fetch user_id by user_name."""
-#    query = "SELECT id FROM Users WHERE user_name = %s"
-#    users = users_model.run_query(query, (user_name,))
-#    return users[0]['id'] if users else None
 
 
 def fetch_today_menu(user_id):
@@ -291,7 +284,6 @@ def submit_final_menu(meal_count):
     for i in range(meal_count):
         # Check if the next indexed meal exists in the form
         meal_id = request.form.get(f'meal_{i}_id')
-        print(f'Processing meal index {i} with meal_id: {meal_id}')
         
         # If we don't find the next index, we've reached the end of the list
         if meal_id is None:
@@ -429,7 +421,12 @@ def add_recipe():
         cook = request.form.get('cooking_time')
         description = request.form.get('description')
         cat_id = request.form.get('category_id')
-        n_portions = request.form.get('n_portions')
+        try:
+            n_portions = int(request.form.get('n_portions'))
+        except (TypeError):
+            print("n_portions is not a valid integer. Defaulting to 1.")
+            flash("Number of portions must be a valid integer. Defaulting to 1.", "error")
+            n_portions = 1
         country_id = request.form.get('country_id')
         file = request.files.get('thumb_file')
         thumb_url = request.form.get('thumb_url')
@@ -797,6 +794,15 @@ def preferences():
 @login_required
 def profile():
     return render_template('profile.html')
+
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template('500.html'), 500
 
 
 if __name__ == '__main__':
