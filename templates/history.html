@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <title>Menu History</title>
+{% endblock %}
+
+{% block body %}
+<div class="selection-container" style="max-width: 900px; margin: 0 auto; padding: 20px;">
+    
+    <h2 style="text-align: center; color: var(--text-pink); margin-bottom: 30px;">Your Menu History</h2>
+
+    {% if history %}
+        {% for day in history %}
+        <div class="history-section" style="margin-bottom: 40px;">
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px; border-bottom: 2px solid var(--accent-purple); padding-bottom: 10px;">
+                <span style="font-size: 1.4em; font-weight: bold; color: white;">{{ day.date }}</span>
+                <span class="time-badge" style="font-size: 0.8em; padding: 5px 15px;">{{ day.total_calories if day.total_calories else 'Full Day' }}</span>
+            </div>
+
+            {% for meal in day.meals %}
+            <div class="menu-row-card" style="margin-bottom: 10px; min-height: auto;">
+                <div class="menu-time-container" style="width: 80px;">
+                    <div class="time-badge" style="background: var(--accent-purple);">
+                        {{ meal.meal_time }}
+                    </div>
+                </div>
+
+                <div class="menu-info">
+                    <span style="color: var(--text-pink); font-size: 0.75em; font-weight: bold; text-transform: uppercase;">
+                        {{ meal.meal_type }}
+                    </span>
+                    <strong style="font-size: 1.1em;">{{ meal.recipe_name }}</strong>
+                </div>
+
+                <div style="flex-shrink: 0;">
+                    <a href="{{ url_for('recipe_details', recipe_id=meal.recipe_id) }}" 
+                       class="action-btn" 
+                       style="text-decoration: none; padding: 8px 15px;">
+                       View Recipe
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+            <form action="{{ url_for('shopping_list', menu_id=day.id) }}" method="GET">
+                <button>Generate Shopping List</button>
+            </form>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="meal-card" style="text-align: center; justify-content: center;">
+            <p style="font-size: 1.2em;">You haven't saved any menus yet.</p>
+            <a href="{{ url_for('menu') }}" class="submit-btn" style="text-decoration: none;">Generate Today's Menu</a>
+        </div>
+    {% endif %}
+
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="{{ url_for('menu') }}" style="color: var(--text-pink);">← Back to Current Menu</a>
+    </div>
+</div>
+{% endblock %}

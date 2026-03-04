@@ -1,6 +1,6 @@
 import os
 from database.db_connector import create_connection
-from database.models import FavoritesRecipesModel, MealsModel, RecipesModel, CategoriesModel, UsersModel, UserRolesModel, CountriesModel
+from database.models import FavoritesRecipesModel, MealsModel, RecipesIngredientsModel, RecipesModel, CategoriesModel, UsersModel, UserRolesModel, CountriesModel
 import pandas as pd
 
 def run_schema( path='database', schema_file_name='schema.sql'):
@@ -153,15 +153,19 @@ if __name__ == "__main__":
     user_roles_model = UserRolesModel()
     countries_model = CountriesModel()
     favorites_recipes_model = FavoritesRecipesModel()
+    recipe_ingredients_model = RecipesIngredientsModel()
 
     populate_meals(meals_model)
     add_test_category(categories_model)
     add_test_coutry(countries_model)
-    populate_basic_recipes(recipes_model, meals_model, categories_model, recipes_path)
+    # populate_basic_recipes(recipes_model, meals_model, categories_model, recipes_path)
+    recipes_model.populate_from_csv('data\Recipes_db_1.csv', 'Recipes', delimiter=';', encoding='utf-8-sig')
+    # recipe_ingredients_model.populate_from_csv('data\Recipes_ingredients_db.csv', 'Recipes_Ingredients', delimiter=',', encoding='utf-8-sig')
 
     #test user
-    user_roles_model.insert({'name': 'test_role', 'description': 'Test role'})
-    test_role_id = user_roles_model.run_query("SELECT id FROM User_roles WHERE name = %s", ('test_role',))[0]['id']
+    user_roles_model.insert({'name': 'user', 'description': 'Test role'})
+    test_role_id = user_roles_model.run_query("SELECT id FROM User_roles WHERE name = %s", ('user',))[0]['id']
     test_user['role_id'] = test_role_id
     users_model.insert(test_user)
+    
     

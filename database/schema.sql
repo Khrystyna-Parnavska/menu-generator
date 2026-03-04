@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS `Shopping_list_ingredients`;
+DROP TABLE IF EXISTS `Shopping_list`;
 DROP TABLE IF EXISTS `User_favorite_recipes`;
 DROP TABLE IF EXISTS `Ingredient_restrictions`;
 DROP TABLE IF EXISTS `Recipes_ingredients`;
@@ -12,7 +14,6 @@ DROP TABLE IF EXISTS `Meals`;
 DROP TABLE IF EXISTS `Countries`;
 DROP TABLE IF EXISTS `Categories`;
 DROP TABLE IF EXISTS `Menus`;
-
 
 
 CREATE TABLE `Recipes`(
@@ -36,13 +37,16 @@ CREATE TABLE `Recipes`(
 );
 CREATE TABLE `Ingredients`(
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `name` VARCHAR(150) NOT NULL
+    `name` VARCHAR(150) NOT NULL,
+    `description` TEXT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `created_by_user_id` BIGINT UNSIGNED NULL
 );
 CREATE TABLE `Recipes_ingredients`(
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `recipe_id` BIGINT UNSIGNED NOT NULL,
     `ingredient_id` BIGINT UNSIGNED NOT NULL,
-    `measure` BIGINT UNSIGNED NOT NULL,
+    `measure` DECIMAL(6,2) UNSIGNED NOT NULL,
     `units` TEXT NOT NULL,
     `order_index` SMALLINT UNSIGNED NOT NULL
 );
@@ -51,7 +55,7 @@ CREATE TABLE `Users`(
     `user_name` VARCHAR(255) NOT NULL,
     `email` TEXT NOT NULL,
     `role_id` SMALLINT UNSIGNED NOT NULL,
-    `password_hash` BIGINT UNSIGNED NOT NULL,
+    `password_hash` VARCHAR(255) NOT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `is_active` BOOLEAN DEFAULT TRUE,
     `country_id` SMALLINT UNSIGNED NULL,
@@ -114,9 +118,24 @@ CREATE TABLE `Menu_meals`(
     `is_leftover_plan` BOOLEAN DEFAULT FALSE,
     `regenerated_times` BIGINT UNSIGNED NOT NULL,
     `if_picked_manually` BOOLEAN DEFAULT FALSE,
-    `submitted_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    `submitted_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `reminder_sent` BOOLEAN DEFAULT FALSE
 );
 
+CREATE TABLE `Shopping_list`(
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `menu_id` BIGINT UNSIGNED NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE `Shopping_list_Ingredients`(
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `shop_list_id` BIGINT UNSIGNED NOT NULL,
+    `ingredient_id` BIGINT UNSIGNED NOT NULL,
+    `measure` DECIMAL(6,2) UNSIGNED NOT NULL,
+    `units` TEXT NOT NULL,
+    `if_checked` BOOLEAN DEFAULT FALSE
+);
 
 ALTER TABLE
     `Ingredient_restrictions` ADD CONSTRAINT `ingredient_restrictions_restriction_id_foreign` FOREIGN KEY(`restriction_id`) REFERENCES `Restrictions`(`id`);
@@ -148,3 +167,9 @@ ALTER TABLE
     `Menu_meals` ADD CONSTRAINT `menu_meals_meal_id_foreign` FOREIGN KEY(`meal_id`) REFERENCES `Meals`(`id`);
 ALTER TABLE
     `User_restrictions` ADD CONSTRAINT `user_restrictions_user_id_foreign` FOREIGN KEY(`user_id`) REFERENCES `Users`(`id`);
+ALTER TABLE
+    `Shopping_list` ADD CONSTRAINT `shopping_list_menu_id_foreign` FOREIGN KEY(`menu_id`) REFERENCES `Menus`(`id`);
+ALTER TABLE
+    `Shopping_list_ingredients` ADD CONSTRAINT `shopping_list_ingredients_shop_list_id_foreign` FOREIGN KEY(`shop_list_id`) REFERENCES `Shopping_list`(`id`);
+ALTER TABLE
+    `Shopping_list_ingredients` ADD CONSTRAINT `shopping_list_ingredients_ingredient_id_foreign` FOREIGN KEY(`ingredient_id`) REFERENCES `Ingredients`(`id`);

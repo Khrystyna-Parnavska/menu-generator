@@ -16,7 +16,7 @@ def create_connection():
             database=os.getenv('DB_NAME')
         )
         if connection.is_connected():
-            print("Connection to the database was successful.")
+            # print("Connection to the database was successful.")
             return connection 
     except Error as e:
         print(f"Error: {e}")

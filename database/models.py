@@ -32,10 +32,10 @@ class BaseModel:
                 print(f"Query Error: {e}")
                 return None
             finally:
-                print(f"query executed: {query}")
-                print(f"with params: {params}")
-                print('Closing connection')
-                print('-'*20)
+                # print(f"query executed: {query}")
+                # print(f"with params: {params}")
+                # print('Closing connection')
+                # print('-'*20)
                 cursor.close()
                 db.close()
         else:
@@ -85,7 +85,7 @@ class BaseModel:
         query = f"SELECT * FROM {self.table_name} WHERE {where_clause}"
         return self.run_query(query, values)
     
-    def populate_from_csv(self, file_path, delimiter=',', encoding='utf-8'):
+    def populate_from_csv(self, file_path, table_name, delimiter=',', encoding='utf-8'):
         """
         Reads a CSV and inserts data based on the columns 
         defined in the child class (e.g., self.columns).
@@ -125,8 +125,8 @@ class BaseModel:
                 if rows_to_insert:
                     cursor.executemany(sql, rows_to_insert)
                     db.commit()
-                    print(f"✅ Successfully imported {len(rows_to_insert)} rows into {self.table_name}")
-                    print(f"Columns used: {cols_to_use}")
+                    print(f"✅ Successfully imported {len(rows_to_insert)} rows into {table_name}")
+                    # print(f"Columns used: {cols_to_use}")
 
         except Exception as e:
             print(f"❌ CSV Import Error: {e}")
@@ -221,6 +221,11 @@ class FavoritesRecipesModel(BaseModel):
     """Model for the 'User_favorite_recipes' table."""
     def __init__(self):
         super().__init__('User_favorite_recipes', ['id', 'user_id', 'recipe_id', 'added_at'])
+
+class RecipesIngredientsModel(BaseModel):
+    """Model for the 'Recipes_ingredients' table."""
+    def __init__(self):
+        super().__init__('Recipes_ingredients', ['id', 'recipe_id', 'ingredient_id', 'measure', 'units', 'order_index'])
 # TODO : Add other models as needed
 
 if __name__ == "__main__":    # Example usage
