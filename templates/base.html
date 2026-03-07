@@ -7,9 +7,9 @@
     {% block head %}{% endblock %}
 </head>
 <body>
-    <body>
     <header>
         <div class="logo-section">
+            <button id="menu-toggle" style="background:none; border:none; color:white; font-size:1.5rem; margin-right:10px; cursor:pointer;">☰</button>
             <div class="icon">🍳</div>
             <span>Menu Generator</span>
         </div>
@@ -19,7 +19,7 @@
     </header>
 
     <div class="app-container">
-        <div class="sidebar">
+        <div class="sidebar" id="sidebar">
             <a href="{{ url_for('menu') }}" class="nav-btn">My Daily Menu</a>
             <a href="{{ url_for('history') }}" class="nav-btn">History</a>
             <a href="{{ url_for('preferences') }}" class="nav-btn">Preferences</a>
@@ -28,10 +28,21 @@
             <a href="#" class="nav-btn">Statistics</a>
             <a href="{{ url_for('profile') }}" class="nav-btn">Profile</a>
             <a href="{{ url_for('signin') }}" style="color:var(--text-pink); text-align:center;">Sign in</a>
+            <a href="{{ url_for('logout') }}" class="your-logout-button-class">
+                                                                                Logout
+                                                                            </a>
         </div>
         <main class="main-content">
         {% block body %}{% endblock %}
         </main>
     </div>
 </body>
+<script>
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.getElementById('sidebar');
+
+    menuToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('active');
+    });
+</script>
 </html>

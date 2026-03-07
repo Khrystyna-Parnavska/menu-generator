@@ -11,7 +11,7 @@
 
     {% if history %}
         {% for day in history %}
-        <div class="history-section" style="margin-bottom: 40px;">
+        <div class="history-section" style="margin-bottom: clamp(10px, 5vw, 40px);">
             <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px; border-bottom: 2px solid var(--accent-purple); padding-bottom: 10px;">
                 <span style="font-size: 1.4em; font-weight: bold; color: white;">{{ day.date }}</span>
                 <span class="time-badge" style="font-size: 0.8em; padding: 5px 15px;">{{ day.total_calories if day.total_calories else 'Full Day' }}</span>

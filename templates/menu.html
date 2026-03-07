@@ -36,7 +36,6 @@
 
             {% for meal_entry in menu_meals %}
                 <div class="menu-row-card">
-                    {# Replace your hidden inputs with indexed versions #}
                     <input type="hidden" name="meal_{{ loop.index0 }}_id" value="{{ meal_entry['meal_id'] }}">
                     <input type="hidden" name="recipe_{{ loop.index0 }}_id" value="{{ meal_entry['recipe_id'] }}">
                     <input type="hidden" name="regenerated_times_{{ loop.index0 }}" value="{{ meal_entry['regenerated_times'] }}">
@@ -58,13 +57,13 @@
                         </strong>
                     </div>
 
-                    <div style="flex-shrink: 0; width: 130px;">
+                    <div style="flex-shrink: 0; max-width: 130px;">
                         <a href="{{ url_for('recipe_details', recipe_id=meal_entry['recipe_id']) }}" class="action-btn">View Recipe</a>
                         <label style="font-size: 0.8em; cursor: pointer; display: flex; align-items: center; gap: 5px;">
                             <input type="checkbox" name="leftover_{{ meal_entry['meal_id'] }}" value="1">  Useleftovers later</label>
                     </div>
 
-                    <div class="action-group" style="flex-shrink: 0; width: 120px;">
+                    <div class="action-group" style="flex-shrink: 0; max-width: 120px;">
                         <button type="submit" form="regen-{{ loop.index }}" class="action-btn">Regenerate</button>
                         <a href="{{ url_for('manual_search', meal_index=loop.index0) }}" 
                         class="action-btn" 

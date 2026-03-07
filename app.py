@@ -662,16 +662,18 @@ def history():
         FROM Menu_meals mm
         JOIN Menus m ON mm.menu_id = m.id
         JOIN Recipes r ON mm.recipe_id = r.id
-        JOIN Meals ms ON mm.meal_id = ms.id;
+        JOIN Meals ms ON mm.meal_id = ms.id
+        WHERE m.user_id = %s
+        ORDER BY m.created_at DESC, mm.meal_time ASC;
     """
-    history_query = """SELECT id, date(created_at) as `date` FROM Menus;"""
+    history_query = """SELECT id, date(created_at) as `date` FROM Menus WHERE user_id = %s;"""
 
-    history = recipe_model.run_query(history_query)
-    meals = recipe_model.run_query(meals_query)
+    history = recipe_model.run_query(history_query, (current_user.id,))
+    meals = recipe_model.run_query(meals_query, (current_user.id,))
     print(history)
 
     for entry in history:
-        entry['date'] = strftime("%B %d, %Y")
+        entry['date'] = entry['date'].strftime("%B %d, %Y")
         entry['meals'] = [meal for meal in meals if meal['menu_id'] == entry['id']]
     print("Meals associated with history entries:")
     print(history)
@@ -766,6 +768,7 @@ def signup():
         confirm_password = request.form.get('confirm_password')
 
         role_id = recipe_model.run_query("SELECT id FROM User_roles WHERE name = %s", ('user',))[0]['id']
+        print(role_id)
 
         # This must be INSIDE the if block
         if password and password == confirm_password: 
@@ -782,6 +785,14 @@ def signup():
 
     # This handles the GET request
     return render_template('signup.html')
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash("You have been successfully logged out. See you next time!", "info")
+    return redirect(url_for('signin'))
 
 
 @app.route('/preferences')
