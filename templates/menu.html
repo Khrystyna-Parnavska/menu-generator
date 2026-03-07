@@ -7,7 +7,7 @@
 
     <h3 style="text-align: center;">Choose meals to add:</h3>
     <form action="{{ url_for('init_plan') }}" method="POST">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 30px;">
+        <div class="meal-select-grid">
             {% for meal in all_meals %}
             <label><input type="checkbox" name="meals" value="{{ meal['name'] }}" checked> {{ meal['name'] }}</label>
             {% endfor %}
@@ -57,10 +57,11 @@
                         </strong>
                     </div>
 
-                    <div style="flex-shrink: 0; max-width: 130px;">
+                    <div class="menu-secondary-actions">
                         <a href="{{ url_for('recipe_details', recipe_id=meal_entry['recipe_id']) }}" class="action-btn">View Recipe</a>
-                        <label style="font-size: 0.8em; cursor: pointer; display: flex; align-items: center; gap: 5px;">
-                            <input type="checkbox" name="leftover_{{ meal_entry['meal_id'] }}" value="1">  Useleftovers later</label>
+                        <label class="leftover-label">
+                            <input type="checkbox" name="leftover_{{ meal_entry['meal_id'] }}" value="1"> Use leftovers later
+                        </label>
                     </div>
 
                     <div class="action-group" style="flex-shrink: 0; max-width: 120px;">

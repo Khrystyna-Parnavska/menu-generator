@@ -31,7 +31,7 @@ header {
 .app-container { display: flex; min-height: 100vh; }
 
 .sidebar {
-    max-width: 260px;
+    width: 260px;
     background-color: var(--bg-dark);
     padding: 20px;
     display: flex;
@@ -299,6 +299,49 @@ textarea.custom-input[readonly] {
     opacity: 0.9;
 }
 
+.recipe-grid-container {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr; /* Desktop default */
+    gap: 30px;
+}
+
+.recipe-header-card {
+    display: flex;
+    flex-direction: row; /* Side-by-side on desktop */
+    align-items: center;
+    padding: 20px;
+    gap: 30px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.favorite-action-container {
+    margin-bottom: 20px; /* Space below the button */
+    width: 100%;
+}
+
+.meal-select-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.menu-secondary-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.leftover-label {
+    font-size: 0.9em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Centered for mobile */
+    gap: 8px;
+    padding: 5px;
+}
 /* --- Mobile Responsive Rules --- */
 
 /* This triggers for screens smaller than 768px (most phones) */
@@ -325,10 +368,59 @@ textarea.custom-input[readonly] {
     header {
         padding: 10px 20px;
     }
-}
 
-@media (max-width: 768px) {
+    .recipe-header-card {
+        flex-direction: column !important; /* Stack image on top of title */
+        text-align: center !important;
+        padding: 15px !important;
+    }
+    
+    .recipe-header-card img {
+        max-width: 100% !important; /* Let image fill the width */
+        height: auto !important;
+    }
+    .recipe-grid-container {
+        grid-template-columns: 1fr; /* Stack ingredients and instructions into 1 column */
+        gap: 20px;
+    }
+    .favorite-action-container {
+        margin-bottom: 15px;
+    }
+    .menu-row-card {
+        flex-direction: column; /* Stack elements vertically */
+        align-items: stretch;   /* Stretch content to full width */
+        gap: 15px;
+        padding: 20px;
+    }
+
+    .menu-time-container {
+        max-width: 100%;        /* Let the time input take full width */
+        text-align: center;
+    }
+
+    .menu-info {
+        text-align: center;     /* Center the recipe name */
+        border-bottom: 1px solid var(--accent-purple);
+        padding-bottom: 10px;
+    }
+
+    /* Make the buttons sit side-by-side in two rows or full width */
+    .action-group {
+        flex-direction: row;    /* Put Regenerate and Pick Manually next to each other */
+        max-width: 100%;
+        gap: 10px;
+    }
+
+    .action-group .action-btn, 
+    .menu-row-card .action-btn {
+        flex: 1;                /* Make buttons equal width */
+        padding: 12px;          /* Bigger touch target for fingers */
+        font-size: 0.9em;
+    }
     .header-profile {
         display: none; /* Hide top links on mobile */
+    }
+    .meal-select-grid {
+        grid-template-columns: 1fr; /* Single column on very small phones */
     }
 }

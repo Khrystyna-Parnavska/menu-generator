@@ -7,17 +7,12 @@
 {% block body %}
 <div class="selection-container" style="max-width: 1000px; margin: 0 auto; padding: 20px;">
 
-    {#{% if recipe.created_by_user_id == user_id %}
+    {% if recipe.created_by_user_id == user_id %}
         <form action="{{ url_for('edit_recipe', recipe_id=recipe.id) }}" method="GET">
             <button type="submit" class="submit-btn" style="width: 100%; padding: 12px;">Edit Recipe</button>
         </form>
-    {% endif %}#}
-    
-    <form action="{{ url_for('edit_recipe', recipe_id=recipe.id) }}" method="GET">
-        <button type="submit" class="submit-btn" style="width: 100%; padding: 12px;">Edit Recipe</button>
-    </form>
-    
-    <div class="meal-card" style="display: flex; flex-direction: row; align-items: center; padding: 20px; gap: 30px; margin-bottom: 20px; text-align: left;">
+    {% endif %}
+    <div class="meal-card recipe-header-card">
         {% if recipe.thumb %}
             <img src="{{ recipe.thumb }}" alt="{{ recipe.name }}" 
                  style="max-width: 200px; max-height: 200px; object-fit: cover; border-radius: 15px; border: 2px solid var(--accent-purple); flex-shrink: 0;">
@@ -27,15 +22,17 @@
         
         <div style="flex-grow: 1;">
             <h1 style="color: var(--text-pink); margin: 0 0 15px 0; font-size: 2em;">{{ recipe.name }}</h1>
-            {% if recipe.id in favorite_ids %}
-                <form action="{{ url_for('remove_favorite', recipe_id=recipe.id) }}" method="POST">
-                    <button type="submit" class="submit-btn" style="width: 100%; padding: 10px;">Remove from Favorites</button>
-                </form>
-            {% else %}  
-                <form action="{{ url_for('add_favorite', recipe_id=recipe.id) }}" method="POST">
-                        <button type="submit" class="submit-btn" style="width: 100%; padding: 10px;">Add to Favorites</button>
-                </form>
-            {% endif %}
+            <div class="favorite-action-container">
+                {% if recipe.id in favorite_ids %}
+                    <form action="{{ url_for('remove_favorite', recipe_id=recipe.id) }}" method="POST">
+                        <button type="submit" class="submit-btn" style="width: 100%; padding: 10px;">Remove from Favorites</button>
+                    </form>
+                {% else %}  
+                    <form action="{{ url_for('add_favorite', recipe_id=recipe.id) }}" method="POST">
+                            <button type="submit" class="submit-btn" style="width: 100%; padding: 10px;">Add to Favorites</button>
+                    </form>
+                {% endif %}
+            </div>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <span class="time-badge">⏱ Prep: {{ recipe.prep_time }}</span>
                 <span class="time-badge">🔥 Cook: {{ recipe.cooking_time }}</span>
@@ -47,7 +44,7 @@
         </div>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 30px; align-items: start;">
+   <div class="recipe-grid-container">
         
         <div class="meal-card" style="display: block; padding: 25px;">
             <h3 style="border-bottom: 2px solid var(--bright-purple); padding-bottom: 10px; margin-top: 0;">Ingredients</h3>
@@ -61,8 +58,8 @@
             </ul>
         </div>
 
-    <div class="meal-card" style="display: block; padding: 25px;">
-        <h3 style="border-bottom: 2px solid var(--bright-purple); padding-bottom: 10px; margin-top: 0;">Instructions</h3>
+        <div class="meal-card" style="display: block; padding: 25px;">
+            <h3 style="border-bottom: 2px solid var(--bright-purple); padding-bottom: 10px; margin-top: 0;">Instructions</h3>
         
         <div class="form-group" style="margin-top: 15px; padding: 10px;">
             <textarea 
