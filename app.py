@@ -279,44 +279,46 @@ def regenerate_meal(meal_id):
 @login_required
 def submit_final_menu(meal_count):
     menu_id = request.form.get('menu_id')
-    
-    # We use a counter to loop through the indexed form fields
-    for i in range(meal_count):
-        # Check if the next indexed meal exists in the form
-        meal_id = request.form.get(f'meal_{i}_id')
-        
-        # If we don't find the next index, we've reached the end of the list
-        if meal_id is None:
-            break
-            
-        # Pull all other data using the same index 'i'
-        r_id = request.form.get(f'recipe_{i}_id')
-        regen_count = request.form.get(f'regenerated_times_{i}')
-        if_manual = request.form.get(f'if_picked_manually_{i}')
-        m_time = request.form.get(f'meal_time_{i}')
-        
-        # Look for the leftover checkbox
-        # Note: Your HTML still uses leftover_{{ meal_entry['meal_id'] }}
-        # So we keep that logic here:
-        is_leftover = 1 if request.form.get(f'leftover_{meal_id}') else 0
+    submitted_at = menu_model.run_query("SELECT submitted_at FROM Menus WHERE id = %s", (menu_id,))[0]['submitted_at']
 
-        # INSERT into Menu_meals table
-        menu_meals_model.insert({
-            'menu_id': menu_id,
-            'meal_id': meal_id,
-            'recipe_id': r_id,
-            'meal_time': m_time,
-            'is_leftover_plan': is_leftover,
-            'regenerated_times': regen_count,
-            'if_picked_manually': if_manual
+    if not submitted_at:
+    # We use a counter to loop through the indexed form fields
+        for i in range(meal_count):
+            # Check if the next indexed meal exists in the form
+            meal_id = request.form.get(f'meal_{i}_id')
+            
+            # If we don't find the next index, we've reached the end of the list
+            if meal_id is None:
+                break
+                
+            # Pull all other data using the same index 'i'
+            r_id = request.form.get(f'recipe_{i}_id')
+            regen_count = request.form.get(f'regenerated_times_{i}')
+            if_manual = request.form.get(f'if_picked_manually_{i}')
+            m_time = request.form.get(f'meal_time_{i}')
+            
+            # Look for the leftover checkbox
+            # Note: Your HTML still uses leftover_{{ meal_entry['meal_id'] }}
+            # So we keep that logic here:
+            is_leftover = 1 if request.form.get(f'leftover_{meal_id}') else 0
+
+            # INSERT into Menu_meals table
+            menu_meals_model.insert({
+                'menu_id': menu_id,
+                'meal_id': meal_id,
+                'recipe_id': r_id,
+                'meal_time': m_time,
+                'is_leftover_plan': is_leftover,
+                'regenerated_times': regen_count,
+                'if_picked_manually': if_manual
+            })
+            
+        # Finalize the menu timestamp
+        menu_model.update(menu_id, {
+            'submitted_at': datetime.now(timezone.utc)
         })
         
-    # Finalize the menu timestamp
-    menu_model.update(menu_id, {
-        'submitted_at': datetime.now(timezone.utc)
-    })
-    
-    session.pop('menu_draft', None)
+        session.pop('menu_draft', None)
 
     # Note: Ensure 'meals_from_db' is defined or fetched here
     return render_template('menu.html', 
@@ -415,7 +417,7 @@ def recipe_details(recipe_id):
 def add_recipe():
     if request.method == 'POST':
         # 1. Get main recipe data
-        name = request.form.get('name')
+        name = request.form.get('name').strip().title()
         meal_id = request.form.get('meal_id')
         prep = request.form.get('prep_time')
         cook = request.form.get('cooking_time')
@@ -499,6 +501,7 @@ def add_recipe():
     countries = recipe_model.run_query("SELECT * FROM Countries")
     # Fetch all ingredients to populate the datalist
     all_ingredients = recipe_model.run_query("SELECT name FROM Ingredients ORDER BY name ASC")
+    print(all_ingredients)
     
     return render_template('add_recipe.html', 
                            categories=categories, 
@@ -547,7 +550,7 @@ def edit_recipe(recipe_id):
 @login_required
 def save_changes(recipe_id):
     # Get form data
-    name = request.form.get('name')
+    name = request.form.get('name').strip().title()
     country_id = request.form.get('country_id')
     meal_id = request.form.get('meal_id')
     cat_id = request.form.get('category_id')

@@ -423,4 +423,34 @@ textarea.custom-input[readonly] {
     .meal-select-grid {
         grid-template-columns: 1fr; /* Single column on very small phones */
     }
+    .ingredient-row {
+        flex-wrap: wrap; /* Allow rows to break */
+        background: var(--bg-dark);
+        padding: 10px;
+        border-radius: 10px;
+        border: 1px solid var(--accent-purple);
+    }
+    
+    .ingredient-row input[name="ing_name[]"] {
+        flex: 1 1 100% !important; /* Name takes full width */
+    }
+    
+    .ingredient-row input[name="ing_measure[]"],
+    .ingredient-row input[name="ing_unit[]"] {
+        flex: 1 1 40% !important; /* Measure and Unit share a line */
+    }
+    .selection-container form > div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+        gap: 15px !important;
+    }
+    .ingredient-row .action-btn {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        width: 30px !important;
+        height: 30px;
+        border-radius: 50%;
+        padding: 0;
+        z-index: 5;
+    }
 }
