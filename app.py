@@ -1193,6 +1193,10 @@ def page_not_found(e):
 def internal_server_error(e):
     return render_template('500.html'), 500
 
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=send_meal_reminders, trigger="interval", minutes=5)
+scheduler.start()
+atexit.register(lambda: scheduler.shutdown())
 
 if __name__ == '__main__':
     app.run(debug=True)
