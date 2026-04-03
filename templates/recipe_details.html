@@ -34,8 +34,8 @@
                 {% endif %}
             </div>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <span class="time-badge">⏱ Prep: {{ recipe.prep_time }}</span>
-                <span class="time-badge">🔥 Cook: {{ recipe.cooking_time }}</span>
+                <span class="time-badge">⏱ Preparation: {{ recipe.prep_time }}</span>
+                <span class="time-badge">🔥 Cooking: {{ recipe.cooking_time }}</span>
                 <span class="time-badge">🍽 {{ recipe.n_portions }} Servings</span>
                 {% if recipe.area %}
                     <span class="time-badge">🌍 {{ recipe.area }}</span>
@@ -51,8 +51,8 @@
             <ul style="list-style: none; padding: 0; margin-top: 15px;">
                 {% for item in ingredients %}
                 <li style="padding: 10px 0; border-bottom: 1px solid var(--accent-purple); display: flex; justify-content: space-between; font-size: 1.05em;">
-                    <span>{{ item.name }}</span>
-                    <span style="color: var(--text-pink); font-weight: bold;">{{ item.measure }} {{ item.units }}</span>
+                    <span>{{ item.ingredient_name }}</span>
+                    <span style="color: var(--text-pink); font-weight: bold;">{{ item.measure }} {{ item.unit_name }} {{ item.prep_notes }}</span>
                 </li>
                 {% endfor %}
             </ul>
@@ -63,15 +63,17 @@
         
         <div class="form-group" style="margin-top: 15px; padding: 10px;">
             <textarea 
-                name="description[]" 
+                name="instructions[]" 
                 class="custom-input description-box" 
-                style="width: 100%; min-height: 250px; border: none; background: transparent; padding: 0;"
-                readonly>{{ recipe['description'] or 'No description available for this recipe.' }}</textarea>
+                style="width: 100%; min-height: 550px; border: none; background: transparent; padding: 0;"
+                readonly>{{ recipe['instructions'] or 'No instructions available for this recipe.' }}</textarea>
         </div>
                 
                 <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 15px;">
                     {% if meal_index != -1 %}
-                        <form action="{{ url_for('select_recipe', meal_index=meal_index, recipe_id=recipe.id) }}" method="POST">
+                        <form action="{{ url_for('select_recipe', meal_index=meal_index, recipe_id=recipe.id, menu_id=menu_id) }}" method="POST">
+                            <input type="hidden" name="meal_index" value="{{ meal_index }}">
+                            <input type="hidden" name="menu_id" value="{{ menu_id }}">
                             <button type="submit" class="submit-btn" style="width: 100%; padding: 12px;">Add to Daily Menu</button>
                         </form>
                     {% endif %}

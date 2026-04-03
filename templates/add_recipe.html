@@ -10,7 +10,7 @@
                     {% for ing in all_ingredients %}
                         <option value="{{ ing.name }}">    
                     {% endfor %}
-                </datalist>  
+                </datalist> 
 
 <div class="selection-container" style="max-width: 900px; margin: 0 auto; padding: 20px;">
     
@@ -19,12 +19,45 @@
     <form action="{{ url_for('add_recipe') }}" method="POST" class="meal-card" enctype="multipart/form-data" autocomplete="off" style="display: block; padding: 30px;">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
             <div class="form-group">
-                <label>Recipe Name</label>
-                <input type="text" name="name" value="test" class="custom-input" required style="width: 100%;">
+                <label class="custom-label">Recipe Name</label>
+                <input type="text" name="name" placeholder="Enter recipe name..." class="custom-input" required style="width: 100%;">
             </div>
 
             <div class="form-group">
-                <label>Thumbnail</label>
+                <label class="custom-label">Number of portions</label>
+                <input type="number" name="n_portions" class="custom-input" required style="width: 100%;">
+            </div>
+
+            <div class="form-group" style="grid-column: span 1;">
+                <label class="custom-label">Preparation Time</label>
+                <div style="display: flex; gap: 10px; width: 100%;">
+                    <div style="flex: 1; position: relative;">
+                        <input type="number" name="prep_hours" class="custom-input" 
+                            placeholder="Hrs" min="0" max="99">
+                    </div>
+                    <div style="flex: 1; position: relative;">
+                        <input type="number" name="prep_minutes" class="custom-input" 
+                            placeholder="Min" min="0" max="59" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" style="grid-column: span 1;">
+                <label class="custom-label">Cooking Time</label>
+                <div style="display: flex; gap: 10px; width: 100%;">
+                    <div style="flex: 1; position: relative;">
+                        <input type="number" name="cooking_hours" class="custom-input" 
+                            placeholder="Hrs" min="0" max="99">
+                    </div>
+                    <div style="flex: 1; position: relative;">
+                        <input type="number" name="cooking_minutes" class="custom-input" 
+                            placeholder="Min" min="0" max="59" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="custom-label">Thumbnail</label>
                 
                 <input type="text" name="thumb_url" class="custom-input" 
                     placeholder="Paste image URL here..." style="width: 100%; margin-bottom: 10px;">
@@ -34,33 +67,22 @@
                 <input type="file" name="thumb_file" class="custom-input" 
                     accept="image/*" style="width: 100%; padding: 10px;">
             </div>
-            
-            <div class="form-group">
-                <label>Preparation Time</label>
-                <input type="time" name="prep_time" class="custom-input" required style="width: 100%;">
-            </div>
 
             <div class="form-group">
-                <label>Cooking Time</label>
-                <input type="time" name="cooking_time" class="custom-input" required style="width: 100%;">
-            </div>
-
-            <div class="form-group">
-                <label>Number of portions</label>
-                <input type="number" name="n_portions" class="custom-input" required style="width: 100%;">
-            </div>
-
-            <div class="form-group">
-                <label>Meal Type</label>
-                <select name="meal_id" class="custom-input" style="width: 100%;">
+                <label class="custom-label" style="text-align: center;">Meal Types</label>
+                <div class="meal-checkbox-grid">
                     {% for meal in meals %}
-                    <option value="{{ meal.id }}">{{ meal.name }}</option>
+                    <label class="meal-checkbox-card">
+                        <input type="checkbox" name="meal_ids" value="{{ meal.id }}">
+                        <span class="checkmark"></span>
+                        <span class="meal-label">{{ meal.name }}</span>
+                    </label>
                     {% endfor %}
-                </select>
+                </div>
             </div>
 
             <div class="form-group">
-                <label>Category</label>
+                <label class="custom-label">Category</label>
                 <select name="category_id" class="custom-input" style="width: 100%;">
                     {% for cat in categories %}
                     <option value="{{ cat.id }}">{{ cat.name }}</option>
@@ -68,7 +90,7 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Country</label>
+                <label class="custom-label">Country</label>
                 <select name="country_id" class="custom-input" style="width: 100%;">
                     {% for country in countries %}
                     <option value="{{ country.id }}">{{ country.name }}</option>
@@ -78,33 +100,45 @@
             
         </div>
        
-        <h3 style="border-bottom: 2px solid var(--bright-purple); padding-bottom: 10px;">Ingredients</h3>
+        <h3 style="border-bottom: 2px solid var(--bright-purple); padding-bottom: 10px; color: var(--text-pink); text-align: center;">Ingredients</h3>
 
         <div id="ingredient-list" style="margin-top: 15px;">
             <small class="ing-hint" style="display: block; font-size: 0.8em; margin-bottom: 20px; color: #bbb;">
                 💡 Tip: Start typing to see suggestions. Double-click to browse all existing ingredients.
             </small>
-            <div class="ingredient-row" style="display: flex; gap: 10px; margin-bottom: 20px; align-items: flex-start; flex-wrap: wrap;">      
-                <div style="flex: 2; display: flex; flex-direction: column;">
-                    <input type="text" name="ing_name[]" list="existing-ingredients" 
+            <div class="ingredient-row" style="display: flex; gap: 10px; margin-bottom: 15px; align-items: flex-start; flex-wrap: wrap;">      
+                <div style="flex: 2; display: flex; flex-direction: column; position: relative;">
+                    <input style="position: relative;" type="text" name="ing_name[]" list="existing-ingredients" 
                         placeholder=" Search or type ingredient..." 
-                        class="custom-input" style="width: 100%;" 
+                        class="custom-input name-input" style="width: 100%;" 
                         oninput="validateIngredient(this)" required>
-                    <small class="new-ing-warning" style="color: #ff9800; font-size: 0.8em; margin-top: 5px; display: none;">
-                        ⚠️ New ingredient: This will be added to the database.
-                    </small>
+                    <button type="button" class="add-to-db-btn" onclick="openIngredientModal(this)" 
+                            style="display:none; position:absolute; right:10px; top:12px; 
+                            background:var(--text-pink); color:white; border:none; border-radius:4px; 
+                            font-size:10px; padding:4px 8px; cursor:pointer; z-index: 10;">
+                        + Add to DB
+                    </button>
+                    <small class="new-ing-warning" style="display: none; color: #ff4d4d; font-size: 0.8em;">⚠️ This ingredient doesn't exist yet.</small>
                 </div>
                 <input type="number" step="0.01" name="ing_measure[]" placeholder="Amt" class="custom-input" style="flex: 0.5;">
-                <input type="text" name="ing_unit[]" placeholder="Unit" class="custom-input" style="flex: 1;">
+                <select name="ing_unit[]" class="custom-input" style="flex: 0.5;" required>
+                    <option value="">Unit</option>
+                    {% for unit in units %}
+                        <option value="{{ unit.id }}">{{ unit.name }}</option>
+                    {% endfor %}
+                </select>
+                <input type="text" name="ing_prep_notes[]" placeholder="Slicing/Preparation Notes" class="custom-input" style="flex: 1;">
+
                 <button type="button" onclick="deleteIngredient(this)" class="action-btn" style="flex: 0.3; background: #ff4d4d; border: none; cursor: pointer;">✕</button>
             </div>
         </div>
 
         <button type="button" onclick="addIngredient()" class="action-btn" style="margin-bottom: 30px; background: var(--accent-purple);">+ Add Another Ingredient</button>
+
+        <h3 style="border-bottom: 2px solid var(--bright-purple); padding-bottom: 10px; color: var(--text-pink); text-align: center;">Instructions</h3>
         <div class="form-group">
-            <label>Description</label>
             <textarea 
-                name="description" 
+                name="instructions" 
                 class="custom-input description-box"
                 required 
                 placeholder="Enter recipe instructions or details here..."
@@ -115,26 +149,208 @@
     </form>
 </div>
 
-<script>
-function validateIngredient(input) {
-    const list = document.getElementById('existing-ingredients');
-    const options = Array.from(list.options).map(opt => opt.value.toLowerCase());
-    const val = input.value.trim().toLowerCase();
-    
-    // Find the warning text specific to this row
-    const warningText = input.parentElement.querySelector('.new-ing-warning');
+<div id="ingredientModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; align-items:center; justify-content:center; padding: 10px;">
+    <div style="background:var(--bg-medium); padding:20px; border-radius:15px; border:2px solid var(--accent-purple); width:100%; max-width:700px; max-height: 95vh; overflow-y: auto;">
+        
+        <h3 style="color:white; margin-top:0; text-align: center;">Register Ingredient</h3>
+        
+        <div class="form-group">
+            <label class="custom-label" style="text-align: center; display: block; margin-bottom: 5px;">Ingredient Name</label>
+            <input type="text" id="new_ing_name" class="custom-input" style="width:100%; margin-bottom:15px;" readonly>
+        </div>
 
-    if (val === "") {
-        input.style.borderColor = "";
-        warningText.style.display = "none";
-    } else if (options.includes(val)) {
-        // MATCH FOUND
-        input.style.borderColor = "#4CAF50"; // Green
-        warningText.style.display = "none";
+        <div class="form-group">
+            <label class="custom-label" style="text-align: center; display: block; margin-bottom: 5px;">Density</label>
+            <input type="number" step="0.01" name="ing_density[]" id="new_ing_density" placeholder="Amount of g per ml (e.g. 1.0)" class="custom-input" style="width: 100%; margin-bottom: 20px;"> 
+        </div>
+
+        <div class="form-group">
+            <label class="custom-label" style="text-align: center; display: block; margin-bottom: 5px;">Description</label>
+            <textarea name="ing_description[]" id="new_ing_description" placeholder="Enter a description for the ingredient" class="custom-input" style="width: 100%; margin-bottom: 20px;"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="custom-label" style="text-align: center; display: block; margin-bottom: 10px;">Ingredient Categories</label>
+            
+            <div class="meal-checkbox-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; max-height: 300px; overflow-y: auto; padding: 12px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(0,0,0,0.2);">
+                {% for cat in ing_categories %}
+                <label class="meal-checkbox-card" style="margin: 0; display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 5px;">
+                    <input type="checkbox" name="cat_{{ cat.id }}" value="{{ cat.id }}" class="cat-checkbox">
+                    <span class="checkmark"></span>
+                    <span class="meal-label" style="font-size: 0.85em; word-break: break-word;" title="{{ cat.name }}">
+                        {{ cat.name }}
+                    </span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div style="display:flex; flex-wrap: wrap; gap:10px; margin-top: 25px;">
+            <button type="button" onclick="saveNewIngredient()" class="submit-btn" style="flex:1; min-width: 140px;">Save Ingredient</button>
+            <button type="button" onclick="closeModal()" class="submit-btn" style="flex:1; min-width: 140px; background:#666;">Cancel</button>
+        </div>
+    </div>
+</div>
+<script>
+const unitOptions = `
+    <option value="">Unit</option>
+    {% for unit in units %}
+        <option value="{{ unit.id }}">{{ unit.name }}</option>
+    {% endfor %}
+`;
+let typingTimer;
+let currentRowForNewIngredient = null;
+
+function addIngredient() {
+    const container = document.getElementById('ingredient-list');
+    const newRow = document.createElement('div');
+    newRow.className = 'ingredient-row';
+    newRow.style = "display: flex; gap: 10px; align-items: flex-start; margin-bottom: 15px; flex-wrap: wrap;";
+
+    // We use backticks (`) for the template to include the new logic
+    newRow.innerHTML = `
+        <div style=\"flex: 2; display: flex; flex-direction: column; position: relative;\">
+            <input type=\"text\" name=\"ing_name[]\" list=\"existing-ingredients\" 
+                   placeholder=\" Search or type ingredient...\" 
+                   class=\"custom-input name-input\" 
+                   style=\"width: 100%;\" 
+                   oninput=\"validateIngredient(this)\" required>
+            
+            <button type=\"button\" class=\"add-to-db-btn\" onclick=\"openIngredientModal(this)\" 
+                    style=\"display:none; position:absolute; right:10px; top:10px; 
+                    background:var(--text-pink); color:white; border:none; border-radius:4px; 
+                    font-size:10px; padding:4px 8px; cursor:pointer; z-index: 10;\">
+                + Add to DB
+            </button>
+            <small class=\"new-ing-warning\" style=\"display: none; color: #ff4d4d; font-size: 0.8em; margin-top: 5px;\">
+                ⚠️ New ingredient
+            </small>
+        </div>
+
+        <input type=\"number\" step=\"0.01\" name=\"ing_measure[]\" placeholder=\"Amt\" class=\"custom-input\" style=\"flex: 0.5;\">
+        
+        <select name=\"ing_unit[]\" class=\"custom-input\" style=\"flex: 0.5;\" required>
+            ${unitOptions} 
+        </select>
+
+        <input type=\"text\" name=\"ing_prep_notes[]\" placeholder=\"Slicing/Preparation Notes\" class=\"custom-input\" style=\"flex: 1;\">
+
+        <button type=\"button\" onclick=\"deleteIngredient(this)\" class=\"action-btn\" style=\"flex: 0.3; background: #ff4d4d; border: none; cursor: pointer;\">✕</button>
+    `;
+    container.appendChild(newRow);
+}
+
+function validateIngredient(inputElement) {
+    clearTimeout(typingTimer);
+    const name = inputElement.value.trim(); // Fixed: .trim() instead of .strip()
+    const row = inputElement.closest('.ingredient-row');
+    const addBtn = row.querySelector('.add-to-db-btn');
+    const warningText = row.querySelector('.new-ing-warning');
+
+    if (name.length < 2) {
+        addBtn.style.display = 'none';
+        warningText.style.display = 'none';
+        inputElement.style.borderColor = "";
+        return;
+    }
+
+    typingTimer = setTimeout(async () => {
+        // We check against your existing datalist first for speed
+        const list = document.getElementById('existing-ingredients');
+        const options = Array.from(list.options).map(opt => opt.value.toLowerCase());
+        
+        if (options.includes(name.toLowerCase())) {
+            // MATCH FOUND
+            addBtn.style.display = 'none';
+            warningText.style.display = 'none';
+            inputElement.style.borderColor = "#4CAF50"; // Green
+        } else {
+            // NEW INGREDIENT
+            addBtn.style.display = 'block'; // SHOW THE BUTTON
+            warningText.style.display = 'block';
+            inputElement.style.borderColor = "#ff9800"; // Orange
+        }
+    }, 400); // Check after 400ms of no typing
+}
+
+function openIngredientModal(btn) {
+    const container = btn.parentElement;
+    const nameInput = container.querySelector('.name-input'); // This was returning null
+    
+    if (!nameInput) {
+        console.error("Could not find .name-input. Did you add the class to the input?");
+        return;
+    }
+    
+    const name = nameInput.value;
+    currentRowForNewIngredient = container.closest('.ingredient-row');
+    
+    document.getElementById('new_ing_name').value = name;
+    document.getElementById('ingredientModal').style.display = 'flex';
+}
+function closeModal() {
+    document.getElementById('ingredientModal').style.display = 'none';
+    currentRowForNewIngredient = null;
+} 
+
+async function saveNewIngredient() {
+    const name = document.getElementById('new_ing_name').value;
+    const density = document.getElementById('new_ing_density').value;
+    const description = document.getElementById('new_ing_description').value;
+    // 1. Collect all checked category IDs
+    const checkedCheckboxes = document.querySelectorAll('.cat-checkbox:checked');
+    const categoryIds = Array.from(checkedCheckboxes).map(cb => cb.value);
+
+    // Validation
+    if (!name) {
+        alert("Name is missing!");
+        return;
+    }
+    if (categoryIds.length === 0) {
+        alert("Please select at least one category.");
+        return;
+    }
+
+    // 2. Send the data to your Flask API
+    const response = await fetch('/api/add-ingredient', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            name: name, 
+            density: density || 1.0, // Default to 1.0 if empty
+            description: description || "", // Default to empty string if empty
+            category_ids: categoryIds 
+        })
+    });
+
+    if (response.ok) {
+        // 3. Update the global datalist so it's recognized as "Existing" immediately
+        const datalist = document.getElementById('existing-ingredients');
+        if (datalist) {
+            const option = document.createElement('option');
+            option.value = name;
+            datalist.appendChild(option);
+        }
+
+        // 4. Update the specific row that triggered the modal
+        if (currentRowForNewIngredient) {
+            const addBtn = currentRowForNewIngredient.querySelector('.add-to-db-btn');
+            const warning = currentRowForNewIngredient.querySelector('.new-ing-warning');
+            const nameInput = currentRowForNewIngredient.querySelector('.name-input');
+
+            if (addBtn) addBtn.style.display = 'none';
+            if (warning) warning.style.display = 'none';
+            if (nameInput) nameInput.style.borderColor = "#4CAF50"; // Turn Green
+        }
+
+        // 5. Reset modal for next time
+        document.querySelectorAll('.cat-checkbox').forEach(cb => cb.checked = false);
+        document.getElementById('new_ing_density').value = '';
+        document.getElementById('new_ing_description').value = '';
+        closeModal();
     } else {
-        // NEW INGREDIENT - SHOW WARNING
-        input.style.borderColor = "#ff9800"; // Orange
-        warningText.style.display = "block";
+        const errorData = await response.json();
+        alert("Error: " + (errorData.error || "Could not save ingredient"));
     }
 }
 
@@ -144,28 +360,6 @@ function showDatalist(input) {
     const val = input.value;
     input.value = '';
     input.value = val;
-}
-function addIngredient() {
-    const container = document.getElementById('ingredient-list');
-    const newRow = document.createElement('div');
-    newRow.className = 'ingredient-row';
-    newRow.style = 'display: flex; gap: 10px; margin-bottom: 20px; align-items: flex-start;';
-    
-    newRow.innerHTML = `
-        <div style="flex: 2; display: flex; flex-direction: column;">
-            <input type="text" name="ing_name[]" list="existing-ingredients" 
-                   placeholder=" Search or type ingredient..." 
-                   class="custom-input" style="width: 100%;" 
-                   oninput="validateIngredient(this)" required>
-            <small class="new-ing-warning" style="color: #ff9800; font-size: 0.8em; margin-top: 5px; display: none;">
-                ⚠️ New ingredient: This will be added to the database.
-            </small>
-        </div>
-        <input type="number" step="0.01" name="ing_measure[]" placeholder="Amt" class="custom-input" style="flex: 0.5;">
-        <input type="text" name="ing_unit[]" placeholder="Unit" class="custom-input" style="flex: 1;">
-        <button type="button" onclick="deleteIngredient(this)" class="action-btn" style="flex: 0.3; background: #ff4d4d; border: none; cursor: pointer;">✕</button>
-    `;
-    container.appendChild(newRow);
 }
 
 function deleteIngredient(button) {
@@ -190,5 +384,6 @@ document.addEventListener('input', function (e) {
         }
     }
 });
+
 </script>
 {% endblock %}

@@ -1,126 +1,151 @@
 {% extends "base.html" %}
-
-{% block head %}
-    <title>Shopping List</title>
-{% endblock %}
-
 {% block body %}
-<div class="selection-container" style="max-width: 800px; margin: 0 auto; padding: 20px;">
+
+<datalist id="existing-ingredients">
+    {% for ing in all_ingredients %}
+        <option value="{{ ing.name }}">
+    {% endfor %}
+</datalist>
+
+<div class="selection-container" style="max-width: 900px; margin: 0 auto; padding: 10px;">
     
-    <h2 style="text-align: center; color: var(--text-pink); margin-bottom: 30px;">Grocery Shopping List</h2>
-
-    <form id="final-shopping-form" action="{{ url_for('shopping_list', menu_id=menu_id) }}" method="POST">
-        
-        <div class="meal-card" style="padding: 25px;">
+    <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 15px; padding: 20px; margin-bottom: 30px;">
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
+            <div style="flex: 2; min-width: 180px; position: relative;">
+                <label class="custom-label">Item Name</label>
+                <input type="text" id="manual-name" class="custom-input" list="existing-ingredients" oninput="validateAndMatchCategory(this)">
+                
+                <small id="manual-warning" style="display:none; color: var(--text-pink); position: absolute; bottom: -18px; left: 0; font-size: 10px; font-weight: bold; white-space: nowrap;">
+                    New item! Please select a category.
+                </small>
+            </div>
             
-            <div style="display: flex; gap: 10px; margin-bottom: 25px; align-items: flex-end;">
-                <div style="flex: 2;">
-                    <label style="font-size: 0.8em; color: var(--text-pink);">Item Name</label>
-                    <input type="text" id="manual-name" class="custom-input" style="width: 100%;" placeholder="e.g. Apples">
-                </div>
-                <div style="flex: 0.5;">
-                    <label style="font-size: 0.8em; color: var(--text-pink);">Qty</label>
-                    <input type="number" step="0.01" id="manual-measure" class="custom-input" style="width: 100%;" placeholder="2">
-                </div>
-                <div style="flex: 1;">
-                    <label style="font-size: 0.8em; color: var(--text-pink);">Unit</label>
-                    <input type="text" id="manual-unit" class="custom-input" style="width: 100%;" placeholder="kg">
-                </div>
-                <button type="button" onclick="addManualItem()" class="action-btn" style="height: 45px; background: var(--bright-purple);">+ Add</button>
-            </div>
-            <div id="shopping-items-list">
-                {% if items %}
-                    {% for item in items %}
-                        <div class="shopping-row" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--accent-purple); {% if item.if_checked %} opacity: 0.5; text-decoration: line-through; {% endif %}">
-                            <div style="display: flex; align-items: center; gap: 15px;">
-                                <input type="checkbox" onchange="toggleCheck(this)" 
-                                    {% if item.if_checked %}checked{% endif %} 
-                                    style="transform: scale(1.3); accent-color: var(--text-pink);">
-                                
-                                <input type="hidden" name="item_names[]" value="{{ item.name }}">
-                                <input type="hidden" name="item_measures[]" value="{{ item.measure }}">
-                                <input type="hidden" name="item_units[]" value="{{ item.units }}">
-                                
-                                <input type="hidden" name="item_checked[]" value="{{ '1' if item.if_checked else '0' }}">
-
-                                <span style="font-size: 1.1em;">
-                                    <strong>{{ item.name }}</strong> 
-                                    <span style="opacity: 0.8;">({{ item.measure }} {{ item.units }})</span>
-                                </span>
-                            </div>
-                            <button type="button" onclick="this.closest('.shopping-row').remove()" class="action-btn" style="padding: 5px 10px; background: transparent; color: var(--text-pink); border: 1px solid var(--text-pink);">✕</button>
-                        </div>
+            <div style="flex: 1.2; min-width: 150px;">
+                <label class="custom-label">Category</label>
+                <select id="manual-category" class="custom-input">
+                    <option value="">-- Pick Category --</option>
+                    {% for cat in all_cats_full %}
+                        <option value="{{ cat.id }}">{{ cat.name }}</option>
                     {% endfor %}
-                {% endif %}
+                </select>
             </div>
 
-            <div style="margin-top: 30px; display: flex; gap: 15px;">
-                <button type="button" id="clear-btn" class="submit-btn" style="flex: 1; background: var(--accent-purple);">Clear Completed</button>
-                <button type="submit" class="submit-btn" style="flex: 1;">Save List</button>
+            <div style="display: flex; flex: 1; gap: 5px;">
+                <input type="number" step="0.01" id="manual-measure" class="custom-input" placeholder="Qty">
+                <input type="text" id="manual-unit" class="custom-input" placeholder="Unit">
             </div>
+            
+            <button type="button" onclick="addManualItem()" class="submit-btn" style="height: 38px;">Add</button>
         </div>
-    </form>
-
-    <div style="text-align: center; margin-top: 20px;">
-        <a href="{{ url_for('menu') }}" style="color: var(--text-pink); text-decoration: none;">← Back to Daily Menu</a>
     </div>
+
+    <form id="shopping-form" method="POST">
+        <div id="shopping-list-container">
+            {% for category, items in grouped_items.items() %}
+            <div class="category-section" id="section-{{ category|replace(' ', '-')|lower }}">
+                <h4 style="color: var(--accent-purple); border-bottom: 1px solid rgba(255,255,255,0.1);">{{ category }}</h4>
+                <div class="items-container">
+                    {% for item in items %}
+                    <div class="shopping-row" style="display: flex; align-items: center; padding: 8px 0; {% if item.if_checked %}opacity: 0.4; text-decoration: line-through;{% endif %}">
+                        <input type="checkbox" {% if item.if_checked %}checked{% endif %} onclick="toggleCheck(this)">
+                        
+                        <div style="display: flex; flex: 1; justify-content: space-between; margin-left: 10px;">
+                            <span>{{ item.name }}</span>
+                            <div>
+                                <input type="number" step="0.1" name="item_measures[]" value="{{ item.measure }}" style="width: 50px; background:transparent; border:none; color: var(--text-pink); text-align:right;">
+                                <input type="text" name="item_units[]" value="{{ item.units }}" style="width: 40px; background:transparent; border:none; color: #ccc;">
+                            </div>
+                        </div>
+
+                        <input type="hidden" name="item_names[]" value="{{ item.name }}">
+                        <input type="hidden" name="item_category_ids[]" value="{{ item.category_id }}">
+                        <input type="hidden" name="item_checked[]" value="{{ 1 if item.if_checked else 0 }}">
+                        
+                        <button type="button" onclick="this.closest('.shopping-row').remove()">&times;</button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <button type="submit" class="submit-btn" style="margin-top: 20px; width: 100%;">Save Changes</button>
+    </form>
 </div>
 
 <script>
-function addManualItem() {
-    const nameInp = document.getElementById('manual-name');
-    const measInp = document.getElementById('manual-measure');
-    const unitInp = document.getElementById('manual-unit');
-    const list = document.getElementById('shopping-items-list');
+// Logic fix: Ensure variable name matches Python's 'ing_map'
+const ingMap = {{ ing_map | tojson | safe }};
 
-    if (nameInp.value.trim() === "") return;
-
-    const newRow = document.createElement('div');
-    newRow.className = "shopping-row";
-    newRow.style = "display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--accent-purple);";
+function validateAndMatchCategory(input) {
+    const val = input.value.toLowerCase().trim();
+    const catSelect = document.getElementById('manual-category');
+    const warning = document.getElementById('manual-warning');
     
-    newRow.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <input type="checkbox" onchange="toggleCheck(this)" style="transform: scale(1.3); accent-color: var(--text-pink);">
-            
-            <input type="hidden" name="item_names[]" value="${nameInp.value}">
-            <input type="hidden" name="item_measures[]" value="${measInp.value}">
-            <input type="hidden" name="item_units[]" value="${unitInp.value}">
-            <input type="hidden" name="item_checked[]" value="0">
+    if (val === "") {
+        warning.style.display = 'none';
+        input.style.borderColor = ""; // Reset border
+        return;
+    }
 
-            <span style="font-size: 1.1em;">
-                <strong>${nameInp.value}</strong> 
-                <span style="opacity: 0.8;">(${measInp.value} ${unitInp.value})</span>
-            </span>
+    if (ingMap[val]) {
+        // ITEM EXISTS: Auto-select category and hide warning
+        catSelect.value = ingMap[val];
+        warning.style.display = 'none';
+        input.style.borderColor = ""; // Normal border
+    } else {
+        // ITEM IS NEW: Show warning and highlight the input
+        warning.style.display = 'block';
+        input.style.borderColor = "var(--text-pink)"; // Visual cue
+    }
+}
+
+function addManualItem() {
+    const name = document.getElementById('manual-name').value.trim();
+    const catSelect = document.getElementById('manual-category');
+    const catId = catSelect.value;
+    const catName = catSelect.options[catSelect.selectedIndex].text;
+    
+    if(!name || !catId) { alert("Please enter a name and category"); return; }
+
+    let sectionId = `section-${catName.replace(/\s+/g, '-').toLowerCase()}`;
+    let section = document.getElementById(sectionId);
+
+    if (!section) {
+        // Create new category section if it doesn't exist
+        const container = document.getElementById('shopping-list-container');
+        section = document.createElement('div');
+        section.id = sectionId;
+        section.className = "category-section";
+        section.innerHTML = `<h4 style="color: var(--accent-purple); border-bottom: 1px solid rgba(255,255,255,0.1);">${catName}</h4><div class="items-container"></div>`;
+        container.prepend(section);
+    }
+
+    const itemsContainer = section.querySelector('.items-container');
+    const row = document.createElement('div');
+    row.className = "shopping-row";
+    row.style = "display: flex; align-items: center; padding: 8px 0;";
+    row.innerHTML = `
+        <input type="checkbox" onclick="toggleCheck(this)">
+        <div style="display: flex; flex: 1; justify-content: space-between; margin-left: 10px;">
+            <span>${name}</span>
+            <div>
+                <input type="number" step="0.1" name="item_measures[]" value="${document.getElementById('manual-measure').value || 0}" style="width: 50px; background:transparent; border:none; color: var(--text-pink); text-align:right;">
+                <input type="text" name="item_units[]" value="${document.getElementById('manual-unit').value || ''}" style="width: 40px; background:transparent; border:none; color: #ccc;">
+            </div>
         </div>
-        <button type="button" onclick="this.closest('.shopping-row').remove()" class="action-btn" style="padding: 5px 10px; background: transparent; color: var(--text-pink); border: 1px solid var(--text-pink);">✕</button>
+        <input type="hidden" name="item_names[]" value="${name}">
+        <input type="hidden" name="item_category_ids[]" value="${catId}">
+        <input type="hidden" name="item_checked[]" value="0">
+        <button type="button" onclick="this.closest('.shopping-row').remove()">&times;</button>
     `;
-    list.appendChild(newRow);
-    nameInp.value = ""; measInp.value = ""; unitInp.value = "";
+    itemsContainer.prepend(row);
 }
 
 function toggleCheck(checkbox) {
     const row = checkbox.closest('.shopping-row');
-    // Find the hidden input for 'checked' status in this specific row
-    const hiddenChecked = row.querySelector('input[name="item_checked[]"]');
-    
-    if (checkbox.checked) {
-        row.style.opacity = "0.5";
-        row.style.textDecoration = "line-through";
-        hiddenChecked.value = "1"; // Update to 1 for DB
-    } else {
-        row.style.opacity = "1";
-        row.style.textDecoration = "none";
-        hiddenChecked.value = "0"; // Update to 0 for DB
-    }
+    row.style.opacity = checkbox.checked ? "0.4" : "1";
+    row.style.textDecoration = checkbox.checked ? "line-through" : "none";
+    row.querySelector('input[name="item_checked[]"]').value = checkbox.checked ? "1" : "0";
 }
-
-document.getElementById('clear-btn').onclick = function() {
-    document.querySelectorAll('.shopping-row').forEach(row => {
-        if (row.querySelector('input[type="checkbox"]').checked) {
-            row.remove();
-        }
-    });
-};
 </script>
 {% endblock %}

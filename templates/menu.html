@@ -5,15 +5,42 @@
 
 {% block body %}
 
-    <h3 style="text-align: center;">Choose meals to add:</h3>
-    <form action="{{ url_for('init_plan') }}" method="POST">
-        <div class="meal-select-grid">
+    <h3 style="text-align: center; color: var(--text-pink);">Plan Your Menu</h3>
+
+    <form action="{{ url_for('init_plan') }}" method="POST" style="max-width: 600px; margin: 0 auto;">
+        <input type="hidden" name="user_timezone" id="user_timezone">
+
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: flex; gap: 15px;">
+            
+            <div style="flex: 2;">
+                <label class="custom-label" style="font-size: 12px; display: block; margin-bottom: 8px;">Start Date</label>
+                <input type="date" name="start_date" id="start_date" class="custom-input" required 
+                    style="width: 100%; height: 45px; color-scheme: dark;"> 
+                    </div>
+
+            <div style="flex: 1;">
+                <label class="custom-label" style="font-size: 12px; display: block; margin-bottom: 8px;">Days</label>
+                <select name="duration_days" class="custom-input" style="width: 100%; height: 45px;">
+                    <option value="1">1 Day</option>
+                    <option value="3">3 Days</option>
+                    <option value="7" selected>7 Days (Week)</option>
+                </select>
+            </div>
+        </div>
+
+        <h4 style="font-size: 14px; color: var(--accent-purple); text-transform: uppercase; margin-bottom: 15px; letter-spacing: 1px;">Include Meals:</h4>
+        
+        <div class="meal-select-grid" style="margin-bottom: 25px;">
             {% for meal in all_meals %}
-            <label><input type="checkbox" name="meals" value="{{ meal['name'] }}" checked> {{ meal['name'] }}</label>
+            <label class="meal-checkbox-label" style="display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 8px; cursor: pointer;">
+                <input type="checkbox" name="meals" value="{{ meal['name'] }}" checked> 
+                <span style="color: white;">{{ meal['name'] }}</span>
+            </label>
             {% endfor %}
         </div>
+
         {% if not success_message %} 
-            <button type="submit" class="submit-btn">Generate Draft</button> 
+            <button type="submit" class="submit-btn" style="width: 100%; height: 50px; font-size: 16px;">Generate Menu Plan</button> 
         {% endif %}
     </form>
 
@@ -26,64 +53,108 @@
             {{ success_message }}
         </div>
     {% endif %}
-
-    {% if menu_meals %}
-    <section id="draft" style="margin-top: 40px;">
-        <h2 style="text-align: center;">Your Generated Menu</h2>
-
-        <form id="final-menu-form" action="{{ url_for('submit_final_menu', meal_count=menu_meals|length) }}" method="POST">
-            <input type="hidden" name="menu_id" value="{{ menu_id }}">
-
-            {% for meal_entry in menu_meals %}
-                <div class="menu-row-card">
-                    <input type="hidden" name="meal_{{ loop.index0 }}_id" value="{{ meal_entry['meal_id'] }}">
-                    <input type="hidden" name="recipe_{{ loop.index0 }}_id" value="{{ meal_entry['recipe_id'] }}">
-                    <input type="hidden" name="regenerated_times_{{ loop.index0 }}" value="{{ meal_entry['regenerated_times'] }}">
-                    <input type="hidden" name="if_picked_manually_{{ loop.index0 }}" value="{{ meal_entry['if_picked_manually'] }}">
-    
-                    <div class="menu-time-container">
-                        <div class="time-badge" style="padding: 5px;">
-                            <input type="time" name="meal_time_{{ loop.index0 }}" value="{{ meal_entry['meal_time'] }}" 
-                                class="custom-input" style="padding: 5px 10px; font-size: 0.9em;">
+    {% if menus %}
+    <section id="drafts-container" style="margin-top: 40px;">
+        <h2 style="text-align: center; color: var(--accent-purple); text-transform: uppercase; letter-spacing: 2px;">Menu Drafts</h2>
+        {# Loop through each menu object in the list #}
+        {% for menu_obj in menus %}
+            {% for menu_id, date_dict in menu_obj.items() %}
+                {% for current_date, menu_meals in date_dict.items() %}
+                
+                <div class="menu-day-card" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 15px; padding: 20px; margin-bottom: 30px;">
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 20px;">
+                        <div>
+                            <h3 style="margin: 0; color: var(--text-pink);">📅 {{ current_date }}</h3>
                         </div>
-                    </div>
 
-                    <div class="menu-info">
-                        <span style="color: var(--text-pink); font-size: 0.8em; font-weight: bold; text-transform: uppercase;">
-                            {{ meal_entry['meal_type'] }}
-                        </span>
-                        <strong style="font-size: 1.1em; display: block; margin-top: 4px;">
-                            {{ meal_entry['recipe_name'] }}
-                        </strong>
+                        <form action="{{ url_for('regenerate_full_menu', menu_id=menu_id) }}" method="POST" style="margin: 0;">
+                            <button type="submit" class="action-btn" style="background: var(--accent-purple); border: 1px solid rgba(255,255,255,0.2);">
+                                ♻️ Regenerate Full Day
+                            </button>
+                        </form>
                     </div>
+                    <form action="{{ url_for('submit_final_menu') }}" method="POST">
+                        <input type="hidden" name="menu_id" value="{{ menu_id }}">
+                        <input type="hidden" name="meal_count" value="{{ menu_meals|length }}">
+                        
+                        {% for meal_entry in menu_meals %}
+                            <div class="menu-row-card" style="margin-bottom: 15px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
+                                <input type="hidden" name="meal_{{ loop.index0 }}_id" value="{{ meal_entry['meal_id'] }}">
+                                
+                                <div style="max-width: 120px; flex-shrink: 0;">
+                                    <div class="time-badge" style="background: rgba(255, 255, 255, 0.1); padding: 10px 5px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.15); text-align: center;">
+                                        <input type="time" name="meal_time_{{ loop.index0 }}" 
+                                            value="{{ meal_entry['meal_time'] }}" 
+                                            class="custom-input" 
+                                            style="border: none; background: transparent; color: white; font-weight: bold; width: 100%; font-size: 1.1em;">
+                                    </div>
+                                </div>
 
-                    <div class="menu-secondary-actions">
-                        <a href="{{ url_for('recipe_details', recipe_id=meal_entry['recipe_id']) }}" class="action-btn">View Recipe</a>
-                        <label class="leftover-label">
-                            <input type="checkbox" name="leftover_{{ meal_entry['meal_id'] }}" value="1"> Use leftovers later
-                        </label>
-                    </div>
+                                <div style="flex: 1; margin: 0 20px; text-align: left; overflow: hidden;">
+                                    <span style="color: var(--text-pink); font-size: 0.75em; font-weight: bold; text-transform: uppercase; display: block;">{{ meal_entry['meal_type'] }}</span>
+                                    <strong style="font-size: 1.2em; color: white; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ meal_entry['recipe_name'] }}</strong>
+                                </div>
 
-                    <div class="action-group" style="flex-shrink: 0; max-width: 120px;">
-                        <button type="submit" form="regen-{{ loop.index }}" class="action-btn">Regenerate</button>
-                        <a href="{{ url_for('manual_search', meal_index=loop.index0) }}" 
-                        class="action-btn" 
-                        style="text-decoration: none; text-align: center; background-color: var(--bright-purple);">
-                        Pick Manually
-                        </a>
-                    </div>
+                                <div style="max-width: 160px; flex-shrink: 0; display: flex; flex-direction: column; gap: 5px;">
+                                    <button type="button" class="action-btn" onclick="submitRegen('{{ menu_id }}', '{{ loop.index0 }}')">
+                                        🔄 Regenerate
+                                    </button>
+                                    <a href="{{ url_for('manual_search', meal_index=loop.index0, menu_id=menu_id) }}" class="action-btn" style="background: var(--bright-purple); text-decoration: none; text-align: center;">
+                                        🔍 Pick Manually
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+
+                        <button type="submit" class="submit-btn" style="width:100%; margin-top: 10px; background: linear-gradient(45deg, var(--accent-purple), var(--text-pink));">
+                            Confirm Menu for {{ current_date }}
+                        </button>
+                    </form>
+
+                    {% for meal_entry in menu_meals %}
+                        <form id="regen-{{ menu_id }}-{{ loop.index0 }}" 
+                            action="{{ url_for('regenerate_meal', meal_index=loop.index0) }}" 
+                            method="POST" style="display:none;">
+                            <input type="hidden" name="menu_id" value="{{ menu_id }}">
+                            <input type="hidden" name="meal_time" id="hidden-time-{{ menu_id }}-{{ loop.index0 }}">
+                        </form>
+                    {% endfor %}
+
                 </div>
+                {% endfor %}
             {% endfor %}
-
-            {% if not success_message %} 
-                <button type="submit" class="submit-btn" style="width:100%">Submit Menu</button>
-            {% endif %}
-        </form>
-
-        {% for meal_entry in menu_meals %}
-        <form id="regen-{{ loop.index }}" action="{{ url_for('regenerate_meal', meal_id=loop.index0) }}" method="POST" style="display:none;"></form>
         {% endfor %}
-
     </section>
 {% endif %}
+<script>
+    // 1. Timezone and Date Initialization
+    document.addEventListener('DOMContentLoaded', function() {
+        const tzInput = document.getElementById('user_timezone');
+        if (tzInput) tzInput.value = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        
+        const dateInput = document.getElementById('start_date');
+        if (dateInput && !dateInput.value) dateInput.valueAsDate = new Date();
+    });
+
+    // 2. Regeneration Sync and Submit
+    function submitRegen(menuId, index) {
+        // Find visible time from the main form
+        const visibleInput = document.querySelector(`input[name="meal_time_${index}"]`);
+        
+        // Find hidden elements in the regeneration form
+        const hiddenInput = document.getElementById(`hidden-time-${menuId}-${index}`);
+        const regenForm = document.getElementById(`regen-${menuId}-${index}`);
+        
+        if (visibleInput && hiddenInput && regenForm) {
+            // Copy the time user typed into the hidden form
+            hiddenInput.value = visibleInput.value;
+            // Send to Python
+            regenForm.submit();
+        } else {
+            console.error("Could not find elements for sync", {menuId, index});
+        }
+    }
+</script>
+
 {% endblock %}

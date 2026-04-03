@@ -185,29 +185,59 @@ header {
     gap: 20px;
 }
 
-/* Base style for ALL inputs (select and date) */
+/* 1. Remove the background-image from the base class */
 .custom-input {
     width: 100%;
-    background-color: #1a0033; /* Dark purple background */
+    background-color: #1a0033;
     color: white;
     border: none;
     padding: 15px 25px;
-    border-radius: 50px; /* Full pill shape */
+    border-radius: 50px;
     font-size: 1rem;
     box-sizing: border-box;
     cursor: pointer;
-    
-    /* Reset browser default appearance */
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
+    /* REMOVED background-image from here */
+}
+.editable-cell {
+        background: transparent;
+        border: 1px solid transparent;
+        color: white;
+        padding: 2px 4px;
+        border-radius: 4px;
+        transition: border 0.2s;
+    }
+.editable-cell:hover {
+        border-color: rgba(255,255,255,0.1);
+    }
+.editable-cell:focus {
+        background: rgba(255,255,255,0.05);
+        border-color: var(--accent-purple);
+        outline: none;
+    }
+/* Hide arrows on number input for cleaner look */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
 
-    /* Custom dropdown arrow icon */
+/* 2. Apply the arrow ONLY to select elements */
+select.custom-input {
     background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="white"><path d="M1 4l5 5 5-5z"/></svg>');
     background-repeat: no-repeat;
     background-position: right 25px center;
+    padding-right: 45px; /* Extra space for the arrow */
 }
 
+/* 3. Keep the specific logic for date/time inputs if needed, 
+      otherwise they will use browser defaults */
+input[type="time"].custom-input,
+input[type="date"].custom-input {
+    background-image: none;
+}
 /* Align labels and inputs consistently */
 .form-group {
     display: flex;
@@ -267,21 +297,43 @@ header {
     gap: 20px;
 }
 
-.description-box {
-    scrollbar-width: thin;
-    scrollbar-color: var(--bright-purple) transparent;
-    overflow-y: auto;
-    font-size: 1.05em;
-    line-height: 1.6;
-    color: #e0e0e0; /* Slightly softer white for long reading */
+.custom-label{
+    margin-bottom: 10px;
+    text-align: left;
+    color: var(--text-pink); 
+    font-weight: bold;
 }
 
-/* For Chrome/Safari */
+input[type=number].custom-input::-webkit-outer-spin-button,
+input[type=number].custom-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type=number].custom-input {
+    -moz-appearance: textfield;
+    text-align: center; /* Centers the numbers for a cleaner look */
+}
+
+.description-box {
+    width: 100%;
+    min-height: 400px; /* This makes it significantly longer/taller */
+    padding: 20px;
+    border-radius: 20px;
+    line-height: 1.6;
+    background-color: var(--bg-dark);
+    border: 1px solid var(--accent-purple);
+    color: white;
+    font-family: inherit;
+    resize: vertical; /* Allows you to drag the bottom corner to expand it */
+    overflow-y: auto;
+}
+
+
 .description-box::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
 }
 .description-box::-webkit-scrollbar-thumb {
-    background-color: var(--bright-purple);
+    background: var(--bright-purple);
     border-radius: 10px;
 }
 
@@ -341,6 +393,113 @@ textarea.custom-input[readonly] {
     justify-content: center; /* Centered for mobile */
     gap: 8px;
     padding: 5px;
+}
+
+/* Container for the checkboxes */
+.meal-checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    width: 100%;
+}
+
+/* The actual Card/Label */
+.meal-checkbox-card {
+    background-color: var(--bg-dark);
+    border: 2px solid var(--accent-purple);
+    padding: 12px 15px;
+    border-radius: 50px; /* Matching your pill-shaped custom-input */
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    user-select: none;
+}
+
+/* Hide the default browser checkbox */
+.meal-checkbox-card input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+/* Style for the custom circular indicator */
+.checkmark {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--text-pink);
+    border-radius: 50%;
+    display: inline-block;
+    position: relative;
+    transition: all 0.3s;
+}
+
+/* When Hovering */
+.meal-checkbox-card:hover {
+    border-color: var(--bright-purple);
+    background-color: var(--input-bg);
+}
+
+/* WHEN CHECKED: The magic happens here */
+.meal-checkbox-card input:checked + .checkmark {
+    background-color: var(--text-pink);
+    border-color: var(--text-pink);
+}
+
+/* Add a tiny white dot inside the checkmark when selected */
+.meal-checkbox-card input:checked + .checkmark::after {
+    content: "";
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: white;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+/* 2. Style the visual checkmark when the HIDDEN input is checked */
+.meal-checkbox-card input:checked ~ .checkmark {
+    background-color: var(--text-pink); /* Or your preferred "active" color */
+}
+
+/* 3. Create the actual 'L' shape checkmark inside the span */
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+/* 4. Show the 'L' shape when checked */
+.meal-checkbox-card input:checked ~ .checkmark:after {
+    display: block;
+}
+
+/* 5. The actual 'L' shape styling */
+.meal-checkbox-card .checkmark:after {
+    left: 7px;
+    top: 3px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 3px 3px 0;
+    transform: rotate(45deg);
+}
+.meal-checkbox-card input:checked ~ .meal-label {
+    color: white;
+    font-weight: bold;
+}
+/* Customizing the date picker calendar icon and text */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1); /* Makes the calendar icon white */
+    cursor: pointer;
+}
+
+.meal-checkbox-label:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
 }
 /* --- Mobile Responsive Rules --- */
 
@@ -423,34 +582,21 @@ textarea.custom-input[readonly] {
     .meal-select-grid {
         grid-template-columns: 1fr; /* Single column on very small phones */
     }
-    .ingredient-row {
-        flex-wrap: wrap; /* Allow rows to break */
-        background: var(--bg-dark);
-        padding: 10px;
-        border-radius: 10px;
-        border: 1px solid var(--accent-purple);
-    }
-    
     .ingredient-row input[name="ing_name[]"] {
-        flex: 1 1 100% !important; /* Name takes full width */
+        flex: 1 1 100% !important; 
     }
     
+    /* Updated to include the Select and the new Prep Notes */
     .ingredient-row input[name="ing_measure[]"],
-    .ingredient-row input[name="ing_unit[]"] {
-        flex: 1 1 40% !important; /* Measure and Unit share a line */
+    .ingredient-row select[name="ing_unit[]"] {
+        flex: 1 1 45% !important; /* Amt and Unit side-by-side */
+    }
+
+    .ingredient-row input[name="ing_prep_notes[]"] {
+        flex: 1 1 85% !important; /* Notes take most of the third line */
     }
     .selection-container form > div[style*="grid-template-columns"] {
         grid-template-columns: 1fr !important;
         gap: 15px !important;
-    }
-    .ingredient-row .action-btn {
-        position: absolute;
-        top: -10px;
-        right: -10px;
-        width: 30px !important;
-        height: 30px;
-        border-radius: 50%;
-        padding: 0;
-        z-index: 5;
     }
 }

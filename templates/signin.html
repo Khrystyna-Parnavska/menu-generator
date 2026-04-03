@@ -6,6 +6,7 @@
                 <h2 style="text-align: center;">Sign in</h2>
                 
                 <form action="{{ url_for('signin') }}" method="POST">
+                    <input type="hidden" name="user_timezone" id="user_timezone">
                     <label for="email">email address</label>
                     <input type="email" id="email" name="email" class="input-field" placeholder="yourname@example.com" required>
                     
@@ -21,4 +22,7 @@
                 </p>
             </div>
     </div>
+    <script>
+        document.getElementById('user_timezone').value = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    </script>
 {% endblock %}

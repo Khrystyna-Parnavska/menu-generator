@@ -10,11 +10,16 @@
 
     <form method="GET" style="display: flex; gap: 10px; margin-bottom: 30px; justify-content: center;">
         <input type="text" name="search" placeholder="Search recipes..." value="{{ search_query }}" class="custom-input" style="width: 300px;">
+        
         <input type="hidden" name="meal_index" value="{{ meal_index }}">
+        <input type="hidden" name="menu_id" value="{{ menu_id }}">
+
         <select name="category" class="custom-input">
             <option value="">All Categories</option>
             {% for cat in categories %}
-            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                <option value="{{ cat.id }}" {% if cat.id|string == request.args.get('category') %}selected{% endif %}>
+                    {{ cat.name }}
+                </option>
             {% endfor %}
         </select>
         
@@ -35,7 +40,7 @@
                 <p style="margin-top: auto; color: var(--text-pink);">Prep: {{ recipe.prep_time }}</p>
             </div>
 
-            <a href="{{ url_for('recipe_details', recipe_id=recipe.id, meal_index=meal_index) }}" class="submit-btn" style="display:block; text-decoration:none; text-align: center; padding: 10px;">View Details</a>
+            <a href="{{ url_for('recipe_details', recipe_id=recipe.id, meal_index=meal_index, menu_id=menu_id) }}" class="submit-btn" style="display:block; text-decoration:none; text-align: center; padding: 10px;">View Details</a>
         
            {% if recipe.id in favorite_ids %}
                 <form action="{{ url_for('remove_favorite', recipe_id=recipe.id) }}" method="POST">
@@ -49,7 +54,7 @@
 
             <div style="width: 100%; margin-top: 10px;">
                 {% if meal_index != -1 %}
-                    <form action="{{ url_for('select_recipe', meal_index=meal_index, recipe_id=recipe.id) }}" method="POST">
+                    <form action="{{ url_for('select_recipe', meal_index=meal_index, recipe_id=recipe.id, menu_id=menu_id) }}" method="POST">
                         <button type="submit" class="submit-btn" style="width: 100%; padding: 10px;">Select for Menu</button>
                     </form>
                 {% endif %}
