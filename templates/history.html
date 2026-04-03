@@ -33,7 +33,7 @@
                 </div>
 
                 <div style="flex-shrink: 0;">
-                    <a href="{{ url_for('recipe_details', recipe_id=meal.recipe_id) }}" 
+                    <a href="{{ url_for('recipe_details', recipe_id=meal.recipe_id, menu_id=day.id) }}" 
                        class="action-btn" 
                        style="text-decoration: none; padding: 8px 15px;">
                        View Recipe

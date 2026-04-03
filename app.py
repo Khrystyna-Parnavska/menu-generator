@@ -388,28 +388,35 @@ meals_from_db = meal_model.select_all()
 
 def send_meal_reminders():
     with app.app_context():
-        # Find meals starting in the next 30 minutes
-        user_tz = users_model.select_by_id(current_user.id)['timezone'] or 'UTC'
-        local_now = local_time_to_utc_range(user_tz, return_now=True)[2]  # Get current local time in user's timezone
-        query = """
-            SELECT mm.id, u.email, r.name as recipe_name, mm.meal_time 
-            FROM Menu_meals mm
-            JOIN Users u ON mm.user_id = u.id
-            JOIN Recipes r ON mm.recipe_id = r.id
-            WHERE mm.meal_time BETWEEN %s AND DATE_ADD(%s, INTERVAL 30 MINUTE)
-            AND mm.reminder_sent = 0
-        """
-        upcoming_meals = recipe_model.run_query(query, (local_now, local_now))
+        with app.app_context(): # Ensure we have access to the app config
+        # 1. Fetch all users from the database
+            all_users = users_model.select_all() 
+        
+            for user in all_users:
+                user_id = user['id']
+                user = users_model.select_by_id(user_id)[0]  # Fetch the full user record to get the timezone
+                user_tz = user['timezone'] or 'UTC'
+                
+                local_now = local_time_to_utc_range(user_tz, return_now=True)[2]  # Get current local time in user's timezone
+                query = """
+                    SELECT mm.id, u.email, r.name as recipe_name, mm.meal_time 
+                    FROM Menu_meals mm
+                    JOIN Users u ON mm.user_id = u.id
+                    JOIN Recipes r ON mm.recipe_id = r.id
+                    WHERE mm.meal_time BETWEEN %s AND DATE_ADD(%s, INTERVAL 30 MINUTE)
+                    AND mm.reminder_sent = 0
+                """
+                upcoming_meals = recipe_model.run_query(query, (local_now, local_now))
 
-        for meal in upcoming_meals:
-            msg = Message("🍳 Time to Cook!",
-                          sender="your-email@gmail.com",
-                          recipients=[meal['email']])
-            msg.body = f"Hi! It's almost time for your meal. Start preparing {meal['recipe_name']} now!"
-            mail.send(msg)
-            print(f"Sent meal reminder for {meal['recipe_name']} to {meal['email']}.")
-            # Mark as sent so we don't spam the user
-            recipe_model.run_query("UPDATE Menu_meals SET reminder_sent = 1 WHERE id = %s", (meal['id'],))
+                for meal in upcoming_meals:
+                    msg = Message("🍳 Time to Cook!",
+                                sender="your-email@gmail.com",
+                                recipients=[meal['email']])
+                    msg.body = f"Hi! It's almost time for your meal. Start preparing {meal['recipe_name']} now!"
+                    mail.send(msg)
+                    print(f"Sent meal reminder for {meal['recipe_name']} to {meal['email']}.")
+                    # Mark as sent so we don't spam the user
+                    recipe_model.run_query("UPDATE Menu_meals SET reminder_sent = 1 WHERE id = %s", (meal['id'],))
 
 
 @app.route('/')
