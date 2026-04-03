@@ -211,7 +211,7 @@ ALTER TABLE
 ALTER TABLE
     `Recipes_ingredients` ADD CONSTRAINT `recipes_ingredients_ingredient_id_foreign` FOREIGN KEY(`ingredient_id`) REFERENCES `Ingredients`(`id`);
 ALTER TABLE
-    `Shopping_list` ADD CONSTRAINT `shopping_list_id_foreign` FOREIGN KEY(`id`) REFERENCES `Menus`(`id`);
+    `Shopping_list` ADD CONSTRAINT `shopping_list_menu_id_foreign` FOREIGN KEY(`menu_id`) REFERENCES `Menus`(`id`);
 ALTER TABLE
     `Users` ADD CONSTRAINT `users_role_id_foreign` FOREIGN KEY(`role_id`) REFERENCES `User_roles`(`id`);
 ALTER TABLE 

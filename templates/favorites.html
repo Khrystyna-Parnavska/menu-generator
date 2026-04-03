@@ -24,7 +24,7 @@
                 <p style="margin-top: auto; color: var(--text-pink);">Prep: {{ recipe.prep_time }}</p>
             </div>
 
-            <a href="{{ url_for('recipe_details', recipe_id=recipe.id, meal_index=meal_index) }}" class="submit-btn" style="display:block; text-decoration:none; text-align: center; padding: 10px;">View Details</a>
+            <a href="{{ url_for('recipe_details', recipe_id=recipe.id, meal_index=meal_index, menu_id=menu_id) }}" class="submit-btn" style="display:block; text-decoration:none; text-align: center; padding: 10px;">View Details</a>
             <form action="{{ url_for('remove_favorite', recipe_id=recipe.id) }}" method="POST">
                 <button type="submit" class="submit-btn" style="width: 100%; padding: 10px;">Remove from Favorites</button>
             </form>

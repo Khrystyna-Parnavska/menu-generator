@@ -27,7 +27,7 @@ UPLOAD_FOLDER = 'static/uploads'
 
 meal_model = BaseModel('Meals')
 menu_model = BaseModel('Menus')
-menu_meals_model = BaseModel('Menu_Meals')
+menu_meals_model = BaseModel('Menu_meals')
 users_model = BaseModel('Users') 
 recipe_model = BaseModel('Recipes')
 ing_model = BaseModel('Ingredients')
@@ -394,7 +394,7 @@ def send_meal_reminders():
         
             for user in all_users:
                 user_id = user['id']
-                user = users_model.select_by_id(user_id)[0]  # Fetch the full user record to get the timezone
+                user = users_model.select_by_id(user_id)
                 user_tz = user['timezone'] or 'UTC'
                 
                 local_now = local_time_to_utc_range(user_tz, return_now=True)[2]  # Get current local time in user's timezone
@@ -1001,7 +1001,7 @@ def history():
         WHERE m.user_id = %s
         ORDER BY m.created_at DESC, mm.meal_time ASC;
     """
-    history_query = """SELECT id, date(created_at) as `created at`, menu_date as `menu date` FROM Menus WHERE user_id = %s ORDER BY created_at DESC;"""
+    history_query = """SELECT id, date(created_at) as `created at`, menu_date as `menu date` FROM Menus WHERE user_id = %s ORDER BY id DESC;"""
 
     history = recipe_model.run_query(history_query, (current_user.id,))
     meals = recipe_model.run_query(meals_query, (current_user.id,))
@@ -1022,11 +1022,13 @@ def shopping_list(menu_id):
     # 1. Handle Timezone & Persistence
     user_tz = request.form.get('user_timezone', users_model.select_by_id(current_user.id)['timezone'] or 'UTC')
     utc_start, utc_end = local_time_to_utc_range(user_tz)
+    print(f"Checking for shopping list with menu_id {menu_id} between {utc_start} and {utc_end} (UTC) for user timezone {user_tz}")
 
     # Check if list exists for today
     check = shopping_list_model.run_query("SELECT id FROM Shopping_list WHERE menu_id = %s AND created_at BETWEEN %s AND %s LIMIT 1", (menu_id, utc_start, utc_end))
     
     if check:
+        print(f"Existing shopping list found with ID {check['id']}")
         shopping_list_id = check[0]['id']
     else:
         # Initial Creation: Snapshot ingredients from Menu into the Shopping List Table
