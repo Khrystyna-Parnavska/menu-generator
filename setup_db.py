@@ -1,6 +1,7 @@
 import os
+from app import menu
 from database.db_connector import create_connection
-from database.models import FavoritesRecipesModel, MealsModel, RecipesIngredientsModel, RecipesModel, CategoriesModel, UsersModel, UserRolesModel, CountriesModel
+from database.models import BaseModel
 import pandas as pd
 
 def run_schema( path='database', schema_file_name='schema.sql'):
@@ -39,6 +40,24 @@ def run_schema( path='database', schema_file_name='schema.sql'):
         db.close()
 
 
+def populate_meals(meals_model: BaseModel):
+    '''
+    Populate the Meals table with predefined meal data.
+    Args:
+        meals_model: The MealsModel instance.
+    '''
+    print('Populating Meals table...')
+    for meal in meals_dict:
+        if list(meal.keys()) == meals_model.columns[1:]:
+            try:
+                meals_model.insert(meal)
+                print(f"Inserted meal: {meal['name']}")
+            except Exception as e:
+                print(f"Error inserting meal {meal['name']}: {e}")
+    print('-'*10)
+    print('meals insertion attempt finished')
+
+
 meals_dict = [
     {'name': 'Breakfast', 'default_time': '07:00:00'},
     {'name': 'Morning Snack', 'default_time': '10:00:00'},
@@ -57,115 +76,115 @@ test_user = {'user_name': 'test_user',
              'age_full_years': None, 
              'birth_date': None}
 
-
-def populate_meals(meals_model: MealsModel):
-    '''
-    Populate the Meals table with predefined meal data.
-    Args:
-        meals_model: The MealsModel instance.
-    '''
-    print('Populating Meals table...')
-    for meal in meals_dict:
-        if list(meal.keys()) == meals_model.columns[1:]:
-            try:
-                meals_model.insert(meal)
-                print(f"Inserted meal: {meal['name']}")
-            except Exception as e:
-                print(f"Error inserting meal {meal['name']}: {e}")
-    print('-'*10)
-    print('meals insertion attempt finished')
-
-
-def add_test_category(categories_model: CategoriesModel):
-    """Add a test category to the Categories table.
-    Args:
-        categories_model: The CategoriesModel instance.
-    """
-    categories_model.insert({'name': 'test'})
-    print("Inserted test category.")
-
-
-def add_test_coutry(countries_model: CountriesModel):
-    """Add a test country to the Countries table.
-    Args:
-        countries_model: The CountriesModel instance.
-    """
-    countries_model.insert({'name': 'test'})
-    print("Inserted test country.")
-
-
-#TODO: MAKE THIS FUNCTION MORE GENERIC
-def populate_basic_recipes(recipes_model: RecipesModel, meals_model: MealsModel, categories_model: CategoriesModel, path: str):
-    """Populate the Recipes table from a CSV file.
-    Args:
-        recipes_model: The RecipesModel instance.
-        meals_model: The MealsModel instance.
-        categories_model: The CategoriesModel instance.
-        path: Path to the CSV file containing recipe data.
-    """
-    test_recipes = pd.read_csv(path, delimiter=';', encoding='utf-8-sig')
-
-    meals = []
-    meals_data = meals_model.get_all()
-    if meals_data is None or not isinstance(meals_data, list):
-        print("Warning: No meals data retrieved from database.")
-        return
-    for meal in meals_data:
-        id = meal['id']
-        name = meal['name']
-        meals.append((id, name))
+sources_dict = [
+    {
+        'name': 'Menu_Generator',
+        'description': 'A custom menu generator for testing and development purposes.'
+    },
+    {
+        'name': 'User_submitted',
+        'description': 'Recipes and ingredients submitted by users of the menu generator application. These recipes are added for testing and development purposes and may not be suitable for commercial use.'
+    },
+    {
+        'name': 'AllRecipes',
+        'description': 'A popular recipe website that offers a wide variety of recipes with detailed information, including ingredients, instructions, and images. It is free for non-commercial use with some limitations, making it suitable for testing and development.'
+    },
+    {
+        'name': 'TheMealDB',
+        'description': 'Not free for commercial use, but free for personal use. Provides a wide variety of meals and recipes with detailed information, including ingredients, instructions, and images. It is a great source for testing and development purposes.'
+    },
+    {
+        'name': 'Spoonacular',
+        'description': 'Offers a comprehensive API with access to a vast database of recipes, ingredients, and nutritional information. It is free for non-commercial use with some limitations, making it suitable for testing and development.'
+    },
+    {
+        'name': 'Edamam',
+        'description': 'Provides a rich API with access to a large database of recipes, ingredients, and nutritional information. It is free for non-commercial use with some limitations, making it a good choice for testing and development.'
+    },
+    {
+        'name': 'OpenFoodAPI',
+        'description': 'A free and open API that provides access to a large database of food products, including ingredients and nutritional information. It is a great resource for testing and development purposes.'
+    },
+    {
+        'name': 'FoodData Central',
+        'description': 'A free API provided by the USDA that offers access to a comprehensive database of food products, including ingredients and nutritional information. It is an excellent source for testing and development.'
+    },
+    {
+        'name': 'Recipe Puppy',
+        'description': 'A simple and free API that provides access to a database of recipes based on ingredients. It is a good option for testing and development purposes, especially for basic recipe retrieval.'
+    },
+    {
+        'name': 'Yummly',
+        'description': 'Offers a comprehensive API with access to a vast database of recipes, ingredients, and nutritional information. It is free for non-commercial use with some limitations, making it suitable for testing and development.'
+    }
+    ]
 
 
-    def get_meal_id(meal_name):
-        for meal in meals:
-            if meal[1] == meal_name:
-                return meal[0]
-        return None
-    
-
-    test_recipes['meal_id'] = test_recipes['meal_name'].apply(get_meal_id)
-    
-    test_id = None
-    for category in categories_model.get_all():
-        if category['name'] == 'test':
-            test_id = category['id']
-            break
-    test_recipes['category_id'] = test_id
-
-    test_recipes.drop(columns=['meal_name'], inplace=True)
-    test_recipes.to_csv('data/recipes_test_processed.csv', index=False, sep=',', encoding='utf-8-sig')
-
-    recipes_model.populate_from_csv('data/recipes_test_processed.csv', delimiter=',', encoding='utf-8-sig')
-    print("Inserted test recipes.")
-
-        
-
-recipes_path = os.path.join('data', 'recipes_test.csv')
+recipes_path = os.path.join('data', 'recipes_db_the_meal_db.csv')
 
 
 if __name__ == "__main__":
 
     run_schema()
-    meals_model = MealsModel()
-    recipes_model = RecipesModel()
-    categories_model = CategoriesModel()
-    users_model = UsersModel()
-    user_roles_model = UserRolesModel()
-    countries_model = CountriesModel()
-    favorites_recipes_model = FavoritesRecipesModel()
-    recipe_ingredients_model = RecipesIngredientsModel()
+    meals_model = BaseModel('Meals')
+    recipe_categories_model = BaseModel('Recipe_categories')
+    recipes_model = BaseModel('Recipes')
+    users_model = BaseModel('Users')
+    user_roles_model = BaseModel('User_roles')
+    countries_model = BaseModel('Countries')
+    favorites_recipes_model = BaseModel('User_favorite_recipes')
+    recipe_ingredients_model = BaseModel('Recipes_ingredients')
+    units_model = BaseModel('Units')
+    ingredients_model = BaseModel('Ingredients')
+
 
     populate_meals(meals_model)
-    add_test_category(categories_model)
-    add_test_coutry(countries_model)
-    # populate_basic_recipes(recipes_model, meals_model, categories_model, recipes_path)
-    recipes_model.populate_from_csv(os.path.join('data', 'Recipes_db_1.csv'), 'Recipes', delimiter=';', encoding='utf-8-sig')
-    # recipe_ingredients_model.populate_from_csv(os.path.join('data', 'Recipes_ingredients_db.csv'), 'Recipes_Ingredients', delimiter=',', encoding='utf-8-sig')
 
-    #test user
-    user_roles_model.insert({'name': 'user', 'description': 'Test role'})
-    test_role_id = user_roles_model.run_query("SELECT id FROM User_roles WHERE name = %s", ('user',))[0]['id']
-    test_user['role_id'] = test_role_id
-    users_model.insert(test_user)
+    #populate countries
+    countries_model.populate_from_csv(os.path.join('data', 'countries_db.csv'), 'Countries', delimiter=',')
+
+    #user roles
+    user_roles = [
+        {'name': 'admin', 'description': 'Admin role with full permissions'},
+        {'name': 'user', 'description': 'Regular user role with limited permissions'},
+    ]
+    user_roles_model.insert_many(user_roles)
+
+
+    # sources
+    source_model = BaseModel('Data_sources')
+    source_model.insert_many(sources_dict)
+
+    themealdb_id = source_model.run_query("SELECT id FROM Data_sources WHERE name = %s", ('TheMealDB',))[0]['id']
+    menu_generator_id = source_model.run_query("SELECT id FROM Data_sources WHERE name = %s", ('Menu_Generator',))[0]['id']
+
+    #ingredients_the_meal_db
+    recipes_model.populate_from_csv(os.path.join('data', 'ingredient_categories.csv'), 'Ingredient_categories', delimiter=',')
+    others_id = recipes_model.run_query("SELECT id FROM Ingredient_categories WHERE name = %s", ('Other',))[0]['id']
+    recipes_model.populate_from_csv(os.path.join('data', 'ingredients_db_the_meal_db.csv'), 'Ingredients', delimiter=',')
+    ingredients_model.run_query("UPDATE Ingredients SET source_id = %s", (themealdb_id,))
+
+
+    #ingredient categories map
+    ing_cat_map_model = BaseModel('Ingredients_categories_map')
+    ingredients_data = ingredients_model.select_all()
+    if ingredients_data is not None and isinstance(ingredients_data, list):
+        for ingredient in ingredients_data:
+            ing_cat_map_model.insert({'ingredient_id': ingredient['id'], 'category_id': others_id, 'source_id': menu_generator_id})
     
-    
+
+    #units
+    units_model.populate_from_csv(os.path.join('data', 'units.csv'), 'Units', delimiter=',')
+    units_model.run_query("UPDATE Units SET source_id = %s", (menu_generator_id,))
+
+    #recipe_categories
+    recipe_categories_model.populate_from_csv(os.path.join('data', 'recipe_categories_the_meal_db.csv'), 'Recipe_categories', delimiter=',')
+    recipe_categories_model.run_query("UPDATE Recipe_categories SET source_id = %s", (themealdb_id,))
+
+    #recipes
+    recipes_model.populate_from_csv(recipes_path, 'Recipes', delimiter=',')
+    recipes_model.run_query("UPDATE Recipes SET source_id = %s", (themealdb_id,))
+
+    #recipe_ingredients
+    recipe_ingredients_model.populate_from_csv(os.path.join('data', 'recipe_ingredients_db_the_meal_db.csv'), 'Recipes_ingredients', delimiter=',')
+    recipe_ingredients_model.run_query("UPDATE Recipes_ingredients SET source_id = %s", (themealdb_id,))

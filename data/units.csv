@@ -1,0 +1,18 @@
+name,description,category,base_unit,factor,notes
+g,grams,Mass,g,1,Standard Metric
+kg,kilograms,Mass,g,1000,
+oz,ounces,Mass,g,28.35,Weight Ounces
+lb,pounds,Mass,g,453.59,
+ml,milliliters,Volume,ml,1,Standard Metric
+l,liters,Volume,ml,1000,
+fl oz,fl oz,Volume,ml,29.57,US Fluid Ounces
+tsp,teaspoon,Volume,ml,4.93,
+tbsp,tablespoon,Volume,ml,14.79,
+cup,cup,Volume,ml,240,
+pinch,pinch,Volume,ml,0.31,Estimate
+handful,handful,Volume,ml,60,Estimate (~1/4 cup)
+pcs,pieces,Count,unit,1,"Default for ""1 Onion"""
+clove,clove,Count,unit,1,Specific to Garlic
+can,can,Count,unit,1,Tins/Jars/Packets
+to_serve,to serve,Subjective,-,0,"""As required/To taste"""
+garnish,garnish,Subjective,-,0,

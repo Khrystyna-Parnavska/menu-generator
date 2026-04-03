@@ -1,13 +1,33 @@
 import csv
+from math import e
 from .db_connector import create_connection
 
 
 class BaseModel:
     """Base model to provide database db."""
 
-    def __init__(self, table_name, columns):
+    def __init__(self, table_name):
         self.table_name = table_name
-        self.columns = columns # List of column names in the table
+        self.columns = []
+        self.fetch_column_names()
+
+    def fetch_column_names(self) -> None:
+        """Fetch column names once and close connection immediately."""
+        db = create_connection()
+        if db:
+            cursor = db.cursor(dictionary=True)
+            try:
+                # We use a direct cursor here to keep the logic contained
+                cursor.execute(f"DESCRIBE {self.table_name}")
+                results = cursor.fetchall()
+                self.columns = [row['Field'] for row in results]
+            except Exception:
+                # Table might not exist yet during the very first run of setup_db.py
+                self.columns = []
+            finally:
+                cursor.close()
+                db.close()
+
     def run_query(self, query, params:tuple = ()):
         """
         Run a given SQL query with optional parameters.
@@ -60,6 +80,22 @@ class BaseModel:
         query = f"INSERT INTO {self.table_name} ({columns}) VALUES ({placeholders})"
         return self.run_query(query, values)
     
+    def insert_many(self, data_list: list):
+        """Insert multiple records into the table."""
+        new_ids = []
+        for data in data_list:
+            if list(data.keys()) != self.columns[1:]:  # Exclude 'id'
+                print(f"Error: Data keys {list(data.keys())} do not match model columns {self.columns[1:]}")
+                return None
+            else:
+                columns = ', '.join(data_list[0].keys())
+                placeholders = ', '.join(['%s'] * len(data_list[0]))
+                query = f"INSERT INTO {self.table_name} ({columns}) VALUES ({placeholders})"
+                values = tuple(data.values())
+                new_id = self.run_query(query, values)
+                new_ids.append(new_id)
+        return new_ids
+    
     def update(self, record_id, data: dict):
         """Update a record by its ID."""
         set_clause = ', '.join([f"{key} = %s" for key in data.keys()])
@@ -67,13 +103,13 @@ class BaseModel:
         query = f"UPDATE {self.table_name} SET {set_clause} WHERE id = %s"
         return self.run_query(query, values)
     
-    def get_by_id(self, record_id):
+    def select_by_id(self, record_id):
         """Retrieve a record by its ID."""
         query = f"SELECT * FROM {self.table_name} WHERE id = %s"
         results = self.run_query(query, (record_id,))
         return results[0] if results else None
     
-    def get_all(self):
+    def select_all(self):
         """Retrieve all records from the table."""
         query = f"SELECT * FROM {self.table_name}"
         return self.run_query(query)
@@ -93,8 +129,14 @@ class BaseModel:
         db = create_connection()
         if db:
             cursor = db.cursor()
+            cursor.execute(f"DESCRIBE {table_name}")
+            column_names = [col[0] for col in cursor.fetchall()]
+            print(f"Table '{table_name}' columns: {column_names}")
+        else:
+            print("No database available.")
 
         try:
+            print(f"Importing data from {file_path} into {table_name}...")
             with open(file_path, mode='r', encoding=encoding) as f:
                 reader = csv.DictReader(f, delimiter=delimiter)
                 # Clean headers to avoid hidden space issues
@@ -104,7 +146,7 @@ class BaseModel:
                 # 1. FIND THE INTERSECTION
                 # We only use columns that are both in your Model AND in the CSV
                 # (Excluding 'id' because it's auto-increment)
-                cols_to_use = [col for col in self.columns if col in csv_headers and col != 'id']
+                cols_to_use = [col for col in column_names if col in csv_headers and col != 'id']
                     
                 if not cols_to_use:
                     print(f"❌ Error: No matching columns found between Model and CSV.")
@@ -113,15 +155,19 @@ class BaseModel:
                 # 2. DYNAMICALLY BUILD THE SQL
                 columns_str = ", ".join(cols_to_use)
                 placeholders = ", ".join(["%s"] * len(cols_to_use))
-                sql = f"INSERT INTO {self.table_name} ({columns_str}) VALUES ({placeholders})"
+                sql = f"INSERT INTO {table_name} ({columns_str}) VALUES ({placeholders})"
 
                 rows_to_insert = []
                 for row in reader:
-                    # 3. EXTRACT ONLY THE NEEDED DATA
-                    # row.get(col) handles cases where a row might be missing a value
-                    values = tuple(row.get(col).strip() if row.get(col) else None for col in cols_to_use)
-                    rows_to_insert.append(values)
+                    # --- PASTE THE FIX HERE ---
+                    values = []
+                    for col in cols_to_use:
+                        val = row.get(col)
+                        # val.strip() removes hidden spaces; 
+                        # 'if val is not None' prevents crashing on empty cells
+                        values.append(val.strip() if val is not None else None)
                     
+                    rows_to_insert.append(tuple(values))
                 if rows_to_insert:
                     cursor.executemany(sql, rows_to_insert)
                     db.commit()
@@ -134,99 +180,5 @@ class BaseModel:
         finally:
             cursor.close()
             db.close()
-    
-# TODO: AUTOMATE COLUMNS NAME FETCHING FROM THE DB SCHEMA
-class MealsModel(BaseModel):
-    """Model for the 'Meals' table."""
-    def __init__(self):
-        super().__init__('Meals', ['id', 'name', 'default_time'])
-
-
-class MenuModel(BaseModel):
-    """Model for the 'Menus' table."""
-    def __init__(self):
-        super().__init__('Menus', ['id', 'user_id', 'created_at', 'submitted_at'])
-
-
-class MenuMealsModel(BaseModel):
-    """Model for the 'Menu_meals' table."""
-    def __init__(self):
-        super().__init__('Menu_meals', ['id', 
-                                       'menu_id', 
-                                       'meal_id', 
-                                       'recipe_id', 
-                                       'meal_time', 
-                                       'regenerated_times', 
-                                       'if_picked_manually', 
-                                       'submitted_at'])
-
-
-class RecipesModel(BaseModel):
-    """Model for the 'Recipes' table."""
-    def __init__(self):
-        super().__init__('Recipes', ['id', 
-                                     'name', 
-                                     'external_id', 
-                                     'country_id', 
-                                     'meal_id', 
-                                     'category_id', 
-                                     'n_portions', 
-                                     'prep_time', 
-                                     'cooking_time', 
-                                     'area', 
-                                     'thumb', 
-                                     'source_url', 
-                                     'youtube', 
-                                     'rating', 
-                                     'created_at'])
-        
-class CategoriesModel(BaseModel):
-    """Model for the 'Categories' table."""
-    def __init__(self):
-        super().__init__('Categories', ['id', 'name'])
-
-class CountriesModel(BaseModel):
-    """Model for the 'Countries' table."""
-    def __init__(self):
-        super().__init__('Countries', ['id', 'name'])
-
-
-class IngredientsModel(BaseModel):
-    """Model for the 'Ingredients' table."""
-    def __init__(self):
-        super().__init__('Ingredients', ['id', 'name'])
-
-
-class UsersModel(BaseModel):
-    """Model for the 'Users' table."""
-    def __init__(self):
-        super().__init__('Users', ['id', 
-                                   'username', 
-                                   'email', 
-                                   'role_id', 
-                                   'password_hash', 
-                                   'created_at', 
-                                   'is_active', 
-                                   'country_id', 
-                                   'age_full_years', 
-                                   'birth_date',])
-
-class UserRolesModel(BaseModel):
-    """Model for the 'User_roles' table."""
-    def __init__(self):
-        super().__init__('User_roles', ['id', 'name', 'description'])
-
-
-class FavoritesRecipesModel(BaseModel):
-    """Model for the 'User_favorite_recipes' table."""
-    def __init__(self):
-        super().__init__('User_favorite_recipes', ['id', 'user_id', 'recipe_id', 'added_at'])
-
-class RecipesIngredientsModel(BaseModel):
-    """Model for the 'Recipes_ingredients' table."""
-    def __init__(self):
-        super().__init__('Recipes_ingredients', ['id', 'recipe_id', 'ingredient_id', 'measure', 'units', 'order_index'])
-# TODO : Add other models as needed
-
 if __name__ == "__main__":    # Example usage
     pass
