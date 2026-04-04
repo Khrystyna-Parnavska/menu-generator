@@ -6,68 +6,73 @@
 
 {% block body %}
 <div class="selection-container" style="padding: 20px;">
-    <h2 style="text-align: center;">Pick a Recipe</h2>
+    <h2 style="text-align: center; color: var(--text-pink);">Pick a Recipe</h2>
 
-    <form method="GET" style="display: flex; gap: 10px; margin-bottom: 30px; justify-content: center;">
-        <input type="text" name="search" placeholder="Search recipes..." value="{{ search_query }}" class="custom-input" style="width: 300px;">
-        
+    <form class="manual-search-form" method="GET" style="display: flex; gap: 10px; margin-bottom: 30px; justify-content: center;">
         <input type="hidden" name="meal_index" value="{{ meal_index }}">
         <input type="hidden" name="menu_id" value="{{ menu_id }}">
 
-        <select name="category" class="custom-input">
-            <option value="">All Categories</option>
-            {% for cat in categories %}
-                <option value="{{ cat.id }}" {% if cat.id|string == request.args.get('category') %}selected{% endif %}>
-                    {{ cat.name }}
-                </option>
-            {% endfor %}
-        </select>
-        
-        <button type="submit" class="action-btn">Filter</button>
+        <div class="search-group" style="display: flex; gap: 10px; align-items: center;"> 
+            <input type="text" name="search" placeholder="Search recipes..." value="{{ search_query }}" class="custom-input">
+        </div>
+
+        <div class="search-group" style="display: flex; gap: 10px; align-items: center;">
+            <select name="category" class="custom-input">
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if cat.id|string == request.args.get('category') %}selected{% endif %}>
+                        {{ cat.name }}
+                    </option>
+                {% endfor %}
+            </select>
+            
+            <button type="submit" class="action-btn" style="min-height: 40px;" >Filter</button>
+        </div>
     </form>
+
+    <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+        <a href="{{ url_for('add_recipe') }}" class="action-btn" style="text-decoration: none; background-color: var(--bright-purple);">
+            + Add New Recipe
+        </a>
+    </div>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;">
         {% for recipe in recipes %}
-        <div class="meal-card">
-            {% if recipe.thumb %}
-                <img src="{{ recipe.thumb }}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;">
-            {% else %}
-                <div style="width: 100%; height: 150px; background: var(--bg-dark); border-radius: 8px; margin-bottom: 10px;"></div>
-            {% endif %}
+        <div class="meal-card manual-selection-card">
+    {% if recipe.thumb %}
+        <img src="{{ recipe.thumb }}" class="card-thumb">
+    {% else %}
+        <div class="card-thumb placeholder-bg"></div>
+    {% endif %}
 
-            <div class="recipe-info">
-                <h4 class="recipe-name">{{ recipe.name }}</h4>
-                <p style="margin-top: auto; color: var(--text-pink);">Prep: {{ recipe.prep_time }}</p>
-            </div>
+    <div class="recipe-info">
+        <h4 class="recipe-name">{{ recipe.name }}</h4>
+        <p class="prep-text">Prep: {{ recipe.prep_time }}</p>
+        <p class="prep-text">Cook: {{ recipe.cooking_time }}</p>
+    </div>
 
-            <a href="{{ url_for('recipe_details', recipe_id=recipe.id, meal_index=meal_index, menu_id=menu_id) }}" class="submit-btn" style="display:block; text-decoration:none; text-align: center; padding: 10px;">View Details</a>
+    <div class="action-footer">
+        <a href="{{ url_for('recipe_details', recipe_id=recipe.id, meal_index=meal_index, menu_id=menu_id) }}" 
+        class="card-btn view-btn">
+        View Details
+        </a>
         
-           {% if recipe.id in favorite_ids %}
-                <form action="{{ url_for('remove_favorite', recipe_id=recipe.id) }}" method="POST">
-                    <button type="submit" class="submit-btn" style="width: 100%; padding: 10px;">Remove from Favorites</button>
-                </form>
-            {% else %}  
-                <form action="{{ url_for('add_favorite', recipe_id=recipe.id) }}" method="POST">
-                        <button type="submit" class="submit-btn" style="width: 100%; padding: 10px;">Add to Favorites</button>
-                </form>
-            {% endif %}
+        <form action="{{ url_for('remove_favorite' if recipe.id in favorite_ids else 'add_favorite', recipe_id=recipe.id) }}" method="POST">
+            <button type="submit" class="card-btn favorite-btn {{ 'is-favorite' if recipe.id in favorite_ids else '' }}">
+                {{ "Remove Favorite" if recipe.id in favorite_ids else "Add Favorite" }}
+            </button>
+        </form>
 
-            <div style="width: 100%; margin-top: 10px;">
-                {% if meal_index != -1 %}
-                    <form action="{{ url_for('select_recipe', meal_index=meal_index, recipe_id=recipe.id, menu_id=menu_id) }}" method="POST">
-                        <button type="submit" class="submit-btn" style="width: 100%; padding: 10px;">Select for Menu</button>
-                    </form>
-                {% endif %}
-                        
-            </div>
-        </div>
+        {% if meal_index != -1 %}
+            <form action="{{ url_for('select_recipe', meal_index=meal_index, recipe_id=recipe.id, menu_id=menu_id) }}" method="POST">
+                <button type="submit" class="card-btn select-btn">Select for Menu</button>
+            </form>
+        {% endif %}
+    </div>
+</div>
     {% endfor %}
     </div> 
-    <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
-    <a href="{{ url_for('add_recipe') }}" class="action-btn" style="text-decoration: none; background-color: var(--bright-purple);">
-        + Add New Recipe
-    </a>
-</div>
+    
     <div style="text-align: center; margin-top: 30px;">
         <a href="{{ url_for('menu') }}" style="color: var(--text-pink);">Back to Menu</a>
     </div>

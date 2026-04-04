@@ -10,17 +10,17 @@
     <form action="{{ url_for('init_plan') }}" method="POST" style="max-width: 600px; margin: 0 auto;">
         <input type="hidden" name="user_timezone" id="user_timezone">
 
-        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: flex; gap: 15px;">
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px; padding: 20px; margin-bottom: 20px; display: flex; gap: 15px;">
             
-            <div style="flex: 2;">
+            <div style="flex: 1.5;">
                 <label class="custom-label" style="font-size: 12px; display: block; margin-bottom: 8px;">Start Date</label>
                 <input type="date" name="start_date" id="start_date" class="custom-input" required 
-                    style="width: 100%; height: 45px; color-scheme: dark;"> 
+                    style="width: 100%; height: 45px; color-scheme: dark; font-size: 13px;"> 
                     </div>
 
             <div style="flex: 1;">
                 <label class="custom-label" style="font-size: 12px; display: block; margin-bottom: 8px;">Days</label>
-                <select name="duration_days" class="custom-input" style="width: 100%; height: 45px;">
+                <select name="duration_days" class="custom-input" style="width: 100%; height: 45px; font-size: 12px;">
                     <option value="1">1 Day</option>
                     <option value="3">3 Days</option>
                     <option value="7" selected>7 Days (Week)</option>
@@ -70,7 +70,7 @@
 
                         <form action="{{ url_for('regenerate_full_menu', menu_id=menu_id) }}" method="POST" style="margin: 0;">
                             <button type="submit" class="action-btn" style="background: var(--accent-purple); border: 1px solid rgba(255,255,255,0.2);">
-                                ♻️ Regenerate Full Day
+                            Regenerate Full Day
                             </button>
                         </form>
                     </div>
@@ -82,8 +82,8 @@
                             <div class="menu-row-card" style="margin-bottom: 15px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
                                 <input type="hidden" name="meal_{{ loop.index0 }}_id" value="{{ meal_entry['meal_id'] }}">
                                 
-                                <div style="max-width: 120px; flex-shrink: 0;">
-                                    <div class="time-badge" style="background: rgba(255, 255, 255, 0.1); padding: 10px 5px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.15); text-align: center;">
+                                <div class="menu-time-container">
+                                    <div class="time-badge" style="background: rgba(255, 255, 255, 0.1); border-radius: 5px; border: 1px solid rgba(255, 255, 255, 0.15); text-align: center;">
                                         <input type="time" name="meal_time_{{ loop.index0 }}" 
                                             value="{{ meal_entry['meal_time'] }}" 
                                             class="custom-input" 
@@ -91,12 +91,13 @@
                                     </div>
                                 </div>
 
-                                <div style="flex: 1; margin: 0 20px; text-align: left; overflow: hidden;">
-                                    <span style="color: var(--text-pink); font-size: 0.75em; font-weight: bold; text-transform: uppercase; display: block;">{{ meal_entry['meal_type'] }}</span>
+                                <div class ="recipe-info">
+                                    <span style="color: var(--text-pink); font-size: 0.9em; font-weight: bold; text-transform: uppercase; display: block;">{{ meal_entry['meal_type'] }}</span>
                                     <strong style="font-size: 1.2em; color: white; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ meal_entry['recipe_name'] }}</strong>
+                                    <a style="color: var(--bright-purple);" href="{{ url_for('recipe_details', recipe_id=meal_entry['recipe_id'], menu_id=menu_id) }}">See details</a>
                                 </div>
 
-                                <div style="max-width: 160px; flex-shrink: 0; display: flex; flex-direction: column; gap: 5px;">
+                                <div class="action-group">
                                     <button type="button" class="action-btn" onclick="submitRegen('{{ menu_id }}', '{{ loop.index0 }}')">
                                         🔄 Regenerate
                                     </button>

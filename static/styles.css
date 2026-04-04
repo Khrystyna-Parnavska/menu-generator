@@ -5,6 +5,7 @@
     --bright-purple: #8c53d1;
     --text-pink: #ff66b2;
     --input-bg: #4b2b7f;
+    --ing-row-bg: #563b80;
 }
 
 body {
@@ -61,39 +62,46 @@ header {
 
 .meal-card {
     background: var(--input-bg);
-    padding: 20px;
+    padding: 15px; /* Slightly reduced padding for mobile */
     border-radius: 20px;
-    display: flex; /* Changed from display: block or grid */
+    display: flex;
     flex-direction: column;
-    justify-content:space-between; 
+    justify-content: space-between; 
     align-items: center;
-    gap: 15px;
-    min-height: 350px; /* Set a consistent height for all cards */
+    gap: 10px;
+    min-height: 400px; /* Force a fixed height so all cards match */
+    overflow: hidden; /* Prevent long content from bleeding out */
 }
 
-/* Create a container for the text to handle the 3-line limit */
+.meal-card-header { 
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+}
 .recipe-info {
-    flex-grow: 1; /* This pushes the button to the bottom */
+    width: 100%;
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    width: 100%;
+    text-align: center;
+    height: auto; /* Fixed height for the name area */
+    gap: 2px;
 }
 
 .recipe-name {
-    margin-bottom: 10px;
-    font-size: 1.1em;
-    font-weight: bold;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    
+    font-size: 1.1rem !important; /* Smaller size to fit more text */
+    line-height: 1.2 !important;
+    margin: 0;
+    padding: 0 5px;
     color: white;
-    /* Fix to exactly 3 lines with ellipsis if too long */
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;  
-    overflow: hidden;
-    min-height: 4.2em; /* Ensures cards with 1 line still take up 3 lines of space */
 }
-
-/* Specific layout for the Menu page to make cards thin and wide */
 .menu-row-card {
     background: var(--input-bg);
     padding: 15px 25px;
@@ -127,12 +135,29 @@ header {
     max-width: 120px;
 }
 
-.time-badge {
+.time-badge {  
     background: var(--bright-purple);
-    padding: 10px;
-    border-radius: 10px;
-    text-align: center;
-    font-weight: bold;
+    display: inline-flex;
+    /* 2. Centers it horizontally in its parent div */
+    margin: 0 auto 15px auto; 
+    
+    /* 3. Forces the parent to treat it like a centered object */
+    align-self: center;
+
+    /* 4. Tighter padding so it doesn't look like a giant block */
+    padding: 8px 20px;
+    
+    /* 5. Keep your fix from before so it stays on one line */
+    white-space: nowrap;
+    
+    /* 6. Optional: Rounded corners look better on Galaxy screens */
+    border-radius: 12px; 
+
+    /* 2. Prevent the text from wrapping to a new line */
+    white-space: nowrap; 
+
+    /* 3. Use 'ch' or 'em' units so it scales with font size */
+    font-size: 1.1rem; 
 }
 
 .action-group { display: flex; flex-direction: column; gap: 8px; }
@@ -297,11 +322,23 @@ input[type="date"].custom-input {
     gap: 20px;
 }
 
-.custom-label{
-    margin-bottom: 10px;
-    text-align: left;
+.custom-label {
+    display: block;           /* CRITICAL: Allows margin and alignment to work */
+    margin-bottom: 10px;      /* Adds the space under the label */
+    text-align: center;       /* Centers the text */
     color: var(--text-pink); 
     font-weight: bold;
+    width: 100%;              /* Ensures it spans the full width to center correctly */
+}
+.shopping-row input[type=number]::-webkit-outer-spin-button,
+.shopping-row input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Hide arrows for Firefox */
+.shopping-row input[type=number] {
+    -moz-appearance: textfield;
 }
 
 input[type=number].custom-input::-webkit-outer-spin-button,
@@ -367,8 +404,81 @@ textarea.custom-input[readonly] {
     text-align: left;
 }
 
+.recipe-header-card img {
+    max-width: 200px; 
+    max-height: 200px; 
+    object-fit: cover; 
+    border-radius: 15px; 
+    border: 2px solid var(--accent-purple); 
+    flex-shrink: 0;
+}
+
+.placeholder-bg {
+    width: 200px;
+    height: 200px;
+    background: var(--bg-dark);
+}
+
+.recipe-header-info {
+    flex-grow: 1;
+}
+
+.recipe-title {
+    color: var(--text-pink); 
+    margin: 0 0 15px 0; 
+    font-size: 2em;
+}
+
+/* Container: Stack the rows, but keep internal content horizontal */
+.recipe-stats-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* Tight gap to save vertical space */
+    margin-top: 15px;
+}
+
+/* Row: Keeps badge and text on the same line */
+.stat-row {
+    display: flex;
+    align-items: center; 
+    gap: 12px; /* Space between badge and label */
+}
+
+/* Force badges to a consistent width so labels align vertically */
+.recipe-stats-container .time-badge {
+    min-width: 130px; /* Adjust based on your longest time text */
+    justify-content: center;
+    margin: 0 !important; 
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    flex-shrink: 0; /* Prevents badge from squishing */
+}
+
+/* Label styling */
+.stat-label {
+    color: var(--text-pink); /* Or white, depending on preference */
+    font-size: 0.9rem;
+    white-space: nowrap; /* Prevents text from jumping to a second line */
+}
+
+/* Mobile Fix: Ensure they don't wrap even on small screens */
+@media (max-width: 768px) {
+    .stat-row {
+        justify-content: flex-start;
+    }
+    
+    .recipe-stats-container .time-badge {
+        min-width: 110px; /* Slightly smaller for mobile */
+        font-size: 0.8rem;
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+    }
+}
+
 .favorite-action-container {
-    margin-bottom: 20px; /* Space below the button */
+    margin-top: 20px; /* Space below the button */
     width: 100%;
 }
 
@@ -501,6 +611,101 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .meal-checkbox-label:hover {
     background: rgba(255, 255, 255, 0.08) !important;
 }
+
+.manual-selection-card {
+    height: auto !important; /* Removes the 400px restriction */
+    min-height: unset !important;
+    padding: 12px !important;
+    display: flex;
+    flex-direction: column;
+    gap: 8px !important; /* Tightens space between all elements */
+}
+
+.card-thumb {
+    width: 100%; 
+    height: 140px; /* Slightly shorter to save vertical space */
+    object-fit: cover; 
+    border-radius: 12px;
+}
+
+/* Ensure the info area doesn't force extra space */
+.manual-selection-card .recipe-info {
+    height: auto !important;
+    text-align: left;
+    padding: 5px 0;
+}
+
+.manual-selection-card .recipe-name {
+    font-size: 1rem !important;
+    margin-bottom: 4px !important;
+    -webkit-line-clamp: 1 !important; /* Keep it to one line to save space */
+}
+
+.prep-text {
+    font-size: 0.9rem;
+    color: var(--text-pink);
+    margin: 0 0 0 20px;
+    font-weight: 600;
+}
+
+/* Group buttons together with small gaps */
+.action-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* Controlled gap between buttons */
+    width: 100%;
+    margin-top: auto; /* Pushes the button group to the bottom of the card */
+}
+
+/* Base style for ALL buttons/links in the card */
+.card-btn {
+    display: block;          /* Forces the <a> tag to act like a button block */
+    width: 100%;             /* Ensures 100% width of the card padding */
+    box-sizing: border-box;  /* Prevents padding from making it wider than 100% */
+    padding: 10px;           /* Comfortable touch target */
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-align: center;
+    text-decoration: none;   /* Removes underline from <a> */
+    border: none;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.card-btn:active {
+    transform: scale(0.98); /* Subtle "click" effect */
+}
+
+/* Specific Colors */
+.view-btn { 
+    background-color: var(--accent-purple); 
+    color: white; 
+}
+
+.favorite-btn { 
+    background-color: transparent; 
+    color: white; 
+    border: 1px solid var(--text-pink); 
+}
+
+/* The active state (is a favorite) */
+.favorite-btn.is-favorite {
+    background-color: var(--text-pink); /* Your pink theme color */
+    border-color: var(--text-pink);
+    color: white;
+}
+
+/* Optional: Add a hover effect to show it can be toggled */
+.favorite-btn.is-favorite:hover {
+    opacity: 0.9;
+    background-color: #ff4d94; /* A slightly deeper pink for the hover */
+}
+
+.select-btn { 
+    background-color: var(--text-pink); 
+    color: white; 
+}
 /* --- Mobile Responsive Rules --- */
 
 /* This triggers for screens smaller than 768px (most phones) */
@@ -528,19 +733,54 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         padding: 10px 20px;
     }
 
-    .recipe-header-card {
-        flex-direction: column !important; /* Stack image on top of title */
-        text-align: center !important;
-        padding: 15px !important;
+   .selection-container {
+        padding: 10px !important;
     }
-    
+
+    /* 2. Fix the Header Card (The part with the image and title) */
+    .recipe-header-card {
+        flex-direction: column !important; /* Stack image above text */
+        gap: 15px !important;
+        padding: 15px !important;
+        text-align: center !important;
+    }
+
+    /* 3. Scale the Recipe Image to fit the phone width */
     .recipe-header-card img {
-        max-width: 100% !important; /* Let image fill the width */
-        height: auto !important;
+        max-width: 100% !important;
+        width: 180px; /* Smaller image on mobile to save space */
+        height: 180px;
+        aspect-ratio: 1 / 1;
+        margin: 0 auto;
+    }
+
+    /* 4. Fix the Title size for mobile */
+    .recipe-header-card h1 {
+        font-size: 1.5rem !important; /* Smaller text so it doesn't wrap 5 times */
+        margin-top: 10px !important;
+    }
+
+    /* 5. Adjust the Time Badges so they don't overflow */
+    .recipe-header-card .time-badge {
+        flex: 1 1 calc(45% - 10px); /* Forces them into a 2x2 grid on the phone */
+        font-size: 0.8rem !important;
+        min-width: 120px;
+        padding: 6px 10px !important;
+        margin: 0 !important;
     }
     .recipe-grid-container {
-        grid-template-columns: 1fr; /* Stack ingredients and instructions into 1 column */
-        gap: 20px;
+    grid-template-columns: 1fr !important; /* Force a single column stack */
+    gap: 15px !important;
+    }
+
+    /* Ensure the cards don't have a fixed height on this page */
+    .recipe-grid-container .meal-card {
+        min-height: auto !important; 
+        height: auto !important;
+    }
+    .recipe-stats-container {
+        justify-content: center; /* Centers badges on phone */
+        display: flex !important; /* Ensures it's not hidden */
     }
     .favorite-action-container {
         margin-bottom: 15px;
@@ -555,8 +795,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     .menu-time-container {
         max-width: 100%;        /* Let the time input take full width */
         text-align: center;
+        margin-bottom: 0;
+        align-self: center;
     }
-
+    
+    /* Ensure the time badge doesn't have extra bottom margin */
+    .menu-time-container .time-badge {
+        margin-bottom: 0 !important; 
+        padding: 5px 10px;
+    }
     .menu-info {
         text-align: center;     /* Center the recipe name */
         border-bottom: 1px solid var(--accent-purple);
@@ -598,5 +845,18 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     .selection-container form > div[style*="grid-template-columns"] {
         grid-template-columns: 1fr !important;
         gap: 15px !important;
+    }
+    .category_select {
+        padding: 12px 20px !important; /* Bigger touch target for mobile */
+        font-size: 1rem !important; /* Ensure text is readable on mobile */
+    }
+    .manual-search-form {
+        flex-direction: column; /* Force vertical stacking */
+        align-items: stretch;   /* Stretch items to full width */
+        gap: 10px;
+    }
+
+    .manual-search-form .search-group {
+        flex: 1 1 auto;         /* Allow them to be 100% wide */
     }
 }
