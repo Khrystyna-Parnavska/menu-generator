@@ -401,7 +401,8 @@ def send_meal_reminders():
                 query = """
                     SELECT mm.id, u.email, r.name as recipe_name, mm.meal_time 
                     FROM Menu_meals mm
-                    JOIN Users u ON mm.user_id = u.id
+                    JOIN Menus m ON mm.menu_id = m.id
+                    JOIN Users u ON m.user_id = u.id
                     JOIN Recipes r ON mm.recipe_id = r.id
                     WHERE mm.meal_time BETWEEN %s AND DATE_ADD(%s, INTERVAL 30 MINUTE)
                     AND mm.reminder_sent = 0
@@ -1028,7 +1029,6 @@ def shopping_list(menu_id):
     check = shopping_list_model.run_query("SELECT id FROM Shopping_list WHERE menu_id = %s AND created_at BETWEEN %s AND %s LIMIT 1", (menu_id, utc_start, utc_end))
     
     if check:
-        print(f"Existing shopping list found with ID {check['id']}")
         shopping_list_id = check[0]['id']
     else:
         # Initial Creation: Snapshot ingredients from Menu into the Shopping List Table

@@ -214,8 +214,6 @@ ALTER TABLE
     `Shopping_list` ADD CONSTRAINT `shopping_list_menu_id_foreign` FOREIGN KEY(`menu_id`) REFERENCES `Menus`(`id`);
 ALTER TABLE
     `Users` ADD CONSTRAINT `users_role_id_foreign` FOREIGN KEY(`role_id`) REFERENCES `User_roles`(`id`);
-ALTER TABLE 
-    `Shopping_list` ADD CONSTRAINT `shopping_list_menu_id_foreign` FOREIGN KEY(`menu_id`) REFERENCES `Menus`(`id`);
 ALTER TABLE
     `Ingredient_restrictions` ADD CONSTRAINT `ingredient_restrictions_ingredient_id_foreign` FOREIGN KEY(`ingredient_id`) REFERENCES `Ingredients`(`id`);
 ALTER TABLE
