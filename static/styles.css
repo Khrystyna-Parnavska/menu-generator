@@ -25,19 +25,23 @@ header {
     border-bottom: 2px solid var(--accent-purple);
 }
 
-.logo-section { display: flex; align-items: center; gap: 10px; }
+.logo-section { 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; }
 .header-profile { font-size: 0.9em; color: var(--text-pink); }
 
 /* --- Layout --- */
 .app-container { display: flex; min-height: 100vh; }
 
+/* Sidebar default state (Hidden on mobile) */
 .sidebar {
     width: 260px;
     background-color: var(--bg-dark);
     padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 10px;
 }
 
 .main-content {
@@ -706,6 +710,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     background-color: var(--text-pink); 
     color: white; 
 }
+.action-group-menu {
+    flex-direction: column; /* Stack Regenerate and Pick Manually vertically */
+    gap: 10px; /* Space between the buttons */
+}
 /* --- Mobile Responsive Rules --- */
 
 /* This triggers for screens smaller than 768px (most phones) */
@@ -715,14 +723,35 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     }
 
     .sidebar {
-        width: 100%; /* Take full width */
-        display: none; /* HIDE IT BY DEFAULT */
+        /* Transform into a sliding drawer */
+        position: fixed;
+        padding: 20px;
+        top: 60px; /* Adjust to match your header height */
+        left: -300px; /* Hide off-screen to the left */
+        bottom: 0;
+        z-index: 1000;
+        transition: left 0.3s ease;
+        box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+    }
+    .sidebar.active {
+        left: 0;
+    }
+    
+    #menu-toggle {
+        display: block;
+        position: fixed; /* Keeps it in the same spot while scrolling */
+        top: 15px;      /* Distance from the top */
+        left: 15px;     /* Distance from the left */
+        z-index: 2000;  /* Higher than the sidebar (1000) so it's always on top */
+        background-color: var(--bg-dark); /* Add a background so it's visible over content */
         padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.3);
     }
 
-    /* A special class to show the sidebar when we click a button */
-    .sidebar.active {
-        display: flex;
+    /* Prevent the logo/header from looking empty when the button moves */
+    .logo-section {
+        padding-left: 50px; 
     }
 
     .main-content {
@@ -731,6 +760,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
     header {
         padding: 10px 20px;
+    }
+    .action-group-menu {
+    flex-direction: row;
+    gap: 1px;
     }
 
    .selection-container {
@@ -859,4 +892,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     .manual-search-form .search-group {
         flex: 1 1 auto;         /* Allow them to be 100% wide */
     }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }

@@ -22,6 +22,7 @@
         <div class="sidebar" id="sidebar">
                 <a href="{{ url_for('menu') }}" class="nav-btn">My Daily Menu</a>
                 <a href="{{ url_for('manual_search', meal_index=-1, menu_id=0) }}" class="nav-btn">Explore</a>
+                <a href="{{ url_for('manage_shopping_lists') }}" class="nav-btn">Shopping Lists</a>
                 <a href="{{ url_for('history') }}" class="nav-btn">History</a>
                 <a href="{{ url_for('preferences') }}" class="nav-btn">Preferences</a>
                 <a href="{{ url_for('favorites') }}" class="nav-btn">Favorites</a>
@@ -34,10 +35,31 @@
             {% endif %}
 
         </div>
+        
         <main class="main-content">
+            <div class="flash-container" style="max-width: 600px; margin: 10px auto;">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="flash-message {{ category }}" style="
+                        padding: 15px; 
+                        margin-bottom: 10px; 
+                        border-radius: 8px; 
+                        color: white;
+                        text-align: center;
+                        background-color: {% if category == 'error' %}#ff4d4d{% elif category == 'success' %}#2ecc71{% else %}#3498db{% endif %};
+                        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                        animation: fadeIn 0.5s;">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
+            </div>
         {% block body %}{% endblock %}
         </main>
     </div>
+    
 </body>
 <script>
     const menuToggle = document.getElementById('menu-toggle');
@@ -46,5 +68,15 @@
     menuToggle.addEventListener('click', () => {
         sidebar.classList.toggle('active');
     });
+
+    // Wait for the page to load
+    setTimeout(function() {
+        const flashes = document.querySelectorAll('.flash-message');
+        flashes.forEach(function(flash) {
+            flash.style.transition = "opacity 0.5s ease";
+            flash.style.opacity = "0";
+            setTimeout(() => flash.remove(), 500);
+        });
+    }, 4000); // 4000ms = 4 seconds
 </script>
 </html>

@@ -56,7 +56,9 @@ CREATE TABLE `Users`(
     `age_full_years` SMALLINT NULL,
     `birth_date` DATE NULL,
     `gender` VARCHAR(10) NULL,
-    `journaling` BOOLEAN NOT NULL DEFAULT 0
+    `journaling` BOOLEAN NOT NULL DEFAULT 0,
+    `is_verified` BOOLEAN DEFAULT FALSE,
+    `email_verification_code` VARCHAR(6) NULL
 );
 CREATE TABLE `Restrictions`(
     `id` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -144,16 +146,19 @@ CREATE TABLE `Recipes`(
     `created_by_user_id` BIGINT UNSIGNED NULL COMMENT 'if added by user, specifies user id',
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
 CREATE TABLE `Shopping_list`(
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `menu_id` BIGINT UNSIGNED NOT NULL,
+    `name` VARCHAR(255) NOT NULL DEFAULT 'My Shopping List',
+    `user_id` BIGINT UNSIGNED NULL,
+    `menu_id` BIGINT UNSIGNED NULL,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE `Shopping_list_ingredients`(
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `shop_list_id` BIGINT UNSIGNED NOT NULL,
-    `ingredient_id` BIGINT UNSIGNED NOT NULL,
+    `ingredient_id` BIGINT UNSIGNED NULL,
     `item_name` TEXT NULL COMMENT 'used if ingredient is not in the ingredients table',
     `category_id` SMALLINT UNSIGNED NULL,
     `measure` DECIMAL(6,2) UNSIGNED NOT NULL,
@@ -244,7 +249,7 @@ ALTER TABLE
     `Ingredients_categories_map` ADD CONSTRAINT `ingredients_categories_map_ingredient_id_foreign` FOREIGN KEY(`ingredient_id`) REFERENCES `Ingredients`(`id`); 
 ALTER TABLE
     `Ingredients_categories_map` ADD CONSTRAINT `ingredients_categories_map_user_id_foreign` FOREIGN KEY(`user_id`) REFERENCES `Users`(`id`);
-alter table
+ALTER TABLE
     `Ingredients_categories_map` ADD CONSTRAINT `ingredients_categories_map_source_id_foreign` FOREIGN KEY(`source_id`) REFERENCES `Data_sources`(`id`);
 ALTER TABLE
     `Ingredient_categories` ADD CONSTRAINT `ingredient_categories_source_id_foreign` FOREIGN KEY(`source_id`) REFERENCES `Data_sources`(`id`);
@@ -252,3 +257,5 @@ ALTER TABLE
     `Units` ADD CONSTRAINT `units_source_id_foreign` FOREIGN KEY(`source_id`) REFERENCES `Data_sources`(`id`);
 ALTER TABLE
     `Shopping_list_ingredients` ADD CONSTRAINT `shopping_list_ingredients_category_id_foreign` FOREIGN KEY(`category_id`) REFERENCES `Ingredient_categories`(`id`);
+ALTER TABLE
+    `Shopping_list_ingredients` ADD CONSTRAINT `shopping_list_ingredients_ingredient_id_foreign` FOREIGN KEY(`ingredient_id`) REFERENCES `Ingredients`(`id`);

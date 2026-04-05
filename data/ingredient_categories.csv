@@ -1,18 +1,24 @@
-name,description
-Prepared Meals,
-Produce,"Fresh, often organic items; located at the store entrance."
-Dairy & Eggs,Animal-based products and plant-based alternatives.
-Meat & Poultry,Raw proteins and pre-sliced lunch meats.
-Bakery,"Freshly baked goods, often made on-site daily."
-Frozen Foods,Items preserved at sub-zero temperatures for longevity.
-Pantry / Dry Goods,Shelf-stable items used for cooking and baking.
-Snack,Ready-to-eat comfort foods and quick bites.
-Alcochol Beverages,"Liquid refreshments, both caffeinated and non-alcoholic."
-Household & Cleaning,Non-food essentials for home maintenance and hygiene.
-Baby Food,
-Deli & Cured Meats,
-Fish & Seafood,Iced / Refrigerated
-Non-Alcochol Beverages,
-Candy,
-Sport,
-Other,Varies based on item type
+name,subcategories,description
+Prepared Meals,"Pizza|Cheese sandwiches|Meat mixed dishes|Poultry mixed dishes|Seafood mixed dishes|Rice mixed dishes|Fried rice and lo/chow mein|Burritos and tacos|Deli and cured meat sandwiches|Meat and BBQ sandwiches|Burgers|Chicken fillet sandwiches|Seafood sandwiches|Frankfurter sandwiches|Soups, broth-based|Ramen and Asian broth-based soups|Soups, cream-based|Egg/breakfast sandwiches|Bean, pea, legume dishes|Vegetable dishes|Vegetable sandwiches/burgers|Peanut butter and jelly sandwiches|Mashed potatoes and white potato mixtures|Pancakes, waffles, French toast|Other Mexican mixed dishes|White potatoes, baked or boiled|French fries and other fried white potatoes|Other fruits and fruit salads|Turnovers and other grain-based items|Frankfurter sandwiches|Grits and other cooked|Oatmeal cereals|Egg rolls, dumplings, sushi|Ready-to-eat cereal, higher sugar (>21.2g/100g)|Fried vegetables|Ready-to-eat cereal, lower sugar (=<21.2g/100g)|Main food description|Macaroni and cheese|Chicken patties, nuggets and tenders|Nutritional beverages|Nutrition bars|",Ready-to-eat or heat-and-serve dishes often found in the deli or frozen sections.
+Produce,"Coleslaw, non-lettuce salads|Other dark green vegetables|Other vegetables and combinations|White potatoes, baked or boiled|Other fruits and fruit salads|Other starchy vegetables|Corn|Carrots|Other red and orange vegetables|String beans|Broccoli|Spinach|Lettuce and lettuce salads|Citrus fruits|Cabbage|Blueberries and other berries|Vegetables on a sandwich|Onions|Apples|Tomatoes|Peaches and nectarines|Mango and papaya|Pears|Pineapple|Melons|Strawberries|Bananas|Grapes|","Fresh, often organic items; located at the store entrance."
+Dairy & Eggs,"Milk, reduced fat|Milk, whole|Milk, lowfat|Milk, nonfat|Flavored milk, whole|Yogurt, regular|Yogurt, Greek|Flavored milk, lowfat|Flavored milk, reduced fat|Flavored milk, nonfat|Milk shakes and other dairy drinks|Cream and cream substitutes|Cream cheese, sour cream, whipped cream|Pudding|Cheese|Cottage/ricotta cheese|Eggs and omelets|Butter and animal fats|Plant-based yogurt|Plant-based milk|Margarine|",Animal-based products and plant-based alternatives.
+Meat & Poultry,"Beef, excludes ground|Ground beef|Cold cuts and cured meats|Bacon|Pork|Lamb, goat, game|Turkey, duck, other poultry|Chicken, whole pieces|Liver and organ meats|Butter and animal fats|Cold cuts and cured meats|Soy and meat-alternative products|",Raw proteins and pre-sliced lunch meats.
+Bakery,"Cakes and pies|Yeast breads|Rolls and buns|Doughnuts, sweet rolls, pastries|Bagels and English muffins|Biscuits, muffins, quick breads|Turnovers and other grain-based items|Tortillas|","Freshly baked goods, often made on-site daily."
+Frozen Foods,Ice cream and frozen dairy desserts|,Items preserved at sub-zero temperatures for longevity.
+Pantry / Dry Goods,"Plant-based milk|Dips, gravies, other sauces|Stir-fry and soy-based sauce mixtures|Pasta sauces, tomato-based|Soy-based condiments|Beans, peas, legumes|Soy and meat-alternative products|Mustard and other condiments|Nuts and seeds|Turnovers and other grain-based items|Mashed potatoes and white potato mixtures|Salad dressings and vegetable oils|Coffee|Tea|Jams, syrups, toppings||Cereal bars|Olives, pickles, pickled vegetables|Rice|Ready-to-eat cereal, higher sugar (>21.2g/100g)|Oatmeal|Ready-to-eat cereal, lower sugar (=<21.2g/100g)|Corn|Dried fruits|Gelatins, ices, sorbets|Tomato-based condiments|Sugar substitutes|Mayonnaise|Sugars and honey|Tortillas|Plant-based yogurt|Pasta, noodles, cooked grains|",Shelf-stable items used for cooking and baking.
+Snack,"Tortilla, corn, other chips|Crackers, excludes saltines|Nuts and seeds|Dips, gravies, other sauces|Pretzels/snack mix|Cereal bars|Potato chips|Popcorn|Dried fruits|Nutrition bars|Nachos|Saltine crackers|","Convenient, ready-to-eat items for on-the-go consumption. Includes chips, nuts, granola bars, and more."
+Alcochol Beverages,Liquor and cocktails|Wine|Beer|,"Liquid refreshments, both caffeinated and non-alcoholic."
+Household & Cleaning,,Non-food essentials for home maintenance and hygiene.
+Baby Food,"Baby food: mixtures|Baby food: yogurt|Formula, prepared from powder|Formula, ready-to-feed|Baby food: meat and dinners|Baby food: vegetables|Baby food: cereals|Baby food: fruit|Baby food: snacks and sweets|Baby juice|Baby water",Nutritionally balanced meals and snacks for infants and toddlers.
+Deli & Cured Meats,Frankfurters|Sausages|Cold cuts and cured meats|,"Ready-to-eat sliced meats and cheeses, often found near the bakery or produce sections."
+Fish & Seafood,Fish|Shellfish| Fresh catches and frozen seafood options.,Fresh catches and frozen seafood options.
+Non-Alcochol Beverages,Smoothies and grain drinks|Fruit drinks|Coffee|Tea|Other fruit juice|Sport and energy drinks|Nutritional beverages|Soft drinks|Diet soft drinks|Diet sport and energy drinks|Citrus juice|Vegetable juice|Other diet drinks|Flavored or carbonated water|Apple juice|Tap water|Enhanced water|Bottled water,"Non-alcoholic drinks, including juices, sodas, and water."
+Candy,"Cookies and brownies|Pancakes, waffles, French toast|Liquor and cocktails|Biscuits, muffins, quick breads|Cereal bars|Candy containing chocolate|Candy not containing chocolate|",Sweet treats and confections.
+Sport,Protein and nutritional powders|Sport and energy drinks|Nutrition bars|Diet sport and energy drinks|,Products related to sports nutrition and performance.
+Other,Others that do not fit into the above categories,Varies based on item type
+Vegan,,Plant-based products free from animal-derived ingredients.
+Vegetarian,,Products that do not contain meat but may include dairy or eggs.
+Gluten-Free,,"Products that do not contain gluten, suitable for those with gluten intolerance or celiac disease."
+Dairy-Free,,"Products that do not contain dairy ingredients, suitable for those with lactose intolerance or dairy allergies."
+Halal,,"Products that comply with Islamic dietary laws, including permissible meat and non-meat items."
+Kosher,,"Products that comply with Jewish dietary laws, including permissible meat and non-meat items."

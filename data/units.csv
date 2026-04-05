@@ -14,5 +14,5 @@ handful,handful,Volume,ml,60,Estimate (~1/4 cup)
 pcs,pieces,Count,unit,1,"Default for ""1 Onion"""
 clove,clove,Count,unit,1,Specific to Garlic
 can,can,Count,unit,1,Tins/Jars/Packets
-to_serve,to serve,Subjective,-,0,"""As required/To taste"""
+to serve,to serve,Subjective,-,0,"""As required/To taste"""
 garnish,garnish,Subjective,-,0,

@@ -153,6 +153,7 @@ if __name__ == "__main__":
 
     # sources
     source_model = BaseModel('Data_sources')
+    print('Inserting data sources...')
     source_model.insert_many(sources_dict)
 
     themealdb_id = source_model.run_query("SELECT id FROM Data_sources WHERE name = %s", ('TheMealDB',))[0]['id']

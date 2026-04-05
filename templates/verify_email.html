@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block body %}
+
+<div class="auth-container" style="max-width: 400px; margin: 50px auto; text-align: center;">
+    <h2>Verify Your Email</h2>
+    <p>We sent a 6-digit code to <strong>{{ email }}</strong></p>
+    
+    <form method="POST">
+        <input type="text" name="code" placeholder="123456" required 
+               style="font-size: 2rem; letter-spacing: 5px; text-align: center; width: 80%; margin: 20px 0;">
+        <br>
+        <button type="submit" class="nav-btn" style="width: 100%;">Verify Account</button>
+    </form>
+    
+    <p style="margin-top: 20px;">
+        Didn't get it? <a href="{{ url_for('resend_code') }}" style="color: var(--text-pink);">Resend Code</a>
+    </p>
+</div>
+{% endblock %}

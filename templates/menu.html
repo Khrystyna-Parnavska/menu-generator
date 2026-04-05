@@ -14,7 +14,7 @@
             
             <div style="flex: 1.5;">
                 <label class="custom-label" style="font-size: 12px; display: block; margin-bottom: 8px;">Start Date</label>
-                <input type="date" name="start_date" id="start_date" class="custom-input" required 
+                <input type="date" name="start_date" id="start_date" onclick="this.showPicker()" class="custom-input" required 
                     style="width: 100%; height: 45px; color-scheme: dark; font-size: 13px;"> 
                     </div>
 
@@ -55,24 +55,36 @@
     {% endif %}
     {% if menus %}
     <section id="drafts-container" style="margin-top: 40px;">
-        <h2 style="text-align: center; color: var(--accent-purple); text-transform: uppercase; letter-spacing: 2px;">Menu Drafts</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid rgba(255,255,255,0.05); padding-bottom: 15px;">
+            <h2 style="margin: 0; color: var(--accent-purple); text-transform: uppercase; letter-spacing: 2px; font-size: 1.2rem;">
+                Menu Drafts ({{ menus|length }})
+            </h2>
+            
+            <a href="{{ url_for('delete_all_drafts') }}" 
+            class="action-btn" 
+            onclick="return confirm('Are you sure you want to delete all drafts?');"
+            style="background: rgba(255, 77, 77, 0.15); color: #ff4d4d; border: 1px solid #ff4d4d; text-decoration: none; padding: 8px 15px; border-radius: 5px; font-size: 12px; transition: 0.3s;">
+                &times; Clear All Drafts
+            </a>
+        </div>
         {# Loop through each menu object in the list #}
         {% for menu_obj in menus %}
             {% for menu_id, date_dict in menu_obj.items() %}
                 {% for current_date, menu_meals in date_dict.items() %}
                 
-                <div class="menu-day-card" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 15px; padding: 20px; margin-bottom: 30px;">
-                    
+                <div class="menu-day-card" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 15px; padding: 20px; margin-bottom: 30px; gap: 15px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 20px;">
-                        <div>
-                            <h3 style="margin: 0; color: var(--text-pink);">📅 {{ current_date }}</h3>
+                        <div style="display: flex; flex-direction: row; gap: 5px; padding-right: 10px;">
+                            <h3 style="margin: 0; color: var(--text-pink); text-align: center;">{{ current_date }}</h3>
                         </div>
-
-                        <form action="{{ url_for('regenerate_full_menu', menu_id=menu_id) }}" method="POST" style="margin: 0;">
-                            <button type="submit" class="action-btn" style="background: var(--accent-purple); border: 1px solid rgba(255,255,255,0.2);">
-                            Regenerate Full Day
-                            </button>
-                        </form>
+                        <div style="display: flex; gap: 10px;">
+                            <form action="{{ url_for('regenerate_full_menu', menu_id=menu_id) }}" method="POST" style="margin: 0;">
+                                <button type="submit" class="action-btn" style="background: var(--accent-purple); border: 1px solid rgba(255,255,255,0.2);">
+                                Regenerate Full Day
+                                </button>
+                            </form>
+                            <a href="{{ url_for('delete_menu', menu_id=menu_id) }}" class="action-btn" style="background: #ff4d4d; text-decoration: none; text-align: center;">Delete menu</a>
+                        </div>
                     </div>
                     <form action="{{ url_for('submit_final_menu') }}" method="POST">
                         <input type="hidden" name="menu_id" value="{{ menu_id }}">
@@ -97,17 +109,25 @@
                                     <a style="color: var(--bright-purple);" href="{{ url_for('recipe_details', recipe_id=meal_entry['recipe_id'], menu_id=menu_id) }}">See details</a>
                                 </div>
 
-                                <div class="action-group">
+                                <div class="action-group-menu" style="display: flex; flex-direction: column; gap: 8px;">
                                     <button type="button" class="action-btn" onclick="submitRegen('{{ menu_id }}', '{{ loop.index0 }}')">
                                         🔄 Regenerate
                                     </button>
-                                    <a href="{{ url_for('manual_search', meal_index=loop.index0, menu_id=menu_id) }}" class="action-btn" style="background: var(--bright-purple); text-decoration: none; text-align: center;">
+                                    <a href="{{ url_for('manual_search', meal_index=loop.index0, menu_id=menu_id) }}" 
+                                        class="action-btn" 
+                                        style="background: var(--bright-purple); text-decoration: none; text-align: center;">
                                         🔍 Pick Manually
                                     </a>
+                                    <a href="{{ url_for('get_calendar_link', meal_id=meal_entry['meal_id'], menu_id=menu_id) }}" 
+                                        target="_blank" 
+                                        class="action-btn" 
+                                        style="background: var(--bright-purple); text-decoration: none; text-align: center;">
+                                        ➕ Add to Google Calendar
+                                        </a>
                                 </div>
                             </div>
                         {% endfor %}
-
+                        
                         <button type="submit" class="submit-btn" style="width:100%; margin-top: 10px; background: linear-gradient(45deg, var(--accent-purple), var(--text-pink));">
                             Confirm Menu for {{ current_date }}
                         </button>
@@ -129,6 +149,13 @@
     </section>
 {% endif %}
 <script>
+    // Set default date to today if empty
+    const dateInput = document.getElementById('start_date');
+    if (!dateInput.value) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+    // Also fill the timezone hidden field
+    document.getElementById('user_timezone').value = Intl.DateTimeFormat().resolvedOptions().timeZone;
     // 1. Timezone and Date Initialization
     document.addEventListener('DOMContentLoaded', function() {
         const tzInput = document.getElementById('user_timezone');

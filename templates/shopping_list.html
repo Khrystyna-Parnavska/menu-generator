@@ -51,14 +51,14 @@
     <form id="shopping-form" method="POST">
         <div class="form-group" style="margin-bottom: 30px; max-width: 500px; margin-left: auto; margin-right: auto;">
         <label class="custom-label">Shopping List Name</label>
-        <input type="text" name="list_name" class="custom-input" 
+        <input type="text" name="shop_list_name" class="custom-input" 
                placeholder="e.g., Weekly Groceries, BBQ Party..." 
-               value="{{ list_name if list_name else '' }}" required 
+               value="{{ shop_list_name if shop_list_name else '' }}" required 
                style="text-align: center; font-weight: bold; border: 1px solid var(--accent-purple);">
         </div>
         <div id="shopping-list-container">
             {% for category, items in grouped_items.items() %}
-            <div class="category-section" id="section-{{ category|replace(' ', '-')|lower }}">
+            <div class="category-section" id="section-{{ category|replace(' ', '-')|lower }}" data-category-id="{{ items[0].category_id }}">
                 <h4 style="color: var(--accent-purple); border-bottom: 1px solid rgba(255,255,255,0.1);">{{ category }}</h4>
                 <div class="items-container">
                     {% for item in items %}
@@ -109,7 +109,7 @@ const ingMap = {{ ing_map | tojson | safe }};
 
 function validateAndMatchCategory(input) {
     const val = input.value.toLowerCase().trim();
-    const catSelect = document.getElementById('manual-category');
+    const catSelect = document.getElementById('manual-category');             
     const warning = document.getElementById('manual-warning');
     
     if (val === "") {
@@ -132,7 +132,9 @@ function validateAndMatchCategory(input) {
 
 function addManualItem() {
     const name = document.getElementById('manual-name').value;
-    const catId = document.getElementById('manual-category').value;
+    const catSelect = document.getElementById('manual-category');
+    const catId = catSelect.value;
+    const catName = catSelect.options[catSelect.selectedIndex].text; // Get the category name
     const measure = document.getElementById('manual-measure').value || 0;
     const unit = document.getElementById('manual-unit').value || '';
 
@@ -141,7 +143,27 @@ function addManualItem() {
         return;
     }
 
-    const itemsContainer = document.querySelector(`.category-section[data-category-id="${catId}"] .items-container`);
+    // 1. Try to find the container
+    let section = document.querySelector(`.category-section[data-category-id="${catId}"]`);
+    
+    // 2. If the section doesn't exist, CREATE IT
+    if (!section) {
+        const container = document.getElementById('shopping-list-container');
+        section = document.createElement('div');
+        section.className = 'category-section';
+        section.dataset.categoryId = catId;
+        section.id = `section-${catName.toLowerCase().replace(/\s+/g, '-')}`;
+        
+        section.innerHTML = `
+            <h4 style="color: var(--accent-purple); border-bottom: 1px solid rgba(255,255,255,0.1); margin-top:20px;">${catName}</h4>
+            <div class="items-container"></div>
+        `;
+        container.appendChild(section);
+    }
+
+    const itemsContainer = section.querySelector('.items-container');
+
+    // 3. Create the row
     const row = document.createElement("div");
     row.className = "shopping-row";
     row.style = "display: flex; align-items: center; padding: 8px 0;";
@@ -149,7 +171,7 @@ function addManualItem() {
     row.innerHTML = `
         <input type="checkbox" onclick="toggleCheck(this)">
         <div style="display: flex; flex: 1; justify-content: space-between; margin-left: 10px; align-items: center;">
-            <span style="font-size: 16px;">${name}</span>
+            <span style="font-size: 16px; color: white;">${name}</span>
             <div style="display: flex; gap: 8px; align-items: center; min-width: 140px; justify-content: flex-end;">
                 <input type="number" step="0.01" name="item_measures[]" value="${measure}" 
                        style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: var(--text-pink); text-align: center; font-size: 16px; font-weight: bold; width: 65px; padding: 8px 2px;">
@@ -160,21 +182,16 @@ function addManualItem() {
         <input type="hidden" name="item_names[]" value="${name}">
         <input type="hidden" name="item_category_ids[]" value="${catId}">
         <input type="hidden" name="item_checked[]" value="0">
-        <button type="button" onclick="this.closest('.shopping-row').remove()" style="background:none; border:none; color:#ff4d4d; cursor:pointer; margin-left:10px;">&times;</button>
+        <button type="button" onclick="this.closest('.shopping-row').remove()" style="background:none; border:none; color:#ff4d4d; cursor:pointer; margin-left:10px; font-size: 20px;">&times;</button>
     `;
+
     itemsContainer.prepend(row);
     
     // Clear inputs
     document.getElementById('manual-name').value = '';
     document.getElementById('manual-measure').value = '';
     document.getElementById('manual-unit').value = '';
-}
-
-function toggleCheck(checkbox) {
-    const row = checkbox.closest('.shopping-row');
-    row.style.opacity = checkbox.checked ? "0.4" : "1";
-    row.style.textDecoration = checkbox.checked ? "line-through" : "none";
-    row.querySelector('input[name="item_checked[]"]').value = checkbox.checked ? "1" : "0";
+    document.getElementById('manual-category').value = '';
 }
 </script>
 {% endblock %}
