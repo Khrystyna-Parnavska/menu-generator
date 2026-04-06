@@ -1,6 +1,5 @@
 from calendar import c
 from multiprocessing.util import close_all_fds_except
-from tkinter import CURRENT, N
 from tracemalloc import start
 from unicodedata import category, name
 from unittest.mock import Base
@@ -14,12 +13,15 @@ from flask import Flask, flash, jsonify, render_template, redirect, url_for, req
 from flask_mail import Mail, Message
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask import make_response
+from itsdangerous import URLSafeTimedSerializer
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, timedelta, time, timezone
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from zoneinfo import ZoneInfo
+
+from send_meal_reminders_scheduler import scheduler
 
 import random
 import os
@@ -45,7 +47,7 @@ shopping_list_items_model = BaseModel('Shopping_list_ingredients')
 
 app = Flask(__name__)
 
-app.secret_key = os.getenv('app_key')
+app.config['SECRET_KEY'] = os.getenv('app_key')
 
 app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
 app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT'))
@@ -78,6 +80,13 @@ def load_user(user_id):
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+
+def generate_reset_token(email):
+    # Use your app's secret key to sign the token
+    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    # This creates a string that contains the email
+    return serializer.dumps(email, salt='password-reset-salt')
 
 
 def is_password_strong(password):
@@ -1379,6 +1388,9 @@ def manage_shopping_lists():
     user_tz = users_model.select_by_id(current_user.id)['timezone'] or 'UTC'
     user_now = local_time_to_utc_range(user_tz, return_now=True)[2]
     shopping_lists = shopping_list_model.run_query("SELECT *, DATE(created_at) as date_created FROM Shopping_list ORDER BY date_created DESC")
+    for sh_list in shopping_lists:
+        sh_list['date_created'] = local_time_to_utc_range(user_tz, sh_list['created_at'])[2].strftime("%B %d, %Y")
+
     menus = menu_model.run_query("SELECT id, menu_date FROM Menus WHERE user_id = %s AND menu_date >= %s", (current_user.id, user_now.date(),))
 
     return render_template('manage_shopping_lists.html', shopping_lists=shopping_lists, menus=menus)
@@ -1518,6 +1530,49 @@ def resend_code():
     flash('A new code has been sent.', 'info')
     return redirect(url_for('verify_email'))
 
+@app.route('/reset_password_request', methods=['GET', 'POST'])
+def reset_password_request():
+    if request.method == 'POST':
+        email = request.form.get('user_email')
+        user = recipe_model.run_query("SELECT id FROM Users WHERE email = %s", (email,))
+        if user:
+            flash('If that email is registered, you will receive reset instructions.', 'info')
+
+            # 2. If user exists, generate token and send email
+            token = generate_reset_token(email)
+            # Create the full link: https://yourname.pythonanywhere.com/reset_password/TOKEN
+            reset_link = url_for('reset_password', token=token, _external=True)
+            # Send the email with the reset link here
+            msg = Message('Password Reset Request', recipients=[email], sender=app.config['MAIL_USERNAME'])
+            msg.body = f"To reset your password, click the following link: {reset_link}"
+            mail.send(msg)
+        else:
+            flash('If that email is registered, you will receive reset instructions.', 'info')
+    return render_template('forgot_password.html')
+
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    # In a real app, you'd verify the token against the DB or a timestamp
+    if request.method == 'POST':
+        new_password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+
+        if new_password == confirm_password:
+            # Update user password in DB here
+            # user.password = hash_password(new_password)
+            flash('Your password has been reset!', 'success')
+            return redirect(url_for('signin'))
+        else:
+            flash('Passwords do not match.', 'error')
+
+    return render_template('reset_password.html', token=token)
+
+
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    return render_template('forgot_password.html')
+
+
 @app.route('/logout')
 @login_required
 def logout():
@@ -1548,11 +1603,3 @@ def internal_server_error(e):
 
 if __name__ == '__main__':
     app.run(debug=True)
-    
-
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(func=send_meal_reminders, trigger="interval", minutes=5)
-    scheduler.start()
-
-    # Shut down the scheduler when the app exits
-    atexit.register(lambda: scheduler.shutdown())
