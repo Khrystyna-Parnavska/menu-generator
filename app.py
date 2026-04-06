@@ -13,7 +13,7 @@ from flask import Flask, flash, jsonify, render_template, redirect, url_for, req
 from flask_mail import Mail, Message
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask import make_response
-from itsdangerous import URLSafeTimedSerializer
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer, verify_reset_token
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, timedelta, time, timezone
@@ -87,6 +87,31 @@ def generate_reset_token(email):
     serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
     # This creates a string that contains the email
     return serializer.dumps(email, salt='password-reset-salt')
+
+
+def verify_reset_token(token, expiration=3600):
+    # 1. Initialize the serializer with your app's SECRET_KEY
+    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    
+    try:
+        # 2. Attempt to "unlock" the token
+        # max_age is the time in seconds (3600 = 1 hour)
+        email = serializer.loads(
+            token,
+            salt='password-reset-salt',
+            max_age=expiration
+        )
+    except SignatureExpired:
+        # Token is valid but too old
+        flash('Error resetting password. Please request a new link for password reset.', 'error')
+        return None
+    except BadSignature:
+        # Token has been tampered with or is just gibberish
+        flash('Error resetting password. Please request a new link for password reset.', 'error')
+        return None
+        
+    # 3. If everything is perfect, it returns the email string
+    return email
 
 
 def is_password_strong(password):
@@ -1559,7 +1584,9 @@ def reset_password(token):
 
         if new_password == confirm_password:
             # Update user password in DB here
-            # user.password = hash_password(new_password)
+            new_password_hash = generate_password_hash(new_password, method='pbkdf2:sha256')
+            email = verify_reset_token(token)  # This should return the email if token is valid
+            recipe_model.run_query("UPDATE Users SET password = %s WHERE email = %s", (new_password_hash, email))
             flash('Your password has been reset!', 'success')
             return redirect(url_for('signin'))
         else:
