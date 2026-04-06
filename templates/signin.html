@@ -15,8 +15,8 @@
                     
                     <button type="submit" class="submit-btn" style="width:100%">Submit</button>
                 </form>
-
-                <p style="text-align: center; font-size: 0.8em; margin-top: 20px;">
+                <a href="{{ url_for('forgot_password') }}" style="display: block; text-align: center; margin-top: 10px; color: var(--text-pink);">Forgot your password?</a>
+                <p style="text-align: center; font-size: 1em; margin-top: 20px;">
                     Don't have an account? 
                     <a href="{{ url_for('signup') }}" style="color:var(--text-pink)">Sign up</a>
                 </p>
