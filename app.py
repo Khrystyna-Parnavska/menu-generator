@@ -13,15 +13,13 @@ from flask import Flask, flash, jsonify, render_template, redirect, url_for, req
 from flask_mail import Mail, Message
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask import make_response
-from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer, verify_reset_token
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, timedelta, time, timezone
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from zoneinfo import ZoneInfo
-
-from send_meal_reminders_scheduler import scheduler
 
 import random
 import os
