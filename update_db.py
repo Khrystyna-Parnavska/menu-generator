@@ -1,5 +1,4 @@
 import os
-from app import menu
 from database.models import BaseModel
 
 recipe_categories_model = BaseModel('Recipe_categories')
