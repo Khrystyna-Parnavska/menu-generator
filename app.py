@@ -1025,6 +1025,7 @@ def add_recipe():
     # GET logic
     categories = recipe_model.run_query("SELECT * FROM Recipe_categories")
     ing_categories = recipe_model.run_query("SELECT * FROM Ingredient_categories WHERE name != 'Household & Cleaning'")
+    none_country_id = recipe_model.run_query("SELECT id FROM Countries WHERE code = '00'")[0]['id']
     meals = recipe_model.run_query("SELECT * FROM Meals")
     countries = recipe_model.run_query("SELECT * FROM Countries")
     # Fetch all ingredients to populate the datalist
@@ -1039,7 +1040,8 @@ def add_recipe():
                            countries=countries,
                            all_ingredients=all_ingredients,
                            units=units,
-                           user_source_id=user_source_id)
+                           user_source_id=user_source_id,
+                           none_country_id=none_country_id)
 
 
 @app.route('/edit-recipe/<int:recipe_id>', methods=['GET'])
@@ -1230,7 +1232,6 @@ def shopping_list(menu_id=None, shop_list_id=None):
                     "INSERT INTO Shopping_list (menu_id, user_id, name, is_menu) VALUES (%s, %s, %s, %s)", 
                     (menu_id, current_user.id, shopping_list_name, True)
                 )
-
                 # RUN SNAPSHOT ONLY HERE (inside the 'else')
                 snapshot_sql = """
                     INSERT INTO Shopping_list_ingredients (shop_list_id, ingredient_id, measure, units, category_id)

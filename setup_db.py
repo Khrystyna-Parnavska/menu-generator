@@ -119,6 +119,8 @@ sources_dict = [
     }
     ]
 
+    
+
 
 recipes_path = os.path.join('data', 'recipes_db_the_meal_db.csv')
 
@@ -181,6 +183,10 @@ if __name__ == "__main__":
     #recipe_categories
     recipe_categories_model.populate_from_csv(os.path.join('data', 'recipe_categories_the_meal_db.csv'), 'Recipe_categories', delimiter=',')
     recipe_categories_model.run_query("UPDATE Recipe_categories SET source_id = %s", (themealdb_id,))
+
+    recipe_categories_model.populate_from_csv(os.path.join('data', 'recipe_categories_menu_generator.csv'), 'Recipe_categories', delimiter=',')
+    recipe_categories_model.run_query("UPDATE Recipe_categories SET source_id = %s WHERE source_id IS NULL", (menu_generator_id,))
+
 
     #recipes
     recipes_model.populate_from_csv(recipes_path, 'Recipes', delimiter=',')

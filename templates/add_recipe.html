@@ -93,7 +93,7 @@
                 <label class="custom-label">Country</label>
                 <select name="country_id" class="custom-input" style="width: 100%;">
                     {% for country in countries %}
-                    <option value="{{ country.id }}">{{ country.name }}</option>
+                    <option value="{{ country.id }}" {{ 'selected' if country.id == none_country_id else '' }}>{{ country.name }}</option>
                     {% endfor %}
                 </select>
             </div>
