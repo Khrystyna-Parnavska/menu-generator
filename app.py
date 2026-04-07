@@ -232,7 +232,7 @@ def group_by_category(items):
     return grouped
 
 
-def fetch_recipe_form_and_update_db(operation_type:str, recipe_id=None, source_id=None)->None:
+def fetch_recipe_form_and_update_db(operation_type:str, recipe_id=None, source_id=None, return_new_recipe_id=False)->None:
     '''
     this function handles both inserting a new recipe and updating an existing one,
     depending on the operation_type parameter. It extracts all relevant data from 
@@ -312,6 +312,7 @@ def fetch_recipe_form_and_update_db(operation_type:str, recipe_id=None, source_i
             'user_id': current_user.id,
             'recipe_id': new_recipe_id
             })
+        print(f"Inserted new recipe with ID: {new_recipe_id} and added to favorites for user {current_user.id}")
             
     else:
         raise ValueError("Invalid operation type. Must be 'INSERT' or 'UPDATE'.")
@@ -350,6 +351,8 @@ def fetch_recipe_form_and_update_db(operation_type:str, recipe_id=None, source_i
                 INSERT INTO Recipes_ingredients (recipe_id, ingredient_id, measure, unit_id, prep_notes, order_index, source_id)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
             """, (new_recipe_id, ing_id, ing_measures[i], ing_units[i], ing_prep_notes[i], i, source_id))
+    if return_new_recipe_id:
+        return new_recipe_id
 
 def clear_drafts_at_midnight():
     scheduler = BackgroundScheduler()
@@ -866,28 +869,30 @@ def delete_all_drafts():
 @app.route('/manual-search', methods=['GET', 'POST'])
 @app.route('/manual-search/<int(signed=True):meal_index>', defaults={'menu_id': 0}, methods=['GET', 'POST'])
 @app.route('/manual-search/<int(signed=True):meal_index>/<int:menu_id>', methods=['GET', 'POST'])
-def manual_search(meal_index, menu_id):
-
-    favorite_ids = fetch_favorites(current_user.id if current_user.is_authenticated else None, return_ids_only=True)
+def manual_search(meal_index = None, menu_id = None):
+    if meal_index and menu_id:
+        session['manual_search'] = {'meal_index': meal_index, 'menu_id': menu_id}
+    favs = request.args.get('show_favorites')
+    favorite_ids = []
+    if favs == '1':
+        if not current_user.is_authenticated:
+            flash("Log in to see your favorite recipes.", "info")
+            return redirect(url_for('manual_search'))
+        else:
+            favorite_ids = fetch_favorites(current_user.id, return_ids_only=True)
 
     search_query = request.args.get('search', '')
     category_id = request.args.get('category')
     params = []
-    query = "SELECT * FROM Recipes"
+    query = "SELECT * FROM Recipes WHERE"
+    # todo FIX  IFS BECAUSE THEY CAN BE ONLY IN RANGE(1, 7) OR ELSE
     # Initialize base query
-    if meal_index == -1:
-        # General "Explore" mode: show all recipes
-        query += " WHERE 1=1"
-        
-    else:
-        # Specific meal selection mode
-        if meal_index >= 6:
-            return redirect(url_for('menu'))
-        
+    if meal_index in range(0, 7):  # Ensure meal_index is valid
         meal_type_id = meals_from_db[meal_index]['id']  # Get meal_id from the meals list based on index
         col = match_meal_to_recipe(meal_type_id, recipe_model.columns)
-        query += f" WHERE {col} = 1"
-
+        query += f" {col} = 1"
+    else:
+        query += " 1=1"  # Default to no meal filter if meal_index is somehow None (shouldn't happen due to route setup)
 
     # Apply filters
     if search_query:
@@ -897,8 +902,17 @@ def manual_search(meal_index, menu_id):
     if category_id:
         query += " AND category_id = %s"
         params.append(category_id)
+
+    if favorite_ids:
+        # 1. Create a string like "%s, %s, %s" based on how many IDs you have
+        placeholders = ', '.join(['%s'] * len(favorite_ids))
+    
+        # 2. Plug those placeholders into the IN clause
+        query += f" AND id IN ({placeholders})"
+        params.extend(favorite_ids)
         
-    recipes = recipe_model.run_query(query, tuple(params))
+    print(f"DEBUG QUERY: {query} with PARAMS: {params}")
+    recipes = recipe_model.run_query(query, tuple(params))  
     categories = recipe_categories_model.select_all()
     
     return render_template('manual_search.html', 
@@ -934,10 +948,10 @@ def select_recipe(meal_index, recipe_id, menu_id):
 
     return redirect(url_for('menu'))
 
-
+@app.route('/recipe/<int:recipe_id>', methods=['GET', 'POST'])
 @app.route('/recipe/<int:recipe_id>/<int:menu_id>', methods=['GET', 'POST'])
 @login_required
-def recipe_details(recipe_id, menu_id):
+def recipe_details(recipe_id, menu_id=None):
     favorite_ids = fetch_favorites(current_user.id, return_ids_only=True)
     recipe = recipe_model.run_query("SELECT * FROM Recipes WHERE id = %s", (recipe_id,))[0]
 
@@ -1000,7 +1014,7 @@ def api_add_ingredient():
         )
         for cat_id in category_ids:
             recipe_model.run_query(
-                "INSERT INTO Ingredient_categories_ingredients (ingredient_id, category_id) VALUES (%s, %s)",
+                "INSERT INTO Categories_ingredients (ingredient_id, category_id) VALUES (%s, %s)",
                 (new_ing_id, cat_id)
             )
         return jsonify({'success': True}), 201
@@ -1012,36 +1026,59 @@ def api_add_ingredient():
 @app.route('/add-recipe', methods=['GET', 'POST'])
 @login_required
 def add_recipe():
+    # 1. Get the context from session so we know which menu slot we are filling
+    manual_search_data = session.get('manual_search')
+    
     if request.method == 'POST':
         try:
-            fetch_recipe_form_and_update_db(operation_type='INSERT')
-            flash('Recipe added successfully!', 'success')
-            return redirect(url_for('manual_search', meal_index=-1))
+            # This creates the recipe and returns the new ID
+            recipe_id = fetch_recipe_form_and_update_db(operation_type='INSERT', return_new_recipe_id=True)
+            flash('Recipe created and added to your menu!', 'success')
+
+            if manual_search_data:
+                meal_index = manual_search_data.get('meal_index')
+                menu_id = manual_search_data.get('menu_id')
+                
+                # Get the actual meal_type_id (e.g., ID for 'Breakfast')
+                meal_type_id = meals_from_db[meal_index]['id']
+
+                # 2. UPDATE THE MENU DIRECTLY
+                # We update the specific menu and meal slot with the new recipe_id
+                query = """
+                    UPDATE Menu_meals 
+                    SET recipe_id = %s, if_picked_manually = 1 
+                    WHERE menu_id = %s AND meal_id = %s
+                """
+                menu_meals_model.run_query(query, (recipe_id, menu_id, meal_type_id))
+
+                # 3. GO BACK TO MENU
+                return redirect(url_for('menu'))
+            
+            # Fallback if no session data found
+            return redirect(url_for('manual_search'))
+
         except Exception as e:
-            print(f"Error adding recipe: {e}")
-            flash('An error occurred while adding the recipe. Please try again.', 'error')
+            print(f"Error: {e}")
+            flash('Failed to add recipe.', 'error')
             return redirect(url_for('add_recipe'))
 
-    # GET logic
-    categories = recipe_model.run_query("SELECT * FROM Recipe_categories")
-    ing_categories = recipe_model.run_query("SELECT * FROM Ingredient_categories WHERE name != 'Household & Cleaning'")
-    none_country_id = recipe_model.run_query("SELECT id FROM Countries WHERE code = '00'")[0]['id']
-    meals = recipe_model.run_query("SELECT * FROM Meals")
-    countries = recipe_model.run_query("SELECT * FROM Countries")
-    # Fetch all ingredients to populate the datalist
-    all_ingredients = recipe_model.run_query("SELECT name FROM Ingredients ORDER BY name ASC")
-    units = recipe_model.run_query("SELECT id, name FROM Units")
-    user_source_id = source_model.run_query("SELECT id FROM Data_sources WHERE name = %s", ('User_submitted',))[0]['id']
+    return render_template('add_recipe.html')
 
-    return render_template('add_recipe.html', 
-                           categories=categories, 
-                           ing_categories=ing_categories,
-                           meals=meals,
-                           countries=countries,
-                           all_ingredients=all_ingredients,
-                           units=units,
-                           user_source_id=user_source_id,
-                           none_country_id=none_country_id)
+
+@app.route('/update-menu-item', methods=['POST'])
+@login_required
+def update_menu_item():
+    recipe_id = request.form.get('recipe_id')
+    menu_id = request.form.get('menu_id')
+    meal_index = int(request.form.get('meal_index'))
+    
+    meal_type_id = meals_from_db[meal_index]['id']
+
+    query = "UPDATE Menu_meals SET recipe_id = %s, if_picked_manually = 1 WHERE menu_id = %s AND meal_id = %s"
+    menu_meals_model.run_query(query, (recipe_id, menu_id, meal_type_id))
+    
+    flash("Menu updated!", "success")
+    return redirect(url_for('menu'))
 
 
 @app.route('/edit-recipe/<int:recipe_id>', methods=['GET'])
@@ -1127,6 +1164,32 @@ def save_changes(recipe_id):
         print(f"Error updating recipe: {e}")
         flash('An error occurred while updating the recipe. Please try again.', 'error')
         return redirect(url_for('edit_recipe', recipe_id=recipe_id))
+
+
+@app.route('/delete-recipe/<int:recipe_id>', methods=['POST'])
+@login_required
+def delete_recipe(recipe_id):
+    try:
+        from_favorites = request.form.get('from_favorites') == '1'
+        print(F'DEBUG form: {request.form.get("from_favorites")}, from_favorites: {from_favorites}')
+        # First, remove from favorites if it exists there to avoid orphaned records
+        # TODO - This should ideally be handled with ON DELETE CASCADE in the database to avoid this manual step and ensure data integrity
+        if_favorite = favorites_recipes_model.run_query("SELECT id FROM User_favorite_recipes WHERE recipe_id = %s AND user_id = %s", (recipe_id, current_user.id))
+        if if_favorite:
+            favorites_recipes_model.run_query("DELETE FROM User_favorite_recipes WHERE recipe_id = %s AND user_id = %s", (recipe_id, current_user.id))
+        recipe_ingredients_model.run_query("DELETE FROM Recipes_ingredients WHERE recipe_id = %s", (recipe_id,))
+        recipe_model.run_query("DELETE FROM Recipes WHERE id = %s AND created_by_user_id = %s", (recipe_id, current_user.id))
+        flash('Recipe deleted successfully!', 'success')
+        if from_favorites:
+            return redirect(url_for('favorites'))
+
+        return redirect(url_for('manual_search'))
+    except Exception as e:
+        print(f"Error deleting recipe: {e}")
+        flash('An error occurred while deleting the recipe. Please try again.', 'error')
+        if from_favorites:
+            return redirect(url_for('favorites'))
+        return redirect(url_for('manual_search'))
 
 
 @app.route('/favorites')

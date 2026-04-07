@@ -12,24 +12,36 @@
     {% if favorites %}
     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;">
         {% for recipe in favorites %}
-        <div class="meal-card">
-            {% if recipe.thumb %}
-                <img src="{{ recipe.thumb }}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;">
-            {% else %}
-                <div style="width: 100%; height: 150px; background: var(--bg-dark); border-radius: 8px; margin-bottom: 10px;"></div>
-            {% endif %}
+        <div class="meal-card manual-selection-card">
+                {% if recipe.thumb %}
+                    <img src="{{ recipe.thumb }}" class="card-thumb">
+                {% else %}
+                    <div class="card-thumb placeholder-bg"></div>
+                {% endif %}
 
-            <div class="recipe-info">
-                <h4 class="recipe-name">{{ recipe.name }}</h4>
-                <p style="margin-top: auto; color: var(--text-pink);">Prep: {{ recipe.prep_time }}</p>
-            </div>
+                <div class="recipe-info">
+                    <h4 class="recipe-name">{{ recipe.name }}</h4>
+                    <p class="prep-text">Prep: {{ recipe.prep_time }}</p>
+                    <p class="prep-text">Cook: {{ recipe.cooking_time }}</p>
+                </div>
 
-            <a href="{{ url_for('recipe_details', recipe_id=recipe.id, meal_index=meal_index, menu_id=menu_id) }}" class="submit-btn" style="display:block; text-decoration:none; text-align: center; padding: 10px;">View Details</a>
-            <form action="{{ url_for('remove_favorite', recipe_id=recipe.id) }}" method="POST">
-                <button type="submit" class="submit-btn" style="width: 100%; padding: 10px;">Remove from Favorites</button>
-            </form>
+                <div class="action-footer">
+                    <a href="{{ url_for('recipe_details', recipe_id=recipe.id)}}" 
+                    class="card-btn view-btn">
+                    View Details
+                    </a>
                 
-        </div>
+                    <form action="{{ url_for('remove_favorite' if recipe.id in favorite_ids else 'add_favorite', recipe_id=recipe.id) }}" method="POST">
+                        <button type="submit" class="card-btn favorite-btn {{ 'is-favorite' if recipe.id in favorite_ids else '' }}">
+                            {{ "Remove Favorite" if recipe.id in favorite_ids else "Add Favorite" }}
+                        </button>
+                    </form>
+                    <form action="{{ url_for('delete_recipe', recipe_id=recipe.id) }}" method="POST">
+                        <input type="hidden" name="from_favorites" value="1">
+                        <button type="submit" class="submit-btn" style="width: 100%; padding: 12px; background-color: transparent; color: white; border: 1px solid var(--text-pink);">Delete Recipe</button>
+                    </form>
+                </div>
+            </div>
         {% endfor %}
     </div>
     {% else %}
