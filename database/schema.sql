@@ -152,6 +152,7 @@ CREATE TABLE `Shopping_list`(
     `name` VARCHAR(255) NOT NULL DEFAULT 'My Shopping List',
     `user_id` BIGINT UNSIGNED NULL,
     `menu_id` BIGINT UNSIGNED NULL,
+    `is_menu` BOOLEAN NOT NULL DEFAULT 0,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -215,8 +216,8 @@ ALTER TABLE
     `User_favorite_recipes` ADD CONSTRAINT `user_favorite_recipes_user_id_foreign` FOREIGN KEY(`user_id`) REFERENCES `Users`(`id`);
 ALTER TABLE
     `Recipes_ingredients` ADD CONSTRAINT `recipes_ingredients_ingredient_id_foreign` FOREIGN KEY(`ingredient_id`) REFERENCES `Ingredients`(`id`);
-ALTER TABLE
-    `Shopping_list` ADD CONSTRAINT `shopping_list_menu_id_foreign` FOREIGN KEY(`menu_id`) REFERENCES `Menus`(`id`);
+ALTER TABLE 
+    `Shopping_list` ADD CONSTRAINT `shopping_list_menu_id_foreign` FOREIGN KEY (`menu_id`) REFERENCES `Menus`(`id`) ON DELETE SET NULL;
 ALTER TABLE
     `Users` ADD CONSTRAINT `users_role_id_foreign` FOREIGN KEY(`role_id`) REFERENCES `User_roles`(`id`);
 ALTER TABLE

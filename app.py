@@ -1227,8 +1227,8 @@ def shopping_list(menu_id=None, shop_list_id=None):
                 
                 # Create the main list record
                 shopping_list_id = shopping_list_model.run_query(
-                    "INSERT INTO Shopping_list (menu_id, user_id, name) VALUES (%s, %s, %s)", 
-                    (menu_id, current_user.id, shopping_list_name)
+                    "INSERT INTO Shopping_list (menu_id, user_id, name, is_menu) VALUES (%s, %s, %s, %s)", 
+                    (menu_id, current_user.id, shopping_list_name, True)
                 )
 
                 # RUN SNAPSHOT ONLY HERE (inside the 'else')
@@ -1584,9 +1584,12 @@ def reset_password(token):
             # Update user password in DB here
             new_password_hash = generate_password_hash(new_password, method='pbkdf2:sha256')
             email = verify_reset_token(token)  # This should return the email if token is valid
-            recipe_model.run_query("UPDATE Users SET password = %s WHERE email = %s", (new_password_hash, email))
-            flash('Your password has been reset!', 'success')
-            return redirect(url_for('signin'))
+            if email:
+                recipe_model.run_query("UPDATE Users SET password_hash = %s WHERE email = %s", (new_password_hash, email))
+                flash('Your password has been reset!', 'success')
+                return redirect(url_for('signin'))
+            else:
+                flash('Error resetting password. Please request a new link for password reset.', 'error')
         else:
             flash('Passwords do not match.', 'error')
 
