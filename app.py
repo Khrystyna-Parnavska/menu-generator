@@ -1,13 +1,5 @@
-from calendar import c
-from multiprocessing.util import close_all_fds_except
-from tracemalloc import start
-from unicodedata import category, name
-from unittest.mock import Base
 from urllib.parse import quote
-from numpy import integer
 from database.models import BaseModel
-from gettext import install
-from time import strftime
 
 from flask import Flask, flash, jsonify, render_template, redirect, url_for, request, session
 from flask_mail import Mail, Message
@@ -16,7 +8,7 @@ from flask import make_response
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from datetime import datetime, timedelta, time, timezone
+from datetime import date, datetime, timedelta, time, timezone
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from zoneinfo import ZoneInfo
@@ -31,7 +23,7 @@ UPLOAD_FOLDER = 'static/uploads'
 meal_model = BaseModel('Meals')
 menu_model = BaseModel('Menus')
 menu_meals_model = BaseModel('Menu_meals')
-users_model = BaseModel('Users') 
+users_model = BaseModel('Users')
 recipe_model = BaseModel('Recipes')
 ing_model = BaseModel('Ingredients')
 recipe_ingredients_model = BaseModel('Recipes_Ingredients')
@@ -70,7 +62,7 @@ class User(UserMixin):
 
 @login_manager.user_loader
 def load_user(user_id):
-    u = recipe_model.run_query("SELECT * FROM Users WHERE id = %s", (user_id,))
+    u = users_model.run_query("SELECT * FROM Users WHERE id = %s", (user_id,))
     if u:
         return User(u[0])
     return None
@@ -90,7 +82,7 @@ def generate_reset_token(email):
 def verify_reset_token(token, expiration=3600):
     # 1. Initialize the serializer with your app's SECRET_KEY
     serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
-    
+
     try:
         # 2. Attempt to "unlock" the token
         # max_age is the time in seconds (3600 = 1 hour)
@@ -107,7 +99,7 @@ def verify_reset_token(token, expiration=3600):
         # Token has been tampered with or is just gibberish
         flash('Error resetting password. Please request a new link for password reset.', 'error')
         return None
-        
+
     # 3. If everything is perfect, it returns the email string
     return email
 
@@ -131,7 +123,7 @@ def send_welcome_email(user_email, user_name):
             # This is the fallback for email clients that don't support HTML
             body=f"Welcome, {user_name}! We're excited to have you. Your account is now active."
         )
-        
+
         # This makes the email look like a real app notification
         msg.html = f"""
             <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 10px; padding: 20px;">
@@ -170,10 +162,10 @@ def match_meal_to_recipe(meal_id:int, cols)->str:
 @app.route('/get_calendar_link/<int:meal_id>/<int:menu_id>')
 def get_calendar_link(meal_id, menu_id):
     try:
-        query = """SELECT r.name as recipe_name, mm.menu_id, mm.meal_time, m.menu_date 
-                 FROM Menu_meals mm 
+        query = """SELECT r.name as recipe_name, mm.menu_id, mm.meal_time, m.menu_date
+                 FROM Menu_meals mm
                  JOIN Recipes r ON mm.recipe_id = r.id
-                 JOIN Menus m ON mm.menu_id = m.id 
+                 JOIN Menus m ON mm.menu_id = m.id
                  WHERE mm.meal_id = %s AND mm.menu_id = %s"""
         result = recipe_model.run_query(query, (meal_id, menu_id))
         if not result:
@@ -184,7 +176,7 @@ def get_calendar_link(meal_id, menu_id):
         meal = result[0]
         menu_date = meal['menu_date']
         raw_time = meal['meal_time']
-    
+
         naive_start = datetime.combine(menu_date, (datetime.min + raw_time).time())
 
         # 3. LOCALIZE it (Tell Python: "This 18:00 is Kyiv time")
@@ -235,9 +227,9 @@ def group_by_category(items):
 def fetch_recipe_form_and_update_db(operation_type:str, recipe_id=None, source_id=None, return_new_recipe_id=False)->None:
     '''
     this function handles both inserting a new recipe and updating an existing one,
-    depending on the operation_type parameter. It extracts all relevant data from 
+    depending on the operation_type parameter. It extracts all relevant data from
     the form, processes it, and then updates the database accordingly.
-    operation_type: 'INSERT' or 'UPDATE' - whether we're adding a new recipe or 
+    operation_type: 'INSERT' or 'UPDATE' - whether we're adding a new recipe or
     updating an existing one
     '''
 
@@ -250,7 +242,7 @@ def fetch_recipe_form_and_update_db(operation_type:str, recipe_id=None, source_i
     cook_h = request.form.get('cooking_hours', 0)
     cook_m = request.form.get('cooking_minutes', 0)
     prep_time = timedelta(hours=int(prep_h or 0), minutes=int(prep_m or 0))
-    cooking_time = timedelta(hours=int(cook_h or 0), minutes=int(cook_m or 0)) 
+    cooking_time = timedelta(hours=int(cook_h or 0), minutes=int(cook_m or 0))
 
     instructions = request.form.get('instructions')
     cat_id = request.form.get('category_id')
@@ -262,7 +254,7 @@ def fetch_recipe_form_and_update_db(operation_type:str, recipe_id=None, source_i
     country_id = request.form.get('country_id')
     file = request.files.get('thumb_file')
     thumb_url = request.form.get('thumb_url')
-    
+
     final_thumb_path = thumb_url # Default to the URL
 
     # 2. If a file exists and has a filename, save it
@@ -270,10 +262,10 @@ def fetch_recipe_form_and_update_db(operation_type:str, recipe_id=None, source_i
         filename = secure_filename(file.filename)
         # Ensure the directory exists
         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-            
+
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
-            
+
         # This is the path you will store in your Database
         final_thumb_path = f"/{UPLOAD_FOLDER}/{filename}"
 
@@ -286,16 +278,16 @@ def fetch_recipe_form_and_update_db(operation_type:str, recipe_id=None, source_i
         new_recipe_id = recipe_id
         # FIX 3: Removed meal_id from here because you use flags now
         recipe_query = """
-            UPDATE Recipes 
-            SET name=%s, country_id=%s, category_id=%s, n_portions=%s, 
+            UPDATE Recipes
+            SET name=%s, country_id=%s, category_id=%s, n_portions=%s,
                 prep_time=%s, cooking_time=%s, instructions=%s, area=%s, thumb=%s, source_id=%s
             WHERE id=%s
         """
 
-        recipe_model.run_query(recipe_query, (name, country_id, cat_id, n_portions, 
-                               prep_time, cooking_time, instructions, country_name, 
+        recipe_model.run_query(recipe_query, (name, country_id, cat_id, n_portions,
+                               prep_time, cooking_time, instructions, country_name,
                                final_thumb_path, source_id, new_recipe_id))
-        
+
         # FIX 2: Reset all meal flags to 0 before applying new ones
         meal_cols = [c for c in recipe_model.columns if c.startswith('if_')]
         for col in meal_cols:
@@ -313,7 +305,7 @@ def fetch_recipe_form_and_update_db(operation_type:str, recipe_id=None, source_i
             'recipe_id': new_recipe_id
             })
         print(f"Inserted new recipe with ID: {new_recipe_id} and added to favorites for user {current_user.id}")
-            
+
     else:
         raise ValueError("Invalid operation type. Must be 'INSERT' or 'UPDATE'.")
 
@@ -322,7 +314,7 @@ def fetch_recipe_form_and_update_db(operation_type:str, recipe_id=None, source_i
         col = match_meal_to_recipe(meal_id, recipe_model.columns)
         if col:
             recipe_model.run_query(f"UPDATE Recipes SET {col} = 1 WHERE id = %s", (new_recipe_id,))
-        
+
     # Get ingredient lists from form
     ing_names = request.form.getlist('ing_name[]')
     ing_measures = request.form.getlist('ing_measure[]')
@@ -333,19 +325,19 @@ def fetch_recipe_form_and_update_db(operation_type:str, recipe_id=None, source_i
     recipe_ingredients_model.run_query("DELETE FROM Recipes_ingredients WHERE recipe_id=%s", (new_recipe_id,))
 
     for i in range(len(ing_names)):
-        name = ing_names[i].strip().title() 
+        name = ing_names[i].strip().title()
         if not name: continue
 
         # 1. Check if ingredient already exists
         existing = ing_model.run_query("SELECT id FROM Ingredients WHERE name = %s", (name,))
-            
+
         if existing:
             ing_id = existing[0]['id']
         else:
             # 2. If it doesn't exist, create it
-                
+
             ing_id = ing_model.run_query("INSERT INTO Ingredients (name, created_by_user_id) VALUES (%s, %s)", (name, current_user.id))
-            
+
         # 3. Link the ingredient to the recipe
         recipe_ingredients_model.run_query(f"""
                 INSERT INTO Recipes_ingredients (recipe_id, ingredient_id, measure, unit_id, prep_notes, order_index, source_id)
@@ -363,8 +355,8 @@ def clear_drafts_at_midnight():
 
 def local_time_to_utc_range(user_timezone= None, return_now=False)->tuple:
     '''This function takes a user's timezone as input and returns the corresponding UTC start and end datetimes for the current local day in that timezone.
-    user_timezone: The timezone string (e.g., 'Europe/Stockholm') for which to calculate the local day range. 
-    If None, it will fetch the timezone from the database based on the current user. 
+    user_timezone: The timezone string (e.g., 'Europe/Stockholm') for which to calculate the local day range.
+    If None, it will fetch the timezone from the database based on the current user.
     return_now: If True, also returns the current local datetime in the user's timezone for additional context.
     Returns a tuple containing the UTC start datetime, UTC end datetime, and optionally the current local datetime if return_now is True.'''
     if not user_timezone:
@@ -385,9 +377,9 @@ def local_time_to_utc_range(user_timezone= None, return_now=False)->tuple:
         return utc_start, utc_end, now_local
     return utc_start, utc_end
 
-    
+
 def generate_meal(meal_id, return_recipe_list=False)->list[dict]:
-    '''This function generates a meal by taking a meal_id (which corresponds to a meal type like breakfast, lunch, etc.) and randomly selecting a recipe from the 
+    '''This function generates a meal by taking a meal_id (which corresponds to a meal type like breakfast, lunch, etc.) and randomly selecting a recipe from the
     database that matches that meal type.
     Returns a single recipe dictionary in a list if return_recipe_list is False, or a list of matching recipes if return_recipe_list is True.'''
     col = match_meal_to_recipe(meal_id, recipe_model.columns)
@@ -396,17 +388,17 @@ def generate_meal(meal_id, return_recipe_list=False)->list[dict]:
         return list_recipes
     recipe = random.choice(list_recipes)
     return [recipe]
- 
 
 
-def generate_menu(menu_id:int, selected_meals:list)->list[dict]: 
-    '''This function generates a menu by taking a menu_id and a list of selected meal types 
+
+def generate_menu(menu_id:int, selected_meals:list)->list[dict]:
+    '''This function generates a menu by taking a menu_id and a list of selected meal types
     (e.g., breakfast, lunch, dinner) and creating a draft menu with randomly selected recipes for each meal type.
     Returns a list of dictionaries, where each dictionary represents a meal in the menu with its associated recipe and details.'''
     draft_menu_meals = []
 
     for name in selected_meals:
-            
+
             meal = meal_model.run_query("SELECT id, default_time FROM Meals WHERE name = %s", (name,))[0]
             meal_id = meal['id']
             meal_time_default = meal['default_time']
@@ -440,8 +432,8 @@ def generate_menu(menu_id:int, selected_meals:list)->list[dict]:
 
 
 def fetch_today_menu()->tuple:
-    '''This function checks if the user already has a menu for today in the database. If they do, it retrieves that menu and its associated meals. 
-    If not, it returns an empty list, indicating that a new menu should be generated. It also handles timezone conversion to ensure that "today" 
+    '''This function checks if the user already has a menu for today in the database. If they do, it retrieves that menu and its associated meals.
+    If not, it returns an empty list, indicating that a new menu should be generated. It also handles timezone conversion to ensure that "today"
     is based on the user's local time.
     Returns a tuple containing the list of meals for today's menu, the menu_id if it exists, and a success message if the menu has already been submitted.'''
     user_timezone = request.form.get('user_timezone', users_model.select_by_id(current_user.id)['timezone'] or 'UTC')
@@ -450,9 +442,9 @@ def fetch_today_menu()->tuple:
     print(f'local start: {start_utc}, local end: {end_utc}, now_local: {now_local}')
 
     query_today = """
-        SELECT *, DATE(created_at) as created_date FROM Menus 
+        SELECT *, DATE(created_at) as created_date FROM Menus
         WHERE user_id = %s
-        AND created_at BETWEEN %s AND %s  
+        AND created_at BETWEEN %s AND %s
         ORDER BY created_at DESC
         LIMIT 1
     """
@@ -464,26 +456,26 @@ def fetch_today_menu()->tuple:
 
     if latest_menu and (latest_menu[0]['created_date'] == now_local.date()):
         menu_id = latest_menu[0]['id']
-        
+
         # If submitted_at is not equal to None, set success_message
         if latest_menu[0].get('submitted_at'):
             success_message = "You have already submitted today's menu."
-    
+
         # Fetch associated meals regardless, so they show up on the page
         query_meals = """
-            SELECT mm.*, r.name as recipe_name, m.name as meal_type 
+            SELECT mm.*, r.name as recipe_name, m.name as meal_type
             FROM Menu_meals mm
             JOIN Recipes r ON mm.recipe_id = r.id
             JOIN Meals m ON mm.meal_id = m.id
             WHERE mm.menu_id = %s
         """
         draft_meals = menu_meals_model.run_query(query_meals, (menu_id,))
-            
+
     return draft_meals, menu_id, success_message
 
 
 def fetch_menu_by_date(user_id, menu_date):
-    '''This function retrieves a menu for a specific user on a specific date. 
+    '''This function retrieves a menu for a specific user on a specific date.
     If a menu exists, it returns the menu; otherwise, it returns None.'''
     query = """
         SELECT *, DATE(created_at) as created_date FROM Menus
@@ -497,7 +489,7 @@ def fetch_menu_by_date(user_id, menu_date):
 
 
 def fetch_favorites(user_id, return_ids_only=False):
-    '''This function retrieves the favorite recipes for a specific user. If return_ids_only is True, it returns a list of recipe IDs; otherwise, 
+    '''This function retrieves the favorite recipes for a specific user. If return_ids_only is True, it returns a list of recipe IDs; otherwise,
     it returns the full recipe details.'''
     query = """
         SELECT r.*
@@ -514,70 +506,6 @@ def fetch_favorites(user_id, return_ids_only=False):
 
 meals_from_db = meal_model.select_all()
 
-def send_meal_reminders():
-    with app.app_context(): # Ensure we have access to the app config
-    # 1. Fetch all users from the database
-        print("Running meal reminder job...")
-        all_users = users_model.select_all() 
-        
-        for user in all_users:
-            user_id = user['id']
-            user = users_model.select_by_id(user_id)
-            user_tz = user['timezone'] or 'UTC'
-                
-            start_time, end_time, local_now = local_time_to_utc_range(user_tz, return_now=True)  # Get current local time in user's timezone
-            query = """
-                    SELECT mm.id, m.menu_date, m.submitted_at, u.email, r.name as recipe_name, mm.meal_time 
-                    FROM Menu_meals mm
-                    JOIN Menus m ON mm.menu_id = m.id
-                    JOIN Users u ON m.user_id = u.id
-                    JOIN Recipes r ON mm.recipe_id = r.id
-                    WHERE mm.meal_time BETWEEN %s AND DATE_ADD(%s, INTERVAL 1 hour)
-                    AND m.user_id = %s AND m.submitted_at IS NOT NULL 
-                    AND m.menu_date = %s
-                    
-                    AND mm.reminder_sent = 0
-                """
-            upcoming_meals = recipe_model.run_query(query, (local_now.time(), local_now.time(), user_id, local_now.date()))
-            if not upcoming_meals:
-                print(f"No upcoming meals for user_id {user_id} at {datetime.now()}.")
-                continue
-
-            for meal in upcoming_meals:
-                try:
-                    msg = Message("🍳 Time to Cook!",
-                                    sender=app.config['MAIL_USERNAME'],
-                                    recipients=[meal['email']])
-                    
-                    menu_url = "https://khrystyna.pythonanywhere.com/menu"
-
-                    msg.html = f"""
-                    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 500px; margin: auto; border: 1px solid #eee; padding: 20px; border-radius: 15px; text-align: center;">
-                        <div style="font-size: 40px;">🍳</div>
-                        <h2 style="color: #ff66b2;">Kitchen Time!</h2>
-                        <p style="color: #555; font-size: 16px;">
-                            It's almost time for your <strong>{meal['meal_time'].strftime('%H:%M')}</strong> meal.
-                        </p>
-                        <p style="font-size: 18px; font-weight: bold; color: #333;">
-                            {meal['recipe_name']}
-                        </p>
-                        <div style="margin: 25px 0;">
-                            <a href="{menu_url}" style="background-color: #ff66b2; color: white; padding: 12px 25px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block;">
-                                Open My Menu
-                            </a>
-                        </div>
-                        <p style="font-size: 12px; color: #999;">
-                            Sent by Menu Generator — Happy Cooking!
-                        </p>
-                    </div>
-                    """ 
-                    mail.send(msg)
-                    print(f"Sent meal reminder for {meal['recipe_name']} to {meal['email']}.")
-                    # Mark as sent so we don't spam the user
-                    recipe_model.run_query("UPDATE Menu_meals SET reminder_sent = 1 WHERE id = %s", (meal['id'],))
-                except Exception as e:
-                    print(f"Error sending reminder for meal ID {meal['id']} at {datetime.now()}. meal_time: {meal['meal_time']}. Error: {e}")
-
 
 @app.route('/')
 def home():
@@ -589,17 +517,17 @@ def home():
 def menu():
     # 1. Get all meal types for the "Include Meals" checkboxes
     all_meals = meal_model.select_all()
-    
+
     # 2. Fetch all menus for this user that have NOT been submitted yet
     # We order by date so the oldest draft appears first
     query_drafts = """
-        SELECT id, menu_date 
-        FROM Menus 
-        WHERE user_id = %s AND submitted_at IS NULL 
+        SELECT id, menu_date
+        FROM Menus
+        WHERE user_id = %s AND submitted_at IS NULL
         ORDER BY menu_date ASC
     """
     db_drafts = menu_model.run_query(query_drafts, (current_user.id,))
-    
+
     menu_drafts_formatted = []
 
     for draft in db_drafts:
@@ -608,7 +536,7 @@ def menu():
 
         # 3. Fetch the meals for this specific draft ID
         query_meals = """
-            SELECT mm.*, r.name as recipe_name, m.name as meal_type 
+            SELECT mm.*, r.name as recipe_name, m.name as meal_type
             FROM Menu_meals mm
             JOIN Recipes r ON mm.recipe_id = r.id
             JOIN Meals m ON mm.meal_id = m.id
@@ -628,8 +556,8 @@ def menu():
         # 5. Structure it into the {menu_id: {date: [meals]}} format expected by menu.html
         menu_drafts_formatted.append({m_id: {m_date: meals}})
 
-    return render_template('menu.html', 
-                           all_meals=all_meals, 
+    return render_template('menu.html',
+                           all_meals=all_meals,
                            menus=menu_drafts_formatted)
 
 @app.route('/init-plan', methods=['POST'])
@@ -666,7 +594,7 @@ def init_plan():
     elif n_menus_in_range >= 7:
         error_message="You already have 7 menus scheduled in the future. Please edit or delete existing menus before adding new ones."
         return render_template('menu.html', error=error_message, all_meals=meals_from_db)
-    
+
     menu_drafts = []
 
     for day in range(int(duration_days or 1)):
@@ -677,13 +605,13 @@ def init_plan():
         if if_draft_already_exists:
             error_message = f"A menu for {current_date} already exists. Please choose a different date range or edit the existing menu."
             return render_template('menu.html', error=error_message, all_meals=meals_from_db)
-    
+
         menu_current_date = fetch_menu_by_date(current_user.id, current_date)
         if menu_current_date:
             menu_id = menu_current_date['id']
             menu_if_submitted = menu_current_date['submitted_at'] is not None
             query_meals = """
-                SELECT mm.*, r.name as recipe_name, m.name as meal_type 
+                SELECT mm.*, r.name as recipe_name, m.name as meal_type
                 FROM Menu_meals mm
                 JOIN Recipes r ON mm.recipe_id = r.id
                 JOIN Meals m ON mm.meal_id = m.id
@@ -695,7 +623,7 @@ def init_plan():
             if menu_id and menu_if_submitted:
                 error_message = f"A menu for {current_date} already exists and has been submitted. You cannot create a new one."
                 return render_template('menu.html', error=error_message, all_meals=meals_from_db)
-            
+
         else:
             # 2. Create a new menu and get its ID
             menu_id = menu_model.insert({'user_id': current_user.id, 'menu_date': current_date})
@@ -719,8 +647,8 @@ def init_plan():
         menu_drafts.append({menu_id: {current_date: menu_meals}})
         success_message = "Your meal plan has been initialized! You can view and edit each day's meals by clicking the 'Regenerate' button for that day."
 
-    return render_template('menu.html', 
-                           menus=menu_drafts, 
+    return render_template('menu.html',
+                           menus=menu_drafts,
                            all_meals=meals_from_db,
                            success_message=success_message)
 
@@ -728,20 +656,20 @@ def init_plan():
 @login_required
 def regenerate_meal(meal_index):
     # Adjusting index to match meal_id in DB
-    db_meal_id = meal_index + 1 
+    db_meal_id = meal_index + 1
     menu_id = request.form.get('menu_id')
-    
+
     if not menu_id:
         return redirect(url_for('menu'))
 
     # 1. Fetch current meal to get its existing time
     query = "SELECT meal_time, meal_id FROM Menu_meals WHERE menu_id = %s AND meal_id = %s"
     current_meal_data = menu_meals_model.run_query(query, (menu_id, db_meal_id))
-    
+
     if not current_meal_data:
         flash("Meal not found in drafts.", "error")
         return redirect(url_for('menu'))
-    
+
     existing_time = current_meal_data[0]['meal_time']
 
     # 2. Generate the new recipe
@@ -751,17 +679,17 @@ def regenerate_meal(meal_index):
         try:
             # 3. Update using the existing_time we just fetched
             update_query = """
-                UPDATE Menu_meals 
-                SET recipe_id = %s, 
-                    meal_time = %s, 
+                UPDATE Menu_meals
+                SET recipe_id = %s,
+                    meal_time = %s,
                     regenerated_times = regenerated_times + 1,
                     if_picked_manually = 0
                 WHERE menu_id = %s AND meal_id = %s
             """
             menu_meals_model.run_query(update_query, (
-                new_recipe[0]['id'], 
+                new_recipe[0]['id'],
                 existing_time, # Keeps the time the user may have already set
-                menu_id, 
+                menu_id,
                 db_meal_id
             ))
             flash(f"Regenerated to {new_recipe[0]['name']}", "success")
@@ -788,11 +716,11 @@ def regenerate_full_menu(menu_id):
     for meal in current_meals:
         db_meal_id = meal['meal_id']
         new_recipe = generate_meal(db_meal_id)
-        
+
         if new_recipe:
             update_query = """
-                UPDATE Menu_meals 
-                SET recipe_id = %s, 
+                UPDATE Menu_meals
+                SET recipe_id = %s,
                     regenerated_times = regenerated_times + 1,
                     if_picked_manually = 0
                 WHERE menu_id = %s AND meal_id = %s
@@ -809,12 +737,12 @@ def submit_final_menu():
     # 1. Pull data from the form
     menu_id = request.form.get('menu_id')
     meal_count = int(request.form.get('meal_count', 0))
-    
+
     # 2. Check if already submitted
     menu_data = menu_model.run_query("SELECT submitted_at FROM Menus WHERE id = %s", (menu_id,))
     if not menu_data:
         return redirect(url_for('menu'))
-        
+
     submitted_at = menu_data[0]['submitted_at']
 
     if not submitted_at:
@@ -822,21 +750,21 @@ def submit_final_menu():
         for i in range(meal_count):
             m_id = request.form.get(f'meal_{i}_id')
             m_time = request.form.get(f'meal_time_{i}')
-            
+
             # Use UPDATE because the row was already created in init_plan
             update_query = """
-                UPDATE Menu_meals 
-                SET meal_time = %s 
+                UPDATE Menu_meals
+                SET meal_time = %s
                 WHERE menu_id = %s AND meal_id = %s
             """
             menu_meals_model.run_query(update_query, (m_time, menu_id, m_id))
-            
+
         # 4. Finalize the menu timestamp
         menu_model.run_query(
-            "UPDATE Menus SET submitted_at = %s WHERE id = %s", 
+            "UPDATE Menus SET submitted_at = %s WHERE id = %s",
             (datetime.now(timezone.utc), menu_id)
         )
-        
+
         session.pop('menu_draft', None)
         flash("Menu finalized and saved!", "success")
 
@@ -898,7 +826,7 @@ def manual_search(meal_index = None, menu_id = None):
     if search_query:
         query += " AND name LIKE %s"
         params.append(f"%{search_query}%")
-    
+
     if category_id:
         query += " AND category_id = %s"
         params.append(category_id)
@@ -906,18 +834,18 @@ def manual_search(meal_index = None, menu_id = None):
     if favorite_ids:
         # 1. Create a string like "%s, %s, %s" based on how many IDs you have
         placeholders = ', '.join(['%s'] * len(favorite_ids))
-    
+
         # 2. Plug those placeholders into the IN clause
         query += f" AND id IN ({placeholders})"
         params.extend(favorite_ids)
-        
+
     print(f"DEBUG QUERY: {query} with PARAMS: {params}")
-    recipes = recipe_model.run_query(query, tuple(params))  
+    recipes = recipe_model.run_query(query, tuple(params))
     categories = recipe_categories_model.select_all()
-    
-    return render_template('manual_search.html', 
-                           recipes=recipes, 
-                           categories=categories, 
+
+    return render_template('manual_search.html',
+                           recipes=recipes,
+                           categories=categories,
                            meal_index=meal_index,
                            search_query=search_query,
                            favorite_ids=favorite_ids,
@@ -932,15 +860,15 @@ def select_recipe(meal_index, recipe_id, menu_id):
         draft_menu = draft_menu[0]  # Get the single meal entry for this meal_index
         # Fetch the full recipe details
         recipe = recipe_model.run_query("SELECT * FROM Recipes WHERE id = %s", (recipe_id,))[0]
-        
+
         # Update the specific meal in the draft
         draft_menu['recipe_id'] = recipe['id']
         draft_menu['recipe_name'] = recipe['name']
         draft_menu['if_picked_manually'] = 1
-        
+
         # Update the database with the new recipe selection
         update_query = """
-            UPDATE Menu_meals 
+            UPDATE Menu_meals
             SET recipe_id = %s, if_picked_manually = 1
             WHERE menu_id = %s AND meal_id = %s
         """
@@ -956,20 +884,20 @@ def recipe_details(recipe_id, menu_id=None):
     recipe = recipe_model.run_query("SELECT * FROM Recipes WHERE id = %s", (recipe_id,))[0]
 
     query = """
-        SELECT i.name as ingredient_name, ri.measure, u.name as unit_name, ri.prep_notes 
-        FROM Recipes_ingredients ri 
-        JOIN Ingredients i ON ri.ingredient_id = i.id 
+        SELECT i.name as ingredient_name, ri.measure, u.name as unit_name, ri.prep_notes
+        FROM Recipes_ingredients ri
+        JOIN Ingredients i ON ri.ingredient_id = i.id
         JOIN Units u ON ri.unit_id = u.id
-        WHERE ri.recipe_id = %s 
+        WHERE ri.recipe_id = %s
         ORDER BY ri.order_index ASC
     """
     ingredients = recipe_model.run_query(query, (recipe_id,))
     meal_index = request.args.get('meal_index', -1, type=int)
 
     return render_template('recipe_details.html',
-                           user_id=current_user.id, 
-                           recipe=recipe, 
-                           ingredients=ingredients, 
+                           user_id=current_user.id,
+                           recipe=recipe,
+                           ingredients=ingredients,
                            meal_index=meal_index,
                            favorite_ids=favorite_ids,
                            menu_id=menu_id)
@@ -980,10 +908,10 @@ def check_ingredient():
     name = request.args.get('name', '').strip().lower()
     if not name:
         return jsonify({'exists': True}) # Don't show button for empty strings
-    
+
     # Check your Ingredients table
     result = recipe_model.run_query("SELECT id FROM Ingredients WHERE LOWER(name) = %s", (name,))
-    
+
     return jsonify({'exists': len(result) > 0})
 
 
@@ -995,10 +923,10 @@ def api_add_ingredient():
     density = data.get('density')
     description = data.get('description', '')
     category_ids = data.get('category_ids', [])
-    
+
     if not name or not category_ids or not density:
         return jsonify({'error': 'Missing data'}), 400
-    
+
     source_id = source_model.run_query("SELECT id FROM Data_sources WHERE name = %s", ('User_submitted',))[0]['id']
 
     try:
@@ -1028,7 +956,7 @@ def api_add_ingredient():
 def add_recipe():
     # 1. Get the context from session so we know which menu slot we are filling
     manual_search_data = session.get('manual_search')
-    
+
     if request.method == 'POST':
         try:
             # This creates the recipe and returns the new ID
@@ -1038,22 +966,22 @@ def add_recipe():
             if manual_search_data:
                 meal_index = manual_search_data.get('meal_index')
                 menu_id = manual_search_data.get('menu_id')
-                
+
                 # Get the actual meal_type_id (e.g., ID for 'Breakfast')
                 meal_type_id = meals_from_db[meal_index]['id']
 
                 # 2. UPDATE THE MENU DIRECTLY
                 # We update the specific menu and meal slot with the new recipe_id
                 query = """
-                    UPDATE Menu_meals 
-                    SET recipe_id = %s, if_picked_manually = 1 
+                    UPDATE Menu_meals
+                    SET recipe_id = %s, if_picked_manually = 1
                     WHERE menu_id = %s AND meal_id = %s
                 """
                 menu_meals_model.run_query(query, (recipe_id, menu_id, meal_type_id))
 
                 # 3. GO BACK TO MENU
                 return redirect(url_for('menu'))
-            
+
             # Fallback if no session data found
             return redirect(url_for('manual_search'))
 
@@ -1062,7 +990,24 @@ def add_recipe():
             flash('Failed to add recipe.', 'error')
             return redirect(url_for('add_recipe'))
 
-    return render_template('add_recipe.html')
+    all_ingredients = recipe_model.run_query("SELECT name FROM Ingredients ORDER BY name ASC")
+    ing_categories = recipe_model.run_query("SELECT * FROM Ingredient_categories WHERE name != 'Household & Cleaning'")
+    categories = recipe_model.run_query("SELECT * FROM Recipe_categories")
+    countries = recipe_model.run_query("SELECT * FROM Countries")
+    units = recipe_model.run_query("SELECT id, name FROM Units")
+    user_source_id = source_model.run_query("SELECT id FROM Data_sources WHERE name = %s", ('User_submitted',))[0]['id']
+    meals_db = meal_model.select_all()
+    none_country_id = recipe_model.run_query("SELECT id FROM Countries WHERE name = 'None'")[0]['id']
+
+    return render_template('add_recipe.html',
+                           categories=categories,
+                           meals=meals_db,
+                           countries=countries,
+                           units=units,
+                           all_ingredients=all_ingredients,
+                           ing_categories=ing_categories,
+                           user_source_id=user_source_id,
+                           none_country_id=none_country_id)
 
 
 @app.route('/update-menu-item', methods=['POST'])
@@ -1071,12 +1016,12 @@ def update_menu_item():
     recipe_id = request.form.get('recipe_id')
     menu_id = request.form.get('menu_id')
     meal_index = int(request.form.get('meal_index'))
-    
+
     meal_type_id = meals_from_db[meal_index]['id']
 
     query = "UPDATE Menu_meals SET recipe_id = %s, if_picked_manually = 1 WHERE menu_id = %s AND meal_id = %s"
     menu_meals_model.run_query(query, (recipe_id, menu_id, meal_type_id))
-    
+
     flash("Menu updated!", "success")
     return redirect(url_for('menu'))
 
@@ -1119,7 +1064,7 @@ def edit_recipe(recipe_id):
         hours = total_seconds // 3600
         minutes = (total_seconds % 3600) // 60
         return f"{hours:02}:{minutes:02}"
-    
+
     recipe['prep_time'] = format_td(recipe['prep_time'])
     recipe['cooking_time'] = format_td(recipe['cooking_time'])
 
@@ -1138,11 +1083,11 @@ def edit_recipe(recipe_id):
     units = recipe_model.run_query("SELECT id, name FROM Units")
     user_source_id = source_model.run_query("SELECT id FROM Data_sources WHERE name = %s", ('User_submitted',))[0]['id']
 
-    response = make_response(render_template('edit_recipe.html', 
-                           recipe=recipe, 
-                           ingredients=ingredients, 
-                           categories=categories, 
-                           meals=meals_db, 
+    response = make_response(render_template('edit_recipe.html',
+                           recipe=recipe,
+                           ingredients=ingredients,
+                           categories=categories,
+                           meals=meals_db,
                            countries=countries,
                            units=units,
                            all_ingredients=all_ingredients,
@@ -1211,7 +1156,7 @@ def add_favorite(recipe_id):
         VALUES (%s, %s)
     """
     favorites_recipes_model.run_query(query, (current_user.id, recipe_id))
-    
+
     return redirect(request.referrer or url_for('manual_search', meal_index=-1))
 
 
@@ -1226,7 +1171,7 @@ def remove_favorite(recipe_id):
         WHERE user_id = %s AND recipe_id = %s
     """
     favorites_recipes_model.run_query(query, (current_user.id, recipe_id))
-    
+
     return redirect(request.referrer or url_for('manual_search', meal_index=-1))
 
 
@@ -1277,10 +1222,10 @@ def shopping_list(menu_id=None, shop_list_id=None):
         if menu_id:
             # 1. Check if list already exists for this menu today
             check = shopping_list_model.run_query(
-                "SELECT id FROM Shopping_list WHERE menu_id = %s AND created_at BETWEEN %s AND %s LIMIT 1", 
+                "SELECT id FROM Shopping_list WHERE menu_id = %s AND created_at BETWEEN %s AND %s LIMIT 1",
                 (menu_id, utc_start, utc_end)
             )
-            
+
             if check:
                 # LIST EXISTS: Just grab the ID and stop. Do NOT snapshot again.
                 shopping_list_id = check[0]['id']
@@ -1289,20 +1234,20 @@ def shopping_list(menu_id=None, shop_list_id=None):
                 menu_date_row = menu_model.run_query("SELECT menu_date FROM Menus WHERE id = %s", (menu_id,))
                 menu_date = menu_date_row[0]['menu_date']
                 shopping_list_name = f"Shopping List for menu: {menu_date.strftime('%B %d, %Y')}"
-                
+
                 # Create the main list record
                 shopping_list_id = shopping_list_model.run_query(
-                    "INSERT INTO Shopping_list (menu_id, user_id, name, is_menu) VALUES (%s, %s, %s, %s)", 
+                    "INSERT INTO Shopping_list (menu_id, user_id, name, is_menu) VALUES (%s, %s, %s, %s)",
                     (menu_id, current_user.id, shopping_list_name, True)
                 )
                 # RUN SNAPSHOT ONLY HERE (inside the 'else')
                 snapshot_sql = """
                     INSERT INTO Shopping_list_ingredients (shop_list_id, ingredient_id, measure, units, category_id)
-                    SELECT 
+                    SELECT
                         %s as shop_list_id,
                         ri.ingredient_id,
-                        SUM(ri.measure) as measure, 
-                        u.name as units, 
+                        SUM(ri.measure) as measure,
+                        u.name as units,
                         icm.category_id
                     FROM Recipes_ingredients ri
                     JOIN Menu_meals mm ON ri.recipe_id = mm.recipe_id
@@ -1312,15 +1257,15 @@ def shopping_list(menu_id=None, shop_list_id=None):
                     GROUP BY ri.ingredient_id, u.name, icm.category_id
                 """
                 shopping_list_items_model.run_query(snapshot_sql, (shopping_list_id, menu_id))
-        
-        else:  
+
+        else:
             # Handle creating a completely empty list
             shopping_list_name = f"My Shopping List - {user_now.strftime('%B %d, %Y')}"
             shopping_list_id = shopping_list_model.run_query(
-                "INSERT INTO Shopping_list (user_id, menu_id, name) VALUES (%s, NULL, %s)", 
+                "INSERT INTO Shopping_list (user_id, menu_id, name) VALUES (%s, NULL, %s)",
                 (current_user.id, shopping_list_name)
             )
-            
+
     else:
         shopping_list_id = shop_list_id
 
@@ -1330,10 +1275,10 @@ def shopping_list(menu_id=None, shop_list_id=None):
         measures = request.form.getlist('item_measures[]')
         units = request.form.getlist('item_units[]')
         checks = request.form.getlist('item_checked[]')
-        cat_ids = request.form.getlist('item_category_ids[]') 
+        cat_ids = request.form.getlist('item_category_ids[]')
         shop_list_name = request.form.get('shop_list_name', '').strip()
 
-        if shop_list_name:      
+        if shop_list_name:
             shopping_list_model.run_query("UPDATE Shopping_list SET name = %s WHERE id = %s", (shop_list_name, shopping_list_id))
 
         shopping_list_items_model.run_query("DELETE FROM Shopping_list_ingredients WHERE shop_list_id = %s", (shopping_list_id,))
@@ -1341,27 +1286,27 @@ def shopping_list(menu_id=None, shop_list_id=None):
         for i in range(len(names)):
             name = names[i].strip().lower()
             if not name: continue
-            
+
             # Check if ingredient exists in DB
             ing = recipe_model.run_query("SELECT id FROM Ingredients WHERE LOWER(name) = LOWER(%s)", (name,))
-            
+
             if ing:
-                # Existing Ingredient: use its ID (Schema requires ingredient_id NOT NULL usually, 
+                # Existing Ingredient: use its ID (Schema requires ingredient_id NOT NULL usually,
                 # but if your schema allows NULL for custom items, update your SQL accordingly)
                 shopping_list_items_model.run_query(
-                    """INSERT INTO Shopping_list_ingredients 
-                       (shop_list_id, ingredient_id, measure, units, if_checked, category_id) 
+                    """INSERT INTO Shopping_list_ingredients
+                       (shop_list_id, ingredient_id, measure, units, if_checked, category_id)
                        VALUES (%s, %s, %s, %s, %s, %s)""",
                     (shopping_list_id, ing[0]['id'], measures[i], units[i], checks[i], cat_ids[i])
                 )
             else:
                 # Custom Item: Set ingredient_id to a dummy value (like 0) or update schema to allow NULL
                 if not cat_ids[i] or cat_ids[i] == 'null':
-                    cat_ids[i] = 0 
+                    cat_ids[i] = 0
                 # Since your schema says NOT NULL for ingredient_id, ensure you handle that or ALTER TABLE to allow NULL
                 shopping_list_items_model.run_query(
-                    """INSERT INTO Shopping_list_ingredients 
-                       (shop_list_id, ingredient_id, item_name, measure, units, if_checked, category_id) 
+                    """INSERT INTO Shopping_list_ingredients
+                       (shop_list_id, ingredient_id, item_name, measure, units, if_checked, category_id)
                        VALUES (%s, %s, %s, %s, %s, %s, %s)""",
                     (shopping_list_id, 0, name, measures[i], units[i].strip().lower(), checks[i], cat_ids[i])
                 )
@@ -1370,8 +1315,8 @@ def shopping_list(menu_id=None, shop_list_id=None):
     # --- GET Logic ---
     # 1. Fetch Items for the List
     db_query = """
-        SELECT 
-            COALESCE(i.name, sli.item_name) as name, 
+        SELECT
+            COALESCE(i.name, sli.item_name) as name,
             sli.measure, sli.units, sli.if_checked,
             ic.name as category,
             sli.category_id
@@ -1383,29 +1328,29 @@ def shopping_list(menu_id=None, shop_list_id=None):
     """
     items = shopping_list_items_model.run_query(db_query, (shopping_list_id,))
     shop_list_name = shopping_list_model.run_query("SELECT name FROM Shopping_list WHERE id = %s", (shopping_list_id,))[0]['name'] or "My Shopping List"
-    
+
     # 2. Fetch Data for Selects and Datalists
     # Full list of categories (ID and Name)
     all_cats = recipe_model.run_query("SELECT id, name FROM Ingredient_categories ORDER BY name")
-    
+
     # Full list of ingredients for the datalist search
     all_ingredients = recipe_model.run_query("SELECT name FROM Ingredients ORDER BY name ASC")
 
     # Map for Javascript Auto-Select (Name -> Category ID)
     raw_ing_data = recipe_model.run_query("""
-        SELECT LOWER(i.name) as name, icm.category_id 
+        SELECT LOWER(i.name) as name, icm.category_id
         FROM Ingredients i
         JOIN Ingredients_categories_map icm ON i.id = icm.ingredient_id
     """)
-    
+
     ing_category_map = {row['name']: row['category_id'] for row in raw_ing_data}
-    return render_template('shopping_list.html', 
-                           grouped_items=group_by_category(items), 
-                           menu_id=menu_id, 
+    return render_template('shopping_list.html',
+                           grouped_items=group_by_category(items),
+                           menu_id=menu_id,
                            all_ingredients=all_ingredients,
                            all_cats_full=all_cats,
                            ing_map=ing_category_map,
-                           shop_list_id=shopping_list_id,   
+                           shop_list_id=shopping_list_id,
                            shop_list_name=shop_list_name,)
 
 @app.route('/merge_menus_to_shopping_list', methods=['POST', 'GET'])
@@ -1415,7 +1360,7 @@ def merge_menus_to_shopping_list():
     selected_ids = [int(id) for id in selected_ids]
     user_tz = request.form.get('user_timezone', users_model.select_by_id(current_user.id)['timezone'] or 'UTC')
     user_now = local_time_to_utc_range(user_tz, return_now=True)[2]
-    
+
     date_range = []
     if not selected_ids:
         flash("Please select at least one menu.", "error")
@@ -1439,11 +1384,11 @@ def merge_menus_to_shopping_list():
     placeholders = ','.join(['%s'] * len(selected_ids_tuple))
     snapshot_sql = F"""
                     INSERT INTO Shopping_list_ingredients (shop_list_id, ingredient_id, measure, units, category_id)
-                    SELECT 
+                    SELECT
                         %s as shop_list_id,
                         ri.ingredient_id,
-                        SUM(ri.measure) as measure, 
-                        u.name as units, 
+                        SUM(ri.measure) as measure,
+                        u.name as units,
                         icm.category_id
                     FROM Recipes_ingredients ri
                     JOIN Menu_meals mm ON ri.recipe_id = mm.recipe_id
@@ -1455,9 +1400,9 @@ def merge_menus_to_shopping_list():
     params = tuple([shopping_list_id] + list(selected_ids_tuple))
 
     shopping_list_items_model.run_query(snapshot_sql, params)
-    
+
     flash(f"Successfully merged {len(selected_ids)} menus into your shopping list!", "success")
- 
+
     return redirect(url_for('shopping_list', shop_list_id=shopping_list_id))
 
 @app.route('/shopping-list-delete/<int:shop_list_id>')
@@ -1471,7 +1416,7 @@ def delete_shopping_list(shop_list_id):
 @app.route('/manage-shopping-lists', methods=['GET', 'POST'])
 @login_required
 def manage_shopping_lists():
-   
+
     user_tz = users_model.select_by_id(current_user.id)['timezone'] or 'UTC'
     user_now = local_time_to_utc_range(user_tz, return_now=True)[2]
     shopping_lists = shopping_list_model.run_query("SELECT *, DATE(created_at) as date_created FROM Shopping_list ORDER BY date_created DESC")
@@ -1490,7 +1435,7 @@ def signin():
         password = request.form.get('password')
         user_timezone = request.form.get('user_timezone', 'UTC')
         user_data = recipe_model.run_query("SELECT * FROM Users WHERE email = %s", (email,))
-        
+
         if user_data and check_password_hash(user_data[0]['password_hash'], password):
             user = User(user_data[0]) # Assuming your User class
             users_model.update(user.id, {'timezone': user_timezone})
@@ -1502,7 +1447,7 @@ def signin():
 
             login_user(user)
             return redirect(url_for('menu'))
-        
+
         flash('Invalid email or password.', 'error')
     return render_template('signin.html')
 
@@ -1543,19 +1488,19 @@ def signup():
             # 5. Prepare Security Data
             hashed_pw = generate_password_hash(password, method='pbkdf2:sha256')
             verification_code = str(random.randint(100000, 999999))
-            
+
             # 6. SINGLE DATABASE INSERT
             # We save the user as unverified (False) with their code immediately
-            query = """INSERT INTO Users (user_name, email, role_id, password_hash, email_verification_code, is_verified) 
+            query = """INSERT INTO Users (user_name, email, role_id, password_hash, email_verification_code, is_verified)
                        VALUES (%s, %s, %s, %s, %s, %s)"""
             recipe_model.run_query(query, (username, email, role_id, hashed_pw, verification_code, False))
-            
+
             # 7. Attempt to Send Email
             try:
                 msg = Message('Your Verification Code', recipients=[email], sender=app.config['MAIL_USERNAME'])
                 msg.body = f"Welcome to Menu Generator! Your verification code is: {verification_code}"
                 mail.send(msg)
-                
+
                 session['unverified_email'] = email
                 print(f"Verification code {verification_code} sent to {email}")
                 flash("A verification code has been sent to your email.", "info")
@@ -1568,7 +1513,7 @@ def signup():
                 return redirect(url_for('signin'))
 
         except Exception as e:
-            print(f"Signup Database Error: {e}") 
+            print(f"Signup Database Error: {e}")
             flash('An internal error occurred. Please try again.', 'error')
             return redirect(url_for('signup'))
 
@@ -1583,10 +1528,10 @@ def verify_email():
 
     if request.method == 'POST':
         user_code = request.form.get('code')
-        
+
         # Fetch the real code from DB
         user = recipe_model.run_query("SELECT user_name, email_verification_code FROM Users WHERE email = %s", (email,))
-        
+
         if user and user[0]['email_verification_code'] == user_code:
             send_welcome_email(email, user[0]['user_name'])
             # SUCCESS: Mark as verified
@@ -1608,12 +1553,12 @@ def resend_code():
 
     new_code = str(random.randint(100000, 999999))
     recipe_model.run_query("UPDATE Users SET email_verification_code = %s WHERE email = %s", (new_code, email))
-    
+
     # Send the email again
     msg = Message('Your New Verification Code', recipients=[email], sender=app.config['MAIL_USERNAME'])
     msg.body = f"Your new code is: {new_code}"
     mail.send(msg)
-    
+
     flash('A new code has been sent.', 'info')
     return redirect(url_for('verify_email'))
 
@@ -1672,6 +1617,123 @@ def logout():
     flash("You have been successfully logged out. See you next time!", "info")
     return redirect(url_for('signin'))
 
+
+@app.route('/journal')
+@login_required
+def journal():
+    meals_from_db = meal_model.select_all()
+    query_history = """
+        SELECT 
+            j.*, 
+            COALESCE(m_direct.name, m_menu.name) as meal_type_display,
+            COALESCE(r_direct.name, r_menu.name) as recipe_display_name,
+            COALESCE(j.time_fact, mm.meal_time) as time_display
+        FROM Journal j
+        -- Joins for scheduled meals
+        LEFT JOIN Menu_meals mm ON j.menu_meal_id = mm.id
+        LEFT JOIN Recipes r_menu ON mm.recipe_id = r_menu.id
+        LEFT JOIN Meals m_menu ON mm.meal_id = m_menu.id
+        -- Joins for manual entries
+        LEFT JOIN Meals m_direct ON j.meal_id = m_direct.id
+        LEFT JOIN Recipes r_direct ON j.recipe_id = r_direct.id
+        WHERE j.user_id = %s AND j.mood IS NOT NULL
+        ORDER BY j.created_at DESC
+        LIMIT 20
+    """
+    history = recipe_model.run_query(query_history, (current_user.id,))
+    # Ensure 'Other' is available for the dropdown
+    if meals_from_db is not None:
+        meals_from_db.append({'id': 0, 'name': 'Other'})
+        
+    all_recipes = recipe_model.run_query("SELECT id, name FROM Recipes")
+    journal_entries = recipe_model.run_query("SELECT * FROM Journal WHERE user_id = %s and submitted_at IS NULL ORDER BY created_at DESC", (current_user.id,))
+    if journal_entries:
+        for entry in journal_entries:
+            entry['date'] = entry['created_at'].strftime("%B %d, %Y")
+    return render_template('journal.html', journal_entries=journal_entries, meals=meals_from_db, all_recipes=all_recipes, history=history)
+
+
+@app.route('/update_journal/<int:journal_id>', methods=['POST'])
+@login_required
+def update_journal(journal_id):
+    try:
+        # 1. Capture and cast form data
+        # We cast to int to ensure database compatibility for the BOOLEAN/TINYINT field
+        meal_as_planned = int(request.form.get('meal_as_planned', 1))
+        
+        # 2. Logic: If they ate as planned, we should wipe any previous 'meal_fact' 
+        # to keep the data clean. If not, we take the new fact.
+        meal_fact = request.form.get('meal_fact') if meal_as_planned == 0 else None
+        
+        mood = request.form.get('mood')
+        thoughts = request.form.get('thoughts')
+
+        # 3. Update the entry
+        # We include current_user.id for security to ensure users can only update their own logs
+        query = """
+            UPDATE Journal 
+            SET meal_as_planned = %s, 
+                meal_fact = %s, 
+                mood = %s, 
+                thoughts = %s, 
+                submitted_at = CURRENT_TIMESTAMP 
+            WHERE id = %s AND user_id = %s
+        """
+        recipe_model.run_query(query, (meal_as_planned, meal_fact, mood, thoughts, journal_id, current_user.id))
+
+        flash('Reflection saved!', 'success')
+    except Exception as e:
+        print(f"Error updating journal {journal_id}: {e}")
+        flash('An error occurred. Please try again.', 'error')
+        
+    return redirect(url_for('journal'))
+
+
+@app.route('/create-journal-entry', methods=['GET', 'POST'])
+@login_required
+def create_journal_entry():
+    meals_from_db = meal_model.select_all()
+    meals_from_db.append({'id': 0, 'name': 'Other'}) if meals_from_db else None
+    user_time_now = local_time_to_utc_range(users_model.select_by_id(current_user.id)['timezone'] or 'UTC', return_now=True)[2]
+
+    menus_today = menu_model.run_query("SELECT id FROM Menus WHERE user_id = %s AND menu_date = %s", (current_user.id, user_time_now.date()))
+
+    menus_today.append({'id': 0, 'name': 'None'}) if not menus_today else None
+
+    if request.method == 'POST':
+        meal_id = request.form.get('meal_type')
+        meal_fact = request.form.get('meal_fact')
+        print(f"Received form data - Meal ID: {meal_id}, Meal Fact: {meal_fact}")
+        recipe_id = request.form.get('recipe_id')
+        time_fact = request.form.get('time_fact')
+        mood = request.form.get('mood')
+        thoughts = request.form.get('thoughts')
+        try:
+            if not meal_fact:
+                menu_meal_id = menu_meals_model.run_query("SELECT id FROM Menu_meals WHERE menu_id = %s AND meal_id = %s", (menus_today[0]['id'], meal_id))[0]['id'] if menus_today and menus_today[0]['id'] != 0 else None
+                recipe_model.run_query(
+                        "INSERT INTO Journal (user_id, menu_meal_id, mood, thoughts, submitted_at) VALUES (%s, %s, %s, %s, %s)",
+                        (current_user.id, menu_meal_id, mood, thoughts, datetime.now(timezone.utc))
+                    )
+                flash('Journal entry created successfully!', 'success')
+                
+            elif meal_fact:
+                menu_meal_id = menu_meals_model.run_query("SELECT id FROM Menu_meals WHERE menu_id = %s AND meal_id = %s", (menus_today[0]['id'], meal_id))[0]['id'] if menus_today and menus_today[0]['id'] != 0 else None 
+                recipe_model.run_query(
+                        "INSERT INTO Journal (user_id, menu_meal_id, meal_as_planned, meal_fact, recipe_id, time_fact, mood, thoughts, submitted_at) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                        (current_user.id, menu_meal_id, 0, meal_fact, recipe_id or None, time_fact, mood, thoughts, datetime.now(timezone.utc))
+                    )
+                flash('Journal entry created successfully!', 'success')
+            else:
+                flash('Please select how the meal went.', 'error')
+        except Exception as e:
+                    print(f"Error creating journal entry: {e}")
+                    flash('An error occurred while creating the journal entry. Please try again.', 'error')
+        
+        return redirect(url_for('journal'))
+    
+
+    return redirect(url_for('journal'))
 
 @app.route('/preferences')
 @login_required

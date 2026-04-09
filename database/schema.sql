@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS `Journal`;
 DROP TABLE IF EXISTS `Ingredients_categories_map`;
 DROP TABLE IF EXISTS `Shopping_list_ingredients`;
 DROP TABLE IF EXISTS `Shopping_list`;
@@ -200,6 +201,20 @@ CREATE TABLE `Ingredients_categories_map`(
     `source_id` SMALLINT UNSIGNED NULL
 );
 
+CREATE TABLE Journal (
+`id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+`user_id` BIGINT UNSIGNED NOT NULL, 
+`menu_meal_id` BIGINT UNSIGNED NULL,
+`meal_as_planned` BOOLEAN NOT NULL DEFAULT 1,
+`meal_id` SMALLINT UNSIGNED NULL COMMENT "if meal_as_planned 0",
+`meal_fact` TEXT NULL COMMENT "if meal_as_planned 0",
+`recipe_id` BIGINT UNSIGNED NULL COMMENT "if meal_as_planned 0",
+`time_fact` TIME NOT NULL COMMENT "if meal_as_planned 0",
+`mood` SMALLINT NOT NULL COMMENT "1 - 10",
+`thoughts` TEXT NULL,
+`created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`submitted_at` TIMESTAMP NULL
+);
 ALTER TABLE
     `Ingredient_restrictions` ADD CONSTRAINT `ingredient_restrictions_restriction_id_foreign` FOREIGN KEY(`restriction_id`) REFERENCES `Restrictions`(`id`);
 ALTER TABLE
@@ -260,3 +275,11 @@ ALTER TABLE
     `Shopping_list_ingredients` ADD CONSTRAINT `shopping_list_ingredients_category_id_foreign` FOREIGN KEY(`category_id`) REFERENCES `Ingredient_categories`(`id`);
 ALTER TABLE
     `Shopping_list_ingredients` ADD CONSTRAINT `shopping_list_ingredients_ingredient_id_foreign` FOREIGN KEY(`ingredient_id`) REFERENCES `Ingredients`(`id`);
+ALTER TABLE
+    `Journal` ADD CONSTRAINT `journal_user_id_foreign` FOREIGN KEY(`user_id`) REFERENCES `Users`(`id`);
+ALTER TABLE
+    `Journal` ADD CONSTRAINT `journal_menu_meal_id_foreign` FOREIGN KEY(`menu_meal_id`) REFERENCES `Menu_meals`(`id`);
+ALTER TABLE
+    `Journal` ADD CONSTRAINT `journal_meal_id_foreign` FOREIGN KEY(`meal_id`) REFERENCES `Meals`(`id`);
+ALTER TABLE
+    `Journal` ADD CONSTRAINT `journal_recipe_id_foreign` FOREIGN KEY(`recipe_id`) REFERENCES `Recipes`(`id`);

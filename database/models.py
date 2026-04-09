@@ -1,5 +1,4 @@
 import csv
-from math import e
 from .db_connector import create_connection
 
 

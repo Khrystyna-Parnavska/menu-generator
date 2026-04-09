@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+{% block body %}
+
+<datalist id="recipe-suggestions">
+    {% for recipe in all_recipes %}
+        <option data-id="{{ recipe.id }}" value="{{ recipe.name }}"></option>
+    {% endfor %}
+</datalist>
+
+
+<div class="centered-content">
+    <h3 style="color: var(--text-pink);">Food Journal</h3>
+    
+    <button type="button" class="submit-btn" onclick="toggleManualForm()" 
+            style="background: transparent; border: 2px solid var(--accent-purple); color: white; width: auto; padding: 10px 30px; margin-bottom: 20px;">
+        + Log Unscheduled/Manual Meal
+    </button>
+</div>
+
+<div id="manual-form-container" style="display: none; margin-top: 20px; animation: fadeIn 0.3s ease;">
+    <div class="form-box" style="border: 2px solid var(--text-pink); max-width: 600px;">
+        <h4 style="color: white; margin-bottom: 20px; text-align: center;">Manual Log</h4>
+        <p style="color: var(--text-pink); font-size: 0.85em; text-align: center; margin-bottom: 20px; font-style: italic;">
+            Note: Manual entries are available for today's date only.
+        </p>
+        <form action="{{ url_for('create_journal_entry') }}" method="POST">
+            <input type="hidden" id="manual_recipe_id" name="recipe_id" value="">
+            <label class="custom-label">What type of meal was it?</label>
+            <select name="meal_type" id="manual_meal_type" class="custom-input" onchange="handleMealTypeChange()" required>
+                {% for meal in meals %}
+                    <option value="{{ meal.id }}">{{ meal.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label class="custom-label">Did you eat as planned?</label>
+            <div class="meal-checkbox-grid" style="margin-bottom: 20px;">
+                <label class="meal-checkbox-card">
+                    <input type="radio" name="meal_as_planned" value="1" id="planned_yes" checked onchange="toggleManualFact(this)">
+                    <span class="checkmark"></span>
+                    <span class="meal-label">Yes</span>
+                </label>
+                <label class="meal-checkbox-card">
+                    <input type="radio" name="meal_as_planned" value="0" id="planned_no" onchange="toggleManualFact(this)">
+                    <span class="checkmark"></span>
+                    <span class="meal-label">No</span>
+                </label>
+            </div>
+
+            <div id="manual-fact-wrapper" style="display: none; margin-bottom: 15px;">
+                <label for="manual_meal_fact" class="custom-label">What did you have instead?</label>
+    
+                <input type="text" id="manual_meal_fact" name="meal_fact" class="custom-input" 
+                    placeholder="Search recipes or type anything..." list="recipe-suggestions" 
+                    oninput="syncRecipeId()">
+
+                <input type="hidden" id="manual_recipe_id" name="recipe_id" value="">
+
+                <label for="manual_time_fact" class="custom-label">Time of Meal</label>
+                <input type="time" id="manual_time_fact" name="time_fact" class="custom-input">
+
+                </select>   
+            </div>
+
+            <div style="display: flex; gap: 15px; margin-top: 15px;">
+                <div style="flex: 1;">
+                    <label for="manual_mood" class="custom-label">Mood (1-10)</label>
+                    <input type="number" name="mood" min="1" max="10" class="custom-input" required placeholder="5">
+                </div>
+            </div>
+
+            <label class="custom-label" style="margin-top:15px;">Thoughts & Feelings</label>
+            <textarea name="thoughts" class="custom-input" style="height: 100px; border-radius: 15px;" placeholder="How do you feel physically and emotionally?"></textarea>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="submit" class="submit-btn" style="flex: 2;">Save Reflection</button>
+                <button type="button" onclick="toggleManualForm()" class="action-btn" style="flex: 1; background: rgba(255,255,255,0.1); border: 1px solid var(--accent-purple);">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="pending-section" style="margin-top: 40px;">
+    <h4 style="color: var(--text-pink); letter-spacing: 1px; border-bottom: 1px solid var(--accent-purple); padding-bottom: 10px; margin-bottom: 20px;">
+        PENDING REFLECTIONS
+    </h4>
+    {% if journal_entries %}
+        {% for entry in journal_entries %}
+            <div class="menu-day-card" style="border-left: 5px solid #ff4d4d; background: rgba(255, 255, 255, 0.02); padding: 25px; margin-bottom: 25px;">
+                <form action="{{ url_for('update_journal', journal_id=entry.id) }}" method="POST">
+                    <div style="margin-bottom: 15px;">
+                        <span style="color: var(--text-pink); font-size: 0.9em; font-weight: bold; text-transform: uppercase;">
+                            {{ entry.meal_type }} • {{ entry.scheduled_time }}
+                        </span>
+                        <h2 style="margin: 5px 0; font-size: 1.3em; color: white;">{{ entry.recipe_name }}</h2>
+                    </div>
+
+                    <div class="meal-checkbox-grid" style="margin-bottom: 20px;">
+                        <label class="meal-checkbox-card">
+                            <input type="radio" name="meal_as_planned" value="1" checked onchange="toggleFactInput(this, 'fact-field-{{ entry.id }}')">
+                            <span class="checkmark"></span>
+                            <span class="meal-label">Ate as planned</span>
+                        </label>
+                        <label class="meal-checkbox-card">
+                            <input type="radio" name="meal_as_planned" value="0" onchange="toggleFactInput(this, 'fact-field-{{ entry.id }}')">
+                            <span class="checkmark"></span>
+                            <span class="meal-label">Ate something else</span>
+                        </label>
+                    </div>
+
+                    <div id="fact-field-{{ entry.id }}" style="display: none; margin-bottom: 20px;">
+                        <label class="custom-label" style="text-align: left;">What was actually eaten?</label>
+                        <input type="text" name="meal_fact" class="custom-input" placeholder="Enter meal details...">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 2.5fr; gap: 15px;">
+                        <div>
+                            <label class="custom-label">Mood (1-10)</label>
+                            <input type="number" name="mood" min="1" max="10" class="custom-input" required>
+                        </div>
+                        <div>
+                            <label class="custom-label">Thoughts</label>
+                            <textarea name="thoughts" class="custom-input" style="height: 45px; border-radius: 50px; padding-top: 12px; resize: none;"></textarea>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-btn" style="width: 100%; margin-top: 20px; background: linear-gradient(45deg, var(--accent-purple), var(--text-pink));">
+                        Confirm Journal Entry
+                    </button>
+                </form>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.4);">
+            <p>All reflections are up to date. Keep going!</p>
+        </div>
+    {% endif %}
+</div>
+
+<div id="history-section" style="margin-top: 50px;">
+    <h4 style="color: var(--accent-purple); letter-spacing: 1px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 20px; text-transform: uppercase;">
+        Past Reflections
+    </h4>
+
+    {% if history %}
+        {% for entry in history %}
+            <div class="menu-row-card" style="opacity: 0.9; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); display: flex; align-items: center; gap: 15px;">
+                
+                <div class="menu-time-container" style="text-align: center; flex-shrink: 0;">
+                    <div class="time-badge" style="background: var(--bg-dark); border: 1px solid var(--text-pink); min-width: 45px; justify-content: center; margin-bottom: 0;">
+                        {{ entry.mood }}
+                    </div>
+                    <small style="color: var(--text-pink); font-size: 0.7em; display: block; margin-top: 5px;">MOOD</small>
+                </div>
+
+                <div class="recipe-info" style="text-align: left; flex-grow: 1;">
+                    <span style="color: var(--text-pink); font-size: 0.8em; font-weight: bold; text-transform: uppercase;">
+                        {{ entry.created_at.strftime('%b %d') }} • 
+                        {{ entry.time_display }} • 
+                        {{ entry.meal_type_display }}
+                    </span>
+                    
+                    <strong style="color: white; font-size: 1.1em; display: block; margin: 2px 0;">
+                        {% if entry.meal_as_planned %}
+                            {{ entry.recipe_display_name }}
+                        {% else %}
+                            {# If they ate something else, show their text, or the recipe name they selected #}
+                            {{ entry.meal_fact or entry.recipe_display_name }}
+                        {% endif %}
+                    </strong>
+
+                    {% if entry.thoughts %}
+                        <p style="font-size: 0.85em; color: rgba(255,255,255,0.6); margin: 5px 0 0 0; font-style: italic; line-height: 1.4;">
+                            "{{ entry.thoughts }}"
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p style="text-align: center; color: rgba(255,255,255,0.3); font-style: italic;">No history yet. Your journey starts here.</p>
+    {% endif %}
+</div>
+
+<script>
+// Toggle the Manual Entry Form visibility
+function toggleManualForm() {
+    const form = document.getElementById('manual-form-container');
+    const pending = document.getElementById('pending-section');
+    
+    if (form.style.display === "none") {
+        form.style.display = "block";
+        pending.style.opacity = "0.2";
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+        form.style.display = "none";
+        pending.style.opacity = "1";
+    }
+}
+
+// Toggle the "What did you actually eat" field in pending rows
+function toggleFactInput(radio, fieldId) {
+    const field = document.getElementById(fieldId);
+    field.style.display = (radio.value === "0") ? "block" : "none";
+}
+
+function toggleManualFact(radio) {
+    const wrapper = document.getElementById('manual-fact-wrapper');
+    const input = document.getElementById('manual_meal_fact');
+    
+    if (radio.value === "0") {
+        wrapper.style.display = 'block';
+        input.setAttribute('required', 'required'); // Make it mandatory if they ate something else
+    } else {
+        wrapper.style.display = 'none';
+        input.removeAttribute('required'); // Not required if eating as planned
+        input.value = ''; // Clear the input
+    }
+}
+function syncRecipeId() {
+    const input = document.getElementById('manual_meal_fact');
+    const hiddenIdInput = document.getElementById('manual_recipe_id');
+    const options = document.querySelectorAll('#recipe-suggestions option');
+    
+    let foundId = ""; // Default to empty (means it's just custom text)
+    
+    options.forEach(option => {
+        if (option.value === input.value) {
+            foundId = option.getAttribute('data-id');
+        }
+    });
+    
+    hiddenIdInput.value = foundId;
+}
+function handleMealTypeChange() {
+    const mealTypeSelect = document.getElementById('manual_meal_type');
+    const plannedNoRadio = document.getElementById('planned_no');
+    
+    // In your Python code, you appended {'id': 0, 'name': 'Other'}
+    if (mealTypeSelect.value === "0") {
+        // 1. Check the "No" radio button
+        plannedNoRadio.checked = true;
+        
+        // 2. Trigger the existing toggleManualFact function to show the description box
+        toggleManualFact(plannedNoRadio);
+    }
+}
+</script>
+
+<style>
+    @keyframes pulse {
+        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.7); }
+        70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(255, 77, 77, 0); }
+        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 77, 77, 0); }
+    }
+</style>
+{% endblock %}
