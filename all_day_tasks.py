@@ -2,29 +2,70 @@ import sys
 import os
 from datetime import datetime
 
-# 1. Path Setup: Replace with your actual PythonAnywhere username/folder
-project_home = u'/home/khrystyna/menu_generator'
+# 1. Path Setup
+project_home = u'/menu_generator' # Ensure this matches your PA path
 if project_home not in sys.path:
     sys.path.append(project_home)
 
-# 2. Import the necessary components from your main app file
-# Assuming your main file is 'main.py' or 'app.py'
-from app import app, mail, recipe_model, users_model, local_time_to_utc_range
+# 2. Imports
+from database.models import BaseModel 
+from app import app, mail, local_time_to_utc_range
 from flask_mail import Message
 
+# Initialize models
+# Using one model instance for general queries is often cleaner
+db_model = BaseModel('Recipes') 
+user_model = BaseModel('Users')
+
+def generate_pending_journals():
+    """Finds passed meals and creates empty journal reflections."""
+    print(f"[{datetime.now()}] Starting journal generation...")
+    
+    users = user_model.select_all()
+    if not users:
+        return
+
+    for user in users:
+        user_id = user['id']
+        # FIX: Ensure we use the correct key for timezone (check your DB column name)
+        user_tz = user.get('timezone') or user.get('time_zone') or 'UTC'
+        
+        # Get the 3rd item from the tuple (local_now)
+        time_data = local_time_to_utc_range(user_tz, return_now=True)
+        user_time_now = time_data[2] 
+        
+        query = """
+        INSERT INTO Journal (user_id, menu_meal_id, meal_as_planned, created_at)
+        SELECT mm.user_id, mm.id, 1, CURRENT_TIMESTAMP
+        FROM Menu_meals mm
+        JOIN Menus m ON mm.menu_id = m.id
+        LEFT JOIN Journal j ON mm.id = j.menu_meal_id
+        WHERE j.id IS NULL 
+        AND m.menu_date = %s
+        AND mm.meal_time <= %s
+        AND m.user_id = %s
+        """
+        
+        try:
+            db_model.run_query(query, (user_time_now.date(), user_time_now.time(), user_id))
+        except Exception as e:
+            print(f"Error generating journal for user {user_id}: {e}")
+
+    print(f"[{datetime.now()}] Journal generation complete.")
+
+
 def send_meal_reminders():
-    # We use 'with app.app_context()' so Flask knows our MAIL_SERVER settings
+    """Sends email notifications for upcoming meals."""
     with app.app_context():
         print(f"[{datetime.now()}] Running meal reminder job...")
         
-        all_users = users_model.select_all()
+        all_users = user_model.select_all()
 
         for user_data in all_users:
             user_id = user_data['id']
-            # Re-fetch or use existing data to get timezone
-            user_tz = user_data.get('timezone') or 'UTC'
+            # FIX: Match the timezone key consistency
+            user_tz = user_data.get('timezone') or user_data.get('time_zone') or 'UTC'
 
-            # Get user's local 'now'
             _, _, local_now = local_time_to_utc_range(user_tz, return_now=True)
             
             query = """
@@ -40,8 +81,7 @@ def send_meal_reminders():
                 AND mm.reminder_sent = 0
             """
             
-            # Note: We use local_now.time() for the range check
-            upcoming_meals = recipe_model.run_query(query, (
+            upcoming_meals = db_model.run_query(query, (
                 local_now.time(), 
                 local_now.time(), 
                 user_id, 
@@ -70,12 +110,14 @@ def send_meal_reminders():
                     
                     mail.send(msg)
                     
-                    # Mark as sent immediately
-                    recipe_model.run_query("UPDATE Menu_meals SET reminder_sent = 1 WHERE id = %s", (meal['id'],))
-                    print(f"Success: Reminder sent to {meal['email']} for {meal['recipe_name']}")
+                    # Mark as sent
+                    db_model.run_query("UPDATE Menu_meals SET reminder_sent = 1 WHERE id = %s", (meal['id'],))
+                    print(f"Success: Reminder sent to {meal['email']}")
                     
                 except Exception as e:
                     print(f"Failed to send email for meal {meal['id']}: {e}")
 
 if __name__ == "__main__":
+    # Order matters: Send reminders first so they aren't delayed by journal generation
     send_meal_reminders()
+    generate_pending_journals()
