@@ -13,12 +13,24 @@ from flask_mail import Message
 db_model = BaseModel('Recipes') 
 user_model = BaseModel('Users')
 
+
+def send_email(to, subject, body):
+    try:
+        msg = Message(subject, sender=app.config['MAIL_USERNAME'], recipients=[to])
+        msg.body = body
+        mail.send(msg)
+        print(f"Email sent to {to}: {subject}")
+    except Exception as e:
+        print(f"Mail error: {e}")
+
+
 def handle_reminders_and_journals():         
     with app.app_context():
         users = user_model.select_all()
         for user in users:
             user_id = user['id']
             user_tz = user.get('timezone') or user.get('time_zone') or 'UTC'
+
             _, _, local_now = local_time_to_utc_range(user_tz, return_now=True)
 
             # --- PART 1: MEAL REMINDERS (15m before Prep + Cook starts) ---
@@ -31,7 +43,7 @@ def handle_reminders_and_journals():
                 JOIN Recipes r ON mm.recipe_id = r.id
                 WHERE m.menu_date = %s 
                 AND mm.reminder_sent = 0
-                AND mm.meal_time <= DATE_ADD(%s, INTERVAL (r.prep_time + r.cooking_time + 15) MINUTE)
+                AND %s >= SUBTIME(mm.meal_time, sec_to_time(time_to_sec(cooking_time) + time_to_sec(prep_time)) + interval 15 minute)
                 AND mm.meal_time > %s
                 AND m.submitted_at IS NOT NULL
             """
@@ -50,8 +62,8 @@ def handle_reminders_and_journals():
             # --- PART 2: CREATE JOURNAL & REFLECTION EMAIL ---
             # Stays the same: Creates entry once the meal_time has passed
             journal_gen_query = """
-                INSERT INTO Journal (user_id, menu_meal_id, meal_as_planned, created_at)
-                SELECT m.user_id, mm.id, 1, CURRENT_TIMESTAMP
+                INSERT INTO Journal (user_id, menu_meal_id, meal_as_planned, meal_id, time_fact, mood)
+                SELECT m.user_id, mm.id, 1, mm.meal_id, mm.meal_time, 5
                 FROM Menu_meals mm
                 JOIN Menus m ON mm.menu_id = m.id
                 LEFT JOIN Journal j ON mm.id = j.menu_meal_id
@@ -69,21 +81,13 @@ def handle_reminders_and_journals():
                 JOIN Menu_meals mm ON j.menu_meal_id = mm.id
                 JOIN Recipes r ON mm.recipe_id = r.id
                 JOIN Users u ON j.user_id = u.id
-                WHERE j.user_id = %s AND j.mood IS NULL AND j.notified = 0
+                WHERE j.user_id = %s AND mm.meal_time <= %s + INTERVAL 20 MINUTE AND j.notified = 0
             """
-            to_notify = db_model.run_query(notif_query, (user_id,))
+            to_notify = db_model.run_query(notif_query, (user_id, local_now.time()))
             for j in (to_notify or []):
                 send_email(j['email'], "📝 Reflection Time", f"How was your {j['name']}? Your journal is ready.")
                 db_model.run_query("UPDATE Journal SET notified = 1 WHERE id = %s", (j['id'],))
 
-def send_email(to, subject, body):
-    try:
-        msg = Message(subject, sender=app.config['MAIL_USERNAME'], recipients=[to])
-        msg.body = body
-        mail.send(msg)
-        print(f"Email sent to {to}: {subject}")
-    except Exception as e:
-        print(f"Mail error: {e}")
 
 if __name__ == "__main__":
     handle_reminders_and_journals()

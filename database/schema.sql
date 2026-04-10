@@ -216,6 +216,7 @@ CREATE TABLE Journal (
 `submitted_at` TIMESTAMP NULL,
 `notified` BOOLEAN NOT NULL DEFAULT 0
 );
+
 ALTER TABLE
     `Ingredient_restrictions` ADD CONSTRAINT `ingredient_restrictions_restriction_id_foreign` FOREIGN KEY(`restriction_id`) REFERENCES `Restrictions`(`id`);
 ALTER TABLE

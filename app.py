@@ -1638,7 +1638,7 @@ def journal():
         -- Joins for manual entries
         LEFT JOIN Meals m_direct ON j.meal_id = m_direct.id
         LEFT JOIN Recipes r_direct ON j.recipe_id = r_direct.id
-        WHERE j.user_id = %s AND j.mood IS NOT NULL
+        WHERE j.user_id = %s AND j.submitted_at IS NOT NULL
         ORDER BY j.created_at DESC
         LIMIT 20
     """
