@@ -143,37 +143,39 @@
 
     {% if history %}
         {% for entry in history %}
-            <div class="menu-row-card" style="opacity: 0.9; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); display: flex; align-items: center; gap: 15px;">
+            <div class="menu-row-card" style="opacity: 0.9; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); display: flex; flex-direction: column; align-items: center; gap: 15px;">
                 
-                <div class="menu-time-container" style="text-align: center; flex-shrink: 0;">
-                    <div class="time-badge" style="background: var(--bg-dark); border: 1px solid var(--text-pink); min-width: 45px; justify-content: center; margin-bottom: 0;">
-                        {{ entry.mood }}
+                <div style="display: flex; gap: 15px; flex-direction: row; align-items: center;">
+                    <div class="menu-time-container" style="text-align: center; flex-shrink: 0;">
+                        <div class="time-badge" style="background: var(--bg-dark); border: 1px solid var(--text-pink); min-width: 45px; justify-content: center; margin-bottom: 0;">
+                            {{ entry.mood }}
+                        </div>
+                        <small style="color: var(--text-pink); font-size: 0.7em; display: block; margin-top: 5px;">MOOD</small>
                     </div>
-                    <small style="color: var(--text-pink); font-size: 0.7em; display: block; margin-top: 5px;">MOOD</small>
+
+                    <div class="recipe-info" style="text-align: left; flex-grow: 1;">
+                        <span style="color: var(--text-pink); font-size: 0.8em; font-weight: bold; text-transform: uppercase;">
+                            {{ entry.created_at.strftime('%b %d') }} • 
+                            {{ entry.time_display }} • 
+                            {{ entry.meal_type_display }}
+                        </span>
+                        
+                        <strong style="color: white; font-size: 1.1em; display: block; margin: 2px 0;">
+                            {% if entry.meal_as_planned %}
+                                {{ entry.recipe_display_name }}
+                            {% else %}
+                                {# If they ate something else, show their text, or the recipe name they selected #}
+                                {{ entry.meal_fact or entry.recipe_display_name }}
+                            {% endif %}
+                        </strong>
+
+                    </div>
                 </div>
-
-                <div class="recipe-info" style="text-align: left; flex-grow: 1;">
-                    <span style="color: var(--text-pink); font-size: 0.8em; font-weight: bold; text-transform: uppercase;">
-                        {{ entry.created_at.strftime('%b %d') }} • 
-                        {{ entry.time_display }} • 
-                        {{ entry.meal_type_display }}
-                    </span>
-                    
-                    <strong style="color: white; font-size: 1.1em; display: block; margin: 2px 0;">
-                        {% if entry.meal_as_planned %}
-                            {{ entry.recipe_display_name }}
-                        {% else %}
-                            {# If they ate something else, show their text, or the recipe name they selected #}
-                            {{ entry.meal_fact or entry.recipe_display_name }}
-                        {% endif %}
-                    </strong>
-
-                    {% if entry.thoughts %}
-                        <p style="font-size: 0.85em; color: rgba(255,255,255,0.6); margin: 5px 0 0 0; font-style: italic; line-height: 1.4;">
+                {% if entry.thoughts %}
+                    <p style="font-size: 0.85em; color: rgba(255,255,255,0.6); margin: 5px 0 0 0; font-style: italic; line-height: 1.4;">
                             "{{ entry.thoughts }}"
-                        </p>
-                    {% endif %}
-                </div>
+                    </p>
+                {% endif %}
             </div>
         {% endfor %}
     {% else %}

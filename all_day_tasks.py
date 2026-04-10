@@ -24,7 +24,7 @@ def handle_reminders_and_journals():
             # --- PART 1: MEAL REMINDERS (15m before Prep + Cook starts) ---
             # Triggers when current time is 15 mins away from (Meal Time - Total Work Time)
             reminder_query = """
-                SELECT mm.id, u.email, r.name, r.prep_time, r.cook_time, mm.meal_time
+                SELECT mm.id, u.email, r.name, r.prep_time, r.cooking_time, mm.meal_time
                 FROM Menu_meals mm
                 JOIN Menus m ON mm.menu_id = m.id
                 JOIN Users u ON m.user_id = u.id

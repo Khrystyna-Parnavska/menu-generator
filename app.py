@@ -777,6 +777,8 @@ def submit_final_menu():
 @login_required
 def delete_menu(menu_id):
     menu_meals_model.run_query("DELETE FROM Menu_meals WHERE menu_id = %s", (menu_id,))
+    shopping_list_items_model.run_query("DELETE FROM Shopping_list_ingredients WHERE shop_list_id IN (SELECT id FROM Shopping_list WHERE menu_id IN (SELECT id FROM Menus WHERE user_id = %s AND submitted_at IS NULL))", (current_user.id,))
+    shopping_list_model.run_query("DELETE FROM Shopping_list WHERE menu_id IN (SELECT id FROM Menus WHERE user_id = %s AND submitted_at IS NULL)", (current_user.id,))
     menu_model.run_query("DELETE FROM Menus WHERE id = %s", (menu_id,))
     return redirect(url_for('menu'))
 
@@ -786,7 +788,7 @@ def delete_all_drafts():
     current_user_id = current_user.id
 
     menu_meals_model.run_query("DELETE FROM Menu_meals WHERE menu_id IN (SELECT id FROM Menus WHERE user_id = %s AND submitted_at IS NULL)", (current_user_id,))
-    shopping_list_items_model.run_query("DELETE FROM Shopping_list_ingredients WHERE shop_list_id IN (SELECT id FROM shop_list WHERE menu_id IN (SELECT id FROM Menus WHERE user_id = %s AND submitted_at IS NULL))", (current_user_id,))
+    shopping_list_items_model.run_query("DELETE FROM Shopping_list_ingredients WHERE shop_list_id IN (SELECT id FROM Shopping_list WHERE menu_id IN (SELECT id FROM Menus WHERE user_id = %s AND submitted_at IS NULL))", (current_user_id,))
     shopping_list_model.run_query("DELETE FROM Shopping_list WHERE menu_id IN (SELECT id FROM Menus WHERE user_id = %s AND submitted_at IS NULL)", (current_user_id,))
     menu_model.run_query("DELETE FROM Menus WHERE user_id = %s AND submitted_at IS NULL", (current_user_id,))
 

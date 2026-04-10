@@ -25,13 +25,13 @@
                     </option>
                 {% endfor %}
             </select>
-            <label class="meal-checkbox-card">
+            <label class="meal-checkbox-card" style="display: flex; align-items: center; margin: 0; padding: 0 15px; height: 40px; background: rgba(255,255,255,0.05); border: 1px solid var(--accent-purple); border-radius: 20px; cursor: pointer;">
                 <input type="checkbox" name="show_favorites" id="favs" value="1" 
                     {% if request.args.get('show_favorites') == '1' %}checked{% endif %}>
-                <span class="checkmark"></span>
-                <span class="meal-label">Show Favorites Only</span>
+                <span class="checkmark" style="margin-right: 0;"></span>
+                <span class="meal-label" style="font-size: 0.8em; white-space: nowrap;">Show Favorites</span>
             </label>
-            <button type="submit" class="action-btn" style="min-height: 40px;" >Filter</button>
+            <button type="submit" class="action-btn" style="min-height: 40px; background-color: var(--text-pink)" >Filter</button>
         </div>
     </form>
 
@@ -68,14 +68,14 @@
                         </button>
                     </form>
                     <form action="{{ url_for('delete_recipe', recipe_id=recipe.id) }}" method="POST">
-                                        <button type="submit" class="submit-btn" style="width: 100%; padding: 12px; background-color: transparent; color: white; border: 1px solid var(--text-pink);">Delete Recipe</button>
+                                        <button type="submit" class="card-btn view-btn" style="width: 100%; padding: 12px; background-color: transparent; color: white; border: 1px solid var(--text-pink);">Delete Recipe</button>
                     </form>
                     {% if meal_index is not none %}
                         <form action="{{ url_for('update_menu_item') }}" method="POST">
                             <input type="hidden" name="recipe_id" value="{{ recipe.id }}">
                             <input type="hidden" name="menu_id" value="{{ menu_id }}">
                             <input type="hidden" name="meal_index" value="{{ meal_index }}">
-                            <button type="submit" class="select-btn">Select for Menu</button>
+                            <button type="submit" class="card-btn view-btn" style="width: 100%; padding: 12px; background-color: var(--text-pink); color: white;">Select for Menu</button>
                         </form>
                     {% endif %}
                 </div>

@@ -209,7 +209,7 @@ CREATE TABLE Journal (
 `meal_id` SMALLINT UNSIGNED NULL COMMENT "if meal_as_planned 0",
 `meal_fact` TEXT NULL COMMENT "if meal_as_planned 0",
 `recipe_id` BIGINT UNSIGNED NULL COMMENT "if meal_as_planned 0",
-`time_fact` TIME NOT NULL COMMENT "if meal_as_planned 0",
+`time_fact` TIME NULL COMMENT "if meal_as_planned 0",
 `mood` SMALLINT NOT NULL COMMENT "1 - 10",
 `thoughts` TEXT NULL,
 `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
