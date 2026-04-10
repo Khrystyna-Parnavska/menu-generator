@@ -31,14 +31,14 @@ def handle_reminders_and_journals():
                 JOIN Recipes r ON mm.recipe_id = r.id
                 WHERE m.menu_date = %s 
                 AND mm.reminder_sent = 0
-                AND mm.meal_time <= DATE_ADD(%s, INTERVAL (r.prep_time + r.cook_time + 15) MINUTE)
+                AND mm.meal_time <= DATE_ADD(%s, INTERVAL (r.prep_time + r.cooking_time + 15) MINUTE)
                 AND mm.meal_time > %s
                 AND m.submitted_at IS NOT NULL
             """
             to_remind = db_model.run_query(reminder_query, (local_now.date(), local_now.time(), local_now.time()))
             
             for meal in (to_remind or []):
-                total_work = meal['prep_time'] + meal['cook_time']
+                total_work = meal['prep_time'] + meal['cooking_time']
                 subject = f"🍳 Time to start: {meal['name']}"
                 body = (f"Hi! It's time to head to the kitchen.\n\n"
                         f"Your meal is at {meal['meal_time']}.\n"
