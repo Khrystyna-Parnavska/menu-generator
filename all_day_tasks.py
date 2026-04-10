@@ -2,122 +2,88 @@ import sys
 import os
 from datetime import datetime
 
-# 1. Path Setup
-project_home = u'/menu_generator' # Ensure this matches your PA path
-if project_home not in sys.path:
-    sys.path.append(project_home)
+script_dir = os.path.dirname(os.path.abspath(__file__))
+if script_dir not in sys.path:
+    sys.path.append(script_dir)
 
-# 2. Imports
 from database.models import BaseModel 
 from app import app, mail, local_time_to_utc_range
 from flask_mail import Message
 
-# Initialize models
-# Using one model instance for general queries is often cleaner
 db_model = BaseModel('Recipes') 
 user_model = BaseModel('Users')
 
-def generate_pending_journals():
-    """Finds passed meals and creates empty journal reflections."""
-    print(f"[{datetime.now()}] Starting journal generation...")
-    
-    users = user_model.select_all()
-    if not users:
-        return
-
-    for user in users:
-        user_id = user['id']
-        # FIX: Ensure we use the correct key for timezone (check your DB column name)
-        user_tz = user.get('timezone') or user.get('time_zone') or 'UTC'
-        
-        # Get the 3rd item from the tuple (local_now)
-        time_data = local_time_to_utc_range(user_tz, return_now=True)
-        user_time_now = time_data[2] 
-        
-        query = """
-        INSERT INTO Journal (user_id, menu_meal_id, meal_as_planned, created_at)
-        SELECT mm.user_id, mm.id, 1, CURRENT_TIMESTAMP
-        FROM Menu_meals mm
-        JOIN Menus m ON mm.menu_id = m.id
-        LEFT JOIN Journal j ON mm.id = j.menu_meal_id
-        WHERE j.id IS NULL 
-        AND m.menu_date = %s
-        AND mm.meal_time <= %s
-        AND m.user_id = %s
-        """
-        
-        try:
-            db_model.run_query(query, (user_time_now.date(), user_time_now.time(), user_id))
-        except Exception as e:
-            print(f"Error generating journal for user {user_id}: {e}")
-
-    print(f"[{datetime.now()}] Journal generation complete.")
-
-
-def send_meal_reminders():
-    """Sends email notifications for upcoming meals."""
+def handle_reminders_and_journals():         
     with app.app_context():
-        print(f"[{datetime.now()}] Running meal reminder job...")
-        
-        all_users = user_model.select_all()
-
-        for user_data in all_users:
-            user_id = user_data['id']
-            # FIX: Match the timezone key consistency
-            user_tz = user_data.get('timezone') or user_data.get('time_zone') or 'UTC'
-
+        users = user_model.select_all()
+        for user in users:
+            user_id = user['id']
+            user_tz = user.get('timezone') or user.get('time_zone') or 'UTC'
             _, _, local_now = local_time_to_utc_range(user_tz, return_now=True)
-            
-            query = """
-                SELECT mm.id, m.menu_date, u.email, r.name as recipe_name, mm.meal_time
+
+            # --- PART 1: MEAL REMINDERS (15m before Prep + Cook starts) ---
+            # Triggers when current time is 15 mins away from (Meal Time - Total Work Time)
+            reminder_query = """
+                SELECT mm.id, u.email, r.name, r.prep_time, r.cook_time, mm.meal_time
                 FROM Menu_meals mm
                 JOIN Menus m ON mm.menu_id = m.id
                 JOIN Users u ON m.user_id = u.id
                 JOIN Recipes r ON mm.recipe_id = r.id
-                WHERE mm.meal_time BETWEEN %s AND DATE_ADD(%s, INTERVAL 1 HOUR)
-                AND m.user_id = %s 
-                AND m.submitted_at IS NOT NULL
-                AND m.menu_date = %s
+                WHERE m.menu_date = %s 
                 AND mm.reminder_sent = 0
+                AND mm.meal_time <= DATE_ADD(%s, INTERVAL (r.prep_time + r.cook_time + 15) MINUTE)
+                AND mm.meal_time > %s
+                AND m.submitted_at IS NOT NULL
             """
+            to_remind = db_model.run_query(reminder_query, (local_now.date(), local_now.time(), local_now.time()))
             
-            upcoming_meals = db_model.run_query(query, (
-                local_now.time(), 
-                local_now.time(), 
-                user_id, 
-                local_now.date()
-            ))
+            for meal in (to_remind or []):
+                total_work = meal['prep_time'] + meal['cook_time']
+                subject = f"🍳 Time to start: {meal['name']}"
+                body = (f"Hi! It's time to head to the kitchen.\n\n"
+                        f"Your meal is at {meal['meal_time']}.\n"
+                        f"You have {total_work} minutes of prep and cooking ahead of you. Let's go!")
+                
+                send_email(meal['email'], subject, body)
+                db_model.run_query("UPDATE Menu_meals SET reminder_sent = 1 WHERE id = %s", (meal['id'],))
 
-            if not upcoming_meals:
-                continue
+            # --- PART 2: CREATE JOURNAL & REFLECTION EMAIL ---
+            # Stays the same: Creates entry once the meal_time has passed
+            journal_gen_query = """
+                INSERT INTO Journal (user_id, menu_meal_id, meal_as_planned, created_at)
+                SELECT m.user_id, mm.id, 1, CURRENT_TIMESTAMP
+                FROM Menu_meals mm
+                JOIN Menus m ON mm.menu_id = m.id
+                LEFT JOIN Journal j ON mm.id = j.menu_meal_id
+                WHERE j.id IS NULL AND m.submitted_at IS NOT NULL
+                AND m.menu_date = %s 
+                AND mm.meal_time <= %s 
+                AND m.user_id = %s
+            """
+            db_model.run_query(journal_gen_query, (local_now.date(), local_now.time(), user_id))
 
-            for meal in upcoming_meals:
-                try:
-                    msg = Message("🍳 Time to Cook!",
-                                  sender=app.config['MAIL_USERNAME'],
-                                  recipients=[meal['email']])
+            # Notify user to fill out the journal
+            notif_query = """
+                SELECT j.id, u.email, r.name 
+                FROM Journal j
+                JOIN Menu_meals mm ON j.menu_meal_id = mm.id
+                JOIN Recipes r ON mm.recipe_id = r.id
+                JOIN Users u ON j.user_id = u.id
+                WHERE j.user_id = %s AND j.mood IS NULL AND j.notified = 0
+            """
+            to_notify = db_model.run_query(notif_query, (user_id,))
+            for j in (to_notify or []):
+                send_email(j['email'], "📝 Reflection Time", f"How was your {j['name']}? Your journal is ready.")
+                db_model.run_query("UPDATE Journal SET notified = 1 WHERE id = %s", (j['id'],))
 
-                    menu_url = "https://yourusername.pythonanywhere.com/menu"
-
-                    msg.html = f"""
-                    <div style="font-family: sans-serif; max-width: 400px; margin: auto; border: 1px solid #5d3f9b; padding: 20px; border-radius: 15px; text-align: center; background-color: #f9f9f9;">
-                        <h2 style="color: #ff66b2;">Kitchen Time!</h2>
-                        <p>It's almost time for your <strong>{meal['recipe_name']}</strong>.</p>
-                        <p>Scheduled for: <strong>{meal['meal_time']}</strong></p>
-                        <a href="{menu_url}" style="background-color: #5d3f9b; color: white; padding: 10px 20px; text-decoration: none; border-radius: 25px; display: inline-block;">View Recipe</a>
-                    </div>
-                    """
-                    
-                    mail.send(msg)
-                    
-                    # Mark as sent
-                    db_model.run_query("UPDATE Menu_meals SET reminder_sent = 1 WHERE id = %s", (meal['id'],))
-                    print(f"Success: Reminder sent to {meal['email']}")
-                    
-                except Exception as e:
-                    print(f"Failed to send email for meal {meal['id']}: {e}")
+def send_email(to, subject, body):
+    try:
+        msg = Message(subject, sender=app.config['MAIL_USERNAME'], recipients=[to])
+        msg.body = body
+        mail.send(msg)
+        print(f"Email sent to {to}: {subject}")
+    except Exception as e:
+        print(f"Mail error: {e}")
 
 if __name__ == "__main__":
-    # Order matters: Send reminders first so they aren't delayed by journal generation
-    send_meal_reminders()
-    generate_pending_journals()
+    handle_reminders_and_journals()

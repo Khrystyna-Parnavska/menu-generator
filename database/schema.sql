@@ -213,7 +213,8 @@ CREATE TABLE Journal (
 `mood` SMALLINT NOT NULL COMMENT "1 - 10",
 `thoughts` TEXT NULL,
 `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-`submitted_at` TIMESTAMP NULL
+`submitted_at` TIMESTAMP NULL,
+`notified` BOOLEAN NOT NULL DEFAULT 0
 );
 ALTER TABLE
     `Ingredient_restrictions` ADD CONSTRAINT `ingredient_restrictions_restriction_id_foreign` FOREIGN KEY(`restriction_id`) REFERENCES `Restrictions`(`id`);
