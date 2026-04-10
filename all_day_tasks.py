@@ -81,7 +81,7 @@ def handle_reminders_and_journals():
                 JOIN Menu_meals mm ON j.menu_meal_id = mm.id
                 JOIN Recipes r ON mm.recipe_id = r.id
                 JOIN Users u ON j.user_id = u.id
-                WHERE j.user_id = %s AND mm.meal_time <= %s + INTERVAL 20 MINUTE AND j.notified = 0
+                WHERE j.user_id = %s AND mm.meal_time <= ADDTIME(%s, '00:20:00') AND j.notified = 0
             """
             to_notify = db_model.run_query(notif_query, (user_id, local_now.time()))
             for j in (to_notify or []):

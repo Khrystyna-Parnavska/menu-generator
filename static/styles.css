@@ -93,6 +93,13 @@ header {
     gap: 2px;
 }
 
+.history_date_filter {
+    display: flex; 
+    flex-direction: row; 
+    gap: 20px; 
+    margin-bottom: 40px;
+}
+
 .recipe-name {
     display: -webkit-box !important;
     -webkit-line-clamp: 2 !important;
@@ -891,6 +898,16 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
     .manual-search-form .search-group {
         flex: 1 1 auto;         /* Allow them to be 100% wide */
+    }
+
+    .history_date_filter {
+        flex-direction: column; /* Stack the date filter vertically */
+        align-items: center;    /* Center the items */
+        gap: 5px;             /* Add more space between them */
+    }
+    .history_date_filter .submit-btn {
+        width: 100%;            /* Make the submit button full width */
+        padding: 12px;          /* Bigger touch target */
     }
 }
 

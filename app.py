@@ -1,3 +1,4 @@
+from tracemalloc import start
 from urllib.parse import quote
 from database.models import BaseModel
 
@@ -1177,10 +1178,34 @@ def remove_favorite(recipe_id):
     return redirect(request.referrer or url_for('manual_search', meal_index=-1))
 
 
-@app.route('/history')
+@app.route('/history', methods=['GET', 'POST'])
 @login_required
 def history():
-    meals_query = """
+    start_date = request.form.get('start_date', '')
+    end_date = request.form.get('end_date', '')
+    print(f"Filtering history from {start_date} to {end_date} for user_id {current_user.id}")
+    if start_date and end_date:
+        history_query = """SELECT id, date(created_at) as `created at`, menu_date as `menu date` FROM Menus WHERE user_id = %s AND menu_date BETWEEN %s AND %s ORDER BY id DESC;"""
+        meals_query = """
+        SELECT mm.menu_id,
+               mm.meal_id,
+               mm.meal_time,
+               ms.`name` as meal_type,
+               r.`name` as recipe_name,
+               mm.recipe_id
+
+        FROM Menu_meals mm
+        JOIN Menus m ON mm.menu_id = m.id
+        JOIN Recipes r ON mm.recipe_id = r.id
+        JOIN Meals ms ON mm.meal_id = ms.id
+        WHERE m.user_id = %s AND m.menu_date BETWEEN %s AND %s
+        ORDER BY m.created_at DESC, mm.meal_time ASC;
+        """
+        history = recipe_model.run_query(history_query, (current_user.id, start_date, end_date))
+        meals = recipe_model.run_query(meals_query, (current_user.id, start_date, end_date))
+    else:
+        history_query = """SELECT id, date(created_at) as `created at`, menu_date as `menu date` FROM Menus WHERE user_id = %s ORDER BY id DESC;"""
+        meals_query = """
         SELECT mm.menu_id,
                mm.meal_id,
                mm.meal_time,
@@ -1194,12 +1219,9 @@ def history():
         JOIN Meals ms ON mm.meal_id = ms.id
         WHERE m.user_id = %s
         ORDER BY m.created_at DESC, mm.meal_time ASC;
-    """
-    history_query = """SELECT id, date(created_at) as `created at`, menu_date as `menu date` FROM Menus WHERE user_id = %s ORDER BY id DESC;"""
-
-    history = recipe_model.run_query(history_query, (current_user.id,))
-    meals = recipe_model.run_query(meals_query, (current_user.id,))
-    print(history)
+        """
+        history = recipe_model.run_query(history_query, (current_user.id,))
+        meals = recipe_model.run_query(meals_query, (current_user.id,))
 
     for entry in history:
         entry['date'] = entry['menu date'].strftime("%B %d, %Y")
