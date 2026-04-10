@@ -89,7 +89,7 @@
                 <form action="{{ url_for('update_journal', journal_id=entry.id) }}" method="POST">
                     <div style="margin-bottom: 15px;">
                         <span style="color: var(--text-pink); font-size: 0.9em; font-weight: bold; text-transform: uppercase;">
-                            {{ entry.meal_type }} • {{ entry.scheduled_time }}
+                            {{ entry.meal_type }} • {{ entry.time_fact }}
                         </span>
                         <h2 style="margin: 5px 0; font-size: 1.3em; color: white;">{{ entry.recipe_name }}</h2>
                     </div>

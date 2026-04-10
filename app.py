@@ -1671,6 +1671,8 @@ def journal():
         
     all_recipes = recipe_model.run_query("SELECT id, name FROM Recipes")
     journal_entries = recipe_model.run_query("SELECT * FROM Journal WHERE user_id = %s and submitted_at IS NULL ORDER BY created_at DESC", (current_user.id,))
+    for entry in journal_entries:
+        entry['meal_type'] = meal_model.run_query("SELECT name FROM Meals WHERE id = %s", (entry['meal_id'],))[0]['name'] if entry['meal_id'] else 'Other'
     if journal_entries:
         for entry in journal_entries:
             entry['date'] = entry['created_at'].strftime("%B %d, %Y")
