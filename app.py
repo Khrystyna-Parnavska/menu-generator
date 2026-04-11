@@ -1298,7 +1298,8 @@ def shopping_list(menu_id=None, shop_list_id=None):
         names = request.form.getlist('item_names[]')
         measures = request.form.getlist('item_measures[]')
         units = request.form.getlist('item_units[]')
-        checks = request.form.getlist('item_checked[]')
+        checked_values = request.form.getlist('item_checked[]')
+        checked_ints = [int(v) if v != '' else 0 for v in checked_values]
         cat_ids = request.form.getlist('item_category_ids[]')
         shop_list_name = request.form.get('shop_list_name', '').strip()
 
@@ -1315,13 +1316,14 @@ def shopping_list(menu_id=None, shop_list_id=None):
             ing = recipe_model.run_query("SELECT id FROM Ingredients WHERE LOWER(name) = LOWER(%s)", (name,))
 
             if ing:
+                print(f'checked ing {checked_ints[i]}')
                 # Existing Ingredient: use its ID (Schema requires ingredient_id NOT NULL usually,
                 # but if your schema allows NULL for custom items, update your SQL accordingly)
                 shopping_list_items_model.run_query(
                     """INSERT INTO Shopping_list_ingredients
                        (shop_list_id, ingredient_id, measure, units, if_checked, category_id)
                        VALUES (%s, %s, %s, %s, %s, %s)""",
-                    (shopping_list_id, ing[0]['id'], measures[i], units[i], checks[i], cat_ids[i])
+                    (shopping_list_id, ing[0]['id'], measures[i], units[i], checked_ints[i], cat_ids[i])
                 )
             else:
                 # Custom Item: Set ingredient_id to a dummy value (like 0) or update schema to allow NULL
@@ -1332,7 +1334,7 @@ def shopping_list(menu_id=None, shop_list_id=None):
                     """INSERT INTO Shopping_list_ingredients
                        (shop_list_id, ingredient_id, item_name, measure, units, if_checked, category_id)
                        VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-                    (shopping_list_id, 0, name, measures[i], units[i].strip().lower(), checks[i], cat_ids[i])
+                    (shopping_list_id, 0, name, measures[i], units[i].strip().lower(), checked_ints[i], cat_ids[i])
                 )
         return redirect(url_for('shopping_list', shop_list_id=shopping_list_id, shop_list_name=shop_list_name))
 

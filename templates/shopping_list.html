@@ -64,7 +64,7 @@
                     {% for item in items %}
                     <div class="shopping-row" style="display: flex; align-items: center; padding: 8px 0; {% if item.if_checked %}opacity: 0.4; text-decoration: line-through;{% endif %}">
                         <input type="checkbox" {% if item.if_checked %}checked{% endif %} onclick="toggleCheck(this)">
-                        
+                        <input type="hidden" name="item_checked[]" value="0">
                         <div style="display: flex; flex: 1; justify-content: space-between; margin-left: 10px;">
                             <span style="font-size: 16px; color: white;">{{ item.name }}</span>
                             <div style="display: flex; gap: 8px; align-items: center; min-width: 140px; justify-content: flex-end;">
@@ -192,6 +192,22 @@ function addManualItem() {
     document.getElementById('manual-measure').value = '';
     document.getElementById('manual-unit').value = '';
     document.getElementById('manual-category').value = '';
+}
+
+function toggleCheck(checkbox) {
+    const row = checkbox.closest('.shopping-row');
+    // Find the hidden input responsible for the checked state
+    const hiddenInput = row.querySelector('input[name="item_checked[]"]');
+    
+    if (checkbox.checked) {
+        row.style.opacity = "0.4";
+        row.style.textDecoration = "line-through";
+        hiddenInput.value = "1";
+    } else {
+        row.style.opacity = "1";
+        row.style.textDecoration = "none";
+        hiddenInput.value = "0";
+    }
 }
 </script>
 {% endblock %}
