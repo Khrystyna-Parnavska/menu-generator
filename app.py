@@ -34,6 +34,7 @@ country_model = BaseModel('Countries')
 source_model = BaseModel('Data_sources')
 shopping_list_model = BaseModel('Shopping_list')
 shopping_list_items_model = BaseModel('Shopping_list_ingredients')
+units_model = BaseModel('Units')
 
 
 app = Flask(__name__)
@@ -71,6 +72,91 @@ def load_user(user_id):
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+
+def consolidate_by_ingredient(rows, ingredient_densities=None):
+    """
+    rows: List of dicts from SQL (ingredient_id, measure, units, category_id)
+    ingredient_densities: Optional dict mapping ingredient_id to a specific density
+    """
+
+    unit_rows = units_model.run_query("SELECT name, category, factor FROM Units")
+    unit_metadata = {row['name'].lower().strip(): {'category': row['category'], 'factor': float(row['factor'])} for row in unit_rows}
+    
+    consolidated = {}
+    ingredient_densities = ingredient_densities or {}
+
+    for row in rows:
+        ing_id = row['ingredient_id']
+        measure = float(row['measure'])
+        unit_name = row['units'].lower().strip()
+        cat_id = row['category_id']
+        
+        if ing_id not in consolidated:
+            consolidated[ing_id] = {
+                'total_base_mass': 0.0,    # Grams
+                'total_base_volume': 0.0,  # Milliliters
+                'counts': {},              # 'pcs', 'clove', etc.
+                'category_id': cat_id      # Preserve category for UI grouping
+            }
+
+        # Look up unit details from units.csv
+        u_info = unit_metadata.get(unit_name)
+        if not u_info:
+            # If unit is unknown, treat as a Count to avoid losing data
+            consolidated[ing_id]['counts'][unit_name] = consolidated[ing_id]['counts'].get(unit_name, 0) + measure
+            continue
+
+        factor = float(u_info['factor'])
+        category = u_info['category']
+
+        if category == 'Mass':
+            consolidated[ing_id]['total_base_mass'] += measure * factor
+        elif category == 'Volume':
+            consolidated[ing_id]['total_base_volume'] += measure * factor
+        elif category == 'Count':
+            consolidated[ing_id]['counts'][unit_name] = consolidated[ing_id]['counts'].get(unit_name, 0) + measure
+        else:
+            # Handle "to serve" or other subjective units
+            consolidated[ing_id]['counts'][unit_name] = "As required"
+
+    # Final conversion step
+    final_shopping_list = []
+    for ing_id, data in consolidated.items():
+        # Get density: uses specific DB density, otherwise defaults to 1.0
+        # Defaulting to 1.0 for volume-to-mass is a safe overestimate for dry goods.
+        density = float(ingredient_densities.get(ing_id, 1.0))
+        
+        # Merge Volume into Mass: mass = volume * density
+        total_grams = data['total_base_mass'] + (data['total_base_volume'] * density)
+
+        if total_grams > 0:
+            # Choose readable unit: kg if > 1000g, otherwise g
+            if total_grams >= 1000:
+                final_shopping_list.append({
+                    'ingredient_id': ing_id,
+                    'measure': round(total_grams / 1000, 2),
+                    'units': 'kg',
+                    'category_id': data['category_id']
+                })
+            else:
+                final_shopping_list.append({
+                    'ingredient_id': ing_id,
+                    'measure': round(total_grams, 1),
+                    'units': 'g',
+                    'category_id': data['category_id']
+                })
+
+        # Add separate entries for items like "2 pcs" or "3 cloves"
+        for unit, qty in data['counts'].items():
+            final_shopping_list.append({
+                'ingredient_id': ing_id,
+                'measure': qty,
+                'units': unit,
+                'category_id': data['category_id']
+            })
+
+    return final_shopping_list
 
 
 def generate_reset_token(email):
@@ -399,14 +485,20 @@ def generate_menu(menu_id:int, selected_meals:list)->list[dict]:
     draft_menu_meals = []
 
     for name in selected_meals:
-
-            meal = meal_model.run_query("SELECT id, default_time FROM Meals WHERE name = %s", (name,))[0]
-            meal_id = meal['id']
-            meal_time_default = meal['default_time']
-
+        
+        meal = meal_model.run_query("SELECT id, default_time FROM Meals WHERE name = %s", (name,))[0]
+        meal_id = meal['id']
+        meal_time_default = meal['default_time']
+        draft_recipe_ids = [meal['recipe_id'] for meal in draft_menu_meals] 
+        recipe = generate_meal(meal_id)[0]
+  
+        # TODO FIX LOOP. AVOID LIMIT
+        attempts = 0
+        while recipe['id'] in draft_recipe_ids and attempts < 5:
             recipe = generate_meal(meal_id)[0]
+            attempts += 1
 
-            draft_meal = {
+        draft_meal = {
                             'menu_id': menu_id,
                             'meal_id': meal_id,
                             'recipe_id': recipe['id'],
@@ -416,9 +508,9 @@ def generate_menu(menu_id:int, selected_meals:list)->list[dict]:
                             'regenerated_times': 0,
                             'if_picked_manually': 0
             }
-            draft_meal['recipe_name'] = recipe['name']
-            draft_meal['meal_type'] = name
-            draft_menu_meals.append(draft_meal)
+        draft_meal['recipe_name'] = recipe['name']
+        draft_meal['meal_type'] = name
+        draft_menu_meals.append(draft_meal)
 
         # Final formatting loop for Jinja2
     for meal in draft_menu_meals:
@@ -1264,9 +1356,7 @@ def shopping_list(menu_id=None, shop_list_id=None):
                     "INSERT INTO Shopping_list (name, user_id, menu_id, is_menu) VALUES (%s, %s, %s, %s)",
                     (shopping_list_name, current_user.id, menu_id, 1)
                 )
-                # RUN SNAPSHOT ONLY HERE (inside the 'else')
-                snapshot_sql = """
-                    INSERT INTO Shopping_list_ingredients (shop_list_id, ingredient_id, measure, units, category_id)
+                select_items_query = """
                     SELECT
                         %s as shop_list_id,
                         ri.ingredient_id,
@@ -1278,9 +1368,17 @@ def shopping_list(menu_id=None, shop_list_id=None):
                     JOIN Units u ON ri.unit_id = u.id
                     LEFT JOIN Ingredients_categories_map icm ON ri.ingredient_id = icm.ingredient_id
                     WHERE mm.menu_id = %s
-                    GROUP BY ri.ingredient_id, u.name, icm.category_id
+                    GROUP BY ri.ingredient_id, u.name, icm.category_id"""
+                
+                select_items = recipe_model.run_query(select_items_query, (shopping_list_id, menu_id))  
+                final_shop_list = consolidate_by_ingredient(select_items)             
+                # RUN SNAPSHOT ONLY HERE (inside the 'else')
+                snapshot_sql = """
+                    INSERT INTO Shopping_list_ingredients (shop_list_id, ingredient_id, measure, units, category_id)
+                VALUES (%s, %s, %s, %s, %s)
                 """
-                shopping_list_items_model.run_query(snapshot_sql, (shopping_list_id, menu_id))
+                for item in final_shop_list:
+                    shopping_list_items_model.run_query(snapshot_sql, (shopping_list_id, item['ingredient_id'], item['measure'], item['units'], item['category_id']))
 
         else:
             # Handle creating a completely empty list
