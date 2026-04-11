@@ -33,7 +33,7 @@
                 </div>
 
                 {% for meal in day.meals %}
-                <div class="menu-row-card" style="margin-bottom: 10px; min-height: auto;">
+                <div class="menu-row-card" style="margin-bottom: 10px; min-height: auto; background: rgba(255,255,255,0.05); border: 1px solid var(--accent-purple); border-radius: 10px; padding: 15px; display: flex; align-items: center; gap: 15px;">
                     <div class="menu-time-container" style="width: 80px;">
                         <div class="time-badge" style="background: var(--accent-purple);">
                             {{ meal.meal_time }}

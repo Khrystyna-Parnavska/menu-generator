@@ -1261,8 +1261,8 @@ def shopping_list(menu_id=None, shop_list_id=None):
 
                 # Create the main list record
                 shopping_list_id = shopping_list_model.run_query(
-                    "INSERT INTO Shopping_list (menu_id, user_id, name, is_menu) VALUES (%s, %s, %s, %s)",
-                    (menu_id, current_user.id, shopping_list_name, True)
+                    "INSERT INTO Shopping_list (name, user_id, menu_id, is_menu) VALUES (%s, %s, %s, %s)",
+                    (shopping_list_name, current_user.id, menu_id, 1)
                 )
                 # RUN SNAPSHOT ONLY HERE (inside the 'else')
                 snapshot_sql = """
@@ -1645,6 +1645,7 @@ def logout():
 @app.route('/journal')
 @login_required
 def journal():
+    user_current_time = local_time_to_utc_range(users_model.select_by_id(current_user.id)['timezone'] or 'UTC', return_now=True)[2]
     meals_from_db = meal_model.select_all()
     query_history = """
         SELECT 
@@ -1665,14 +1666,22 @@ def journal():
         LIMIT 20
     """
     history = recipe_model.run_query(query_history, (current_user.id,))
+    print(f"Fetched {len(history)} journal entries for user_id {current_user.id}.")
     # Ensure 'Other' is available for the dropdown
     if meals_from_db is not None:
         meals_from_db.append({'id': 0, 'name': 'Other'})
         
     all_recipes = recipe_model.run_query("SELECT id, name FROM Recipes")
-    journal_entries = recipe_model.run_query("SELECT * FROM Journal WHERE user_id = %s and submitted_at IS NULL ORDER BY created_at DESC", (current_user.id,))
-    for entry in journal_entries:
-        entry['meal_type'] = meal_model.run_query("SELECT name FROM Meals WHERE id = %s", (entry['meal_id'],))[0]['name'] if entry['meal_id'] else 'Other'
+    journal_entries = recipe_model.run_query("""SELECT j.*,
+                                                m.name as meal_type,
+                                                r.name as recipe_name,
+                                                mm.meal_time as time_display
+                                                FROM Journal j
+                                                LEFT JOIN Menu_meals mm ON j.menu_meal_id = mm.id
+                                                LEFT JOIN Meals m ON (mm.meal_id = m.id OR j.meal_id = m.id)
+                                                LEFT JOIN Recipes r ON (mm.recipe_id = r.id OR j.recipe_id = r.id)
+                                                WHERE user_id = %s AND submitted_at IS NULL AND meal_as_planned = 1 ORDER BY created_at""", (current_user.id,))
+
     if journal_entries:
         for entry in journal_entries:
             entry['date'] = entry['created_at'].strftime("%B %d, %Y")

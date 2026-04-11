@@ -89,7 +89,7 @@
                 <form action="{{ url_for('update_journal', journal_id=entry.id) }}" method="POST">
                     <div style="margin-bottom: 15px;">
                         <span style="color: var(--text-pink); font-size: 0.9em; font-weight: bold; text-transform: uppercase;">
-                            {{ entry.meal_type }} • {{ entry.time_fact }}
+                            {{ entry.meal_type }} • {{ entry.time_display }} • {{ entry.date }}
                         </span>
                         <h2 style="margin: 5px 0; font-size: 1.3em; color: white;">{{ entry.recipe_name }}</h2>
                     </div>
@@ -97,22 +97,32 @@
                     <div class="meal-checkbox-grid" style="margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; width: 100%;">
     
                         <label class="meal-checkbox-card" style="display: flex; width: 100%; align-items: center; margin: 0; padding: 0 15px; height: 40px; background: rgba(255,255,255,0.05); border: 1px solid var(--accent-purple); border-radius: 20px; cursor: pointer; box-sizing: border-box;">
-                            <input type="radio" name="meal_as_planned" value="1" checked onchange="toggleFactInput(this, 'fact-field-{{ entry.id }}')">
+                            <input type="radio" name="meal_as_planned" value="1" checked onchange="toggleFactInput(this, 'manual-fact-wrapper-{{ entry.id }}')">
                             <span class="checkmark"></span>
                             <span class="meal-label">Ate as planned</span>
                         </label>
 
                         <label class="meal-checkbox-card" style="display: flex; width: 100%; align-items: center; margin: 0; padding: 0 15px; height: 40px; background: rgba(255,255,255,0.05); border: 1px solid var(--accent-purple); border-radius: 20px; cursor: pointer; box-sizing: border-box;">
-                            <input type="radio" name="meal_as_planned" value="0" onchange="toggleFactInput(this, 'fact-field-{{ entry.id }}')">
+                            <input type="radio" name="meal_as_planned" value="0" onchange="toggleFactInput(this, 'manual-fact-wrapper-{{ entry.id }}')">
                             <span class="checkmark"></span>
                             <span class="meal-label">Ate something else</span>
                         </label>
 
                     </div>
 
-                    <div id="fact-field-{{ entry.id }}" style="display: none; margin-bottom: 20px;">
-                        <label class="custom-label" style="text-align: left;">What was actually eaten?</label>
-                        <input type="text" name="meal_fact" class="custom-input" placeholder="Enter meal details...">
+                    <div id="manual-fact-wrapper-{{ entry.id }}" style="display: none; margin-bottom: 15px;">
+                        <label for="manual_meal_fact" class="custom-label">What did you have instead?</label>
+            
+                        <input type="text" id="manual_meal_fact" name="meal_fact" class="custom-input" 
+                            placeholder="Search recipes or type anything..." list="recipe-suggestions" 
+                            oninput="syncRecipeId()">
+
+                        <input type="hidden" id="manual_recipe_id" name="recipe_id" value="">
+
+                        <label for="manual_time_fact" class="custom-label">Time of Meal</label>
+                        <input type="time" id="manual_time_fact" name="time_fact" class="custom-input">
+
+                        </select>   
                     </div>
 
                     <div style="display: flex; flex-direction: column; gap: 15px;">
