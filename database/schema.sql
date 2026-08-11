@@ -161,7 +161,7 @@ CREATE TABLE `Shopping_list_ingredients`(
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `shop_list_id` BIGINT UNSIGNED NOT NULL,
     `ingredient_id` BIGINT UNSIGNED NULL,
-    `item_name` TEXT NULL COMMENT 'used if ingredient is not in the ingredients table',
+    `item_name` VARCHAR(255) NULL COMMENT 'used if ingredient is not in the ingredients table',
     `category_id` SMALLINT UNSIGNED NULL,
     `measure` DECIMAL(6,2) UNSIGNED NOT NULL,
     `units` TEXT NOT NULL,
@@ -275,8 +275,12 @@ ALTER TABLE
     `Units` ADD CONSTRAINT `units_source_id_foreign` FOREIGN KEY(`source_id`) REFERENCES `Data_sources`(`id`);
 ALTER TABLE
     `Shopping_list_ingredients` ADD CONSTRAINT `shopping_list_ingredients_category_id_foreign` FOREIGN KEY(`category_id`) REFERENCES `Ingredient_categories`(`id`);
-ALTER TABLE
-    `Shopping_list_ingredients` ADD CONSTRAINT `shopping_list_ingredients_ingredient_id_foreign` FOREIGN KEY(`ingredient_id`) REFERENCES `Ingredients`(`id`);
+ALTER TABLE Shopping_list_ingredients
+  ADD CONSTRAINT chk_ingredient_or_custom
+  CHECK (
+    (ingredient_id IS NOT NULL AND item_name IS NULL) OR
+    (ingredient_id IS NULL AND item_name IS NOT NULL)
+  );
 ALTER TABLE
     `Journal` ADD CONSTRAINT `journal_user_id_foreign` FOREIGN KEY(`user_id`) REFERENCES `Users`(`id`);
 ALTER TABLE

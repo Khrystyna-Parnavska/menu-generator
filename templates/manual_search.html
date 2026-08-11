@@ -67,9 +67,11 @@
                             {{ "Remove Favorite" if recipe.id in favorite_ids else "Add Favorite" }}
                         </button>
                     </form>
-                    <form action="{{ url_for('delete_recipe', recipe_id=recipe.id) }}" method="POST">
-                                        <button type="submit" class="card-btn view-btn" style="width: 100%; padding: 12px; background-color: transparent; color: white; border: 1px solid var(--text-pink);">Delete Recipe</button>
-                    </form>
+                    {% if recipe.created_by_user_id == user_id %}
+                        <form action="{{ url_for('delete_recipe', recipe_id=recipe.id) }}" method="POST">
+                                            <button type="submit" class="card-btn view-btn" style="width: 100%; padding: 12px; background-color: transparent; color: white; border: 1px solid var(--text-pink);">Delete Recipe</button>
+                        </form>
+                    {% endif %}
                     {% if meal_index is not none %}
                         <form action="{{ url_for('update_menu_item') }}" method="POST">
                             <input type="hidden" name="recipe_id" value="{{ recipe.id }}">

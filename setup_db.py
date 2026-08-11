@@ -144,6 +144,8 @@ if __name__ == "__main__":
 
     #populate countries
     countries_model.populate_from_csv(os.path.join('data', 'countries_db.csv'), 'Countries', delimiter=',')
+    #None country for testing purposes #TODO - consider removing this and using NULL values instead
+    countries_model.insert({'name': 'None', 'code': '00'})
 
     #user roles
     user_roles = [
@@ -175,7 +177,6 @@ if __name__ == "__main__":
         for ingredient in ingredients_data:
             ing_cat_map_model.insert({'ingredient_id': ingredient['id'], 'category_id': others_id, 'source_id': menu_generator_id})
     
-
     #units
     units_model.populate_from_csv(os.path.join('data', 'units.csv'), 'Units', delimiter=',')
     units_model.run_query("UPDATE Units SET source_id = %s", (menu_generator_id,))

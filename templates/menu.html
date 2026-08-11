@@ -110,10 +110,10 @@
                                 </div>
 
                                 <div class="action-group-menu" style="display: flex; flex-direction: column; gap: 8px;">
-                                    <button type="button" class="action-btn" onclick="submitRegen('{{ menu_id }}', '{{ loop.index0 }}')">
+                                    <button type="button" class="action-btn" onclick="submitRegen('{{ menu_id }}', {{ loop.index0 }}, {{ meal_entry['meal_id'] }})">
                                         🔄 Regenerate
                                     </button>
-                                    <a href="{{ url_for('manual_search', meal_index=loop.index0, menu_id=menu_id) }}" 
+                                    <a href="{{ url_for('manual_search', meal_id=meal_entry['meal_id'], menu_id=menu_id) }}" 
                                         class="action-btn" 
                                         style="background: var(--bright-purple); text-decoration: none; text-align: center;">
                                         🔍 Pick Manually
@@ -134,11 +134,11 @@
                     </form>
 
                     {% for meal_entry in menu_meals %}
-                        <form id="regen-{{ menu_id }}-{{ loop.index0 }}" 
-                            action="{{ url_for('regenerate_meal', meal_index=loop.index0) }}" 
+                        <form id="regen-{{ menu_id }}-{{ meal_entry['meal_id'] }}" 
+                            action="{{ url_for('regenerate_meal', meal_id=meal_entry['meal_id']) }}" 
                             method="POST" style="display:none;">
                             <input type="hidden" name="menu_id" value="{{ menu_id }}">
-                            <input type="hidden" name="meal_time" id="hidden-time-{{ menu_id }}-{{ loop.index0 }}">
+                            <input type="hidden" name="meal_time" id="hidden-time-{{ menu_id }}-{{ meal_entry['meal_id'] }}">
                         </form>
                     {% endfor %}
 
@@ -166,23 +166,21 @@
     });
 
     // 2. Regeneration Sync and Submit
-    function submitRegen(menuId, index) {
-        // Find visible time from the main form
-        const visibleInput = document.querySelector(`input[name="meal_time_${index}"]`);
-        
-        // Find hidden elements in the regeneration form
-        const hiddenInput = document.getElementById(`hidden-time-${menuId}-${index}`);
-        const regenForm = document.getElementById(`regen-${menuId}-${index}`);
-        
-        if (visibleInput && hiddenInput && regenForm) {
-            // Copy the time user typed into the hidden form
-            hiddenInput.value = visibleInput.value;
-            // Send to Python
-            regenForm.submit();
-        } else {
-            console.error("Could not find elements for sync", {menuId, index});
-        }
+    function submitRegen(menuId, timeIndex, mealId) {
+    // Visible time input is still keyed by position in the currently-rendered form
+    const visibleInput = document.querySelector(`input[name="meal_time_${timeIndex}"]`);
+
+    // Hidden regen form/input are keyed by actual meal_id now
+    const hiddenInput = document.getElementById(`hidden-time-${menuId}-${mealId}`);
+    const regenForm = document.getElementById(`regen-${menuId}-${mealId}`);
+
+    if (visibleInput && hiddenInput && regenForm) {
+        hiddenInput.value = visibleInput.value;
+        regenForm.submit();
+    } else {
+        console.error("Could not find elements for sync", {menuId, timeIndex, mealId});
     }
+}
 </script>
 
 {% endblock %}

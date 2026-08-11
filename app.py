@@ -260,7 +260,10 @@ def get_calendar_link(meal_id, menu_id):
 
         user_tz  = users_model.select_by_id(current_user.id)['timezone'] or 'UTC'
         user_tz = ZoneInfo(user_tz)
-        meal = result[0]
+        result = result[0] or None
+        if not result:
+            return redirect(url_for('menu'))
+        meal = result
         menu_date = meal['menu_date']
         raw_time = meal['meal_time']
 
@@ -658,6 +661,7 @@ def menu():
 def init_plan():
     # 1. Get the list of names from the checkboxes
     selected_names = request.form.getlist('meals')
+    print(f"Selected meal types: {selected_names}")
     user_time_zone = request.form.get('user_timezone', 'UTC')
     start_date = request.form.get('start_date')
     duration_days = request.form.get('duration_days')
@@ -669,9 +673,9 @@ def init_plan():
     current_date = datetime.now(ZoneInfo(user_time_zone)).date()
     last_valid_date = current_date + timedelta(days=7)
     n_menus_in_range = menu_model.run_query("""
-        SELECT COUNT(*) as count FROM Menus
-        WHERE user_id = %s AND menu_date > %s
-    """, (current_user.id, current_date))[0]['count']
+                                                SELECT COUNT(*) as count FROM Menus
+                                                WHERE user_id = %s AND menu_date > %s
+                                            """, (current_user.id, current_date))[0]['count']
     if not start_date:
         error_message="Please select a start date!"
         return render_template('menu.html', error=error_message, all_meals=meals_from_db)
@@ -745,11 +749,9 @@ def init_plan():
                            all_meals=meals_from_db,
                            success_message=success_message)
 
-@app.route('/regenerate_meal/<int:meal_index>', methods=['POST'])
+@app.route('/regenerate_meal/<int:meal_id>', methods=['POST'])
 @login_required
-def regenerate_meal(meal_index):
-    # Adjusting index to match meal_id in DB
-    db_meal_id = meal_index + 1
+def regenerate_meal(meal_id):
     menu_id = request.form.get('menu_id')
 
     if not menu_id:
@@ -757,7 +759,7 @@ def regenerate_meal(meal_index):
 
     # 1. Fetch current meal to get its existing time
     query = "SELECT meal_time, meal_id FROM Menu_meals WHERE menu_id = %s AND meal_id = %s"
-    current_meal_data = menu_meals_model.run_query(query, (menu_id, db_meal_id))
+    current_meal_data = menu_meals_model.run_query(query, (menu_id, meal_id))
 
     if not current_meal_data:
         flash("Meal not found in drafts.", "error")
@@ -766,11 +768,10 @@ def regenerate_meal(meal_index):
     existing_time = current_meal_data[0]['meal_time']
 
     # 2. Generate the new recipe
-    new_recipe = generate_meal(db_meal_id)
+    new_recipe = generate_meal(meal_id)
 
     if new_recipe and len(new_recipe) > 0:
         try:
-            # 3. Update using the existing_time we just fetched
             update_query = """
                 UPDATE Menu_meals
                 SET recipe_id = %s,
@@ -781,9 +782,9 @@ def regenerate_meal(meal_index):
             """
             menu_meals_model.run_query(update_query, (
                 new_recipe[0]['id'],
-                existing_time, # Keeps the time the user may have already set
+                existing_time,
                 menu_id,
-                db_meal_id
+                meal_id
             ))
             flash(f"Regenerated to {new_recipe[0]['name']}", "success")
         except Exception as e:
@@ -890,11 +891,12 @@ def delete_all_drafts():
 
 
 @app.route('/manual-search', methods=['GET', 'POST'])
-@app.route('/manual-search/<int(signed=True):meal_index>', defaults={'menu_id': 0}, methods=['GET', 'POST'])
-@app.route('/manual-search/<int(signed=True):meal_index>/<int:menu_id>', methods=['GET', 'POST'])
-def manual_search(meal_index = None, menu_id = None):
-    if meal_index and menu_id:
-        session['manual_search'] = {'meal_index': meal_index, 'menu_id': menu_id}
+@app.route('/manual-search/<int(signed=True):meal_id>', defaults={'menu_id': 0}, methods=['GET', 'POST'])
+@app.route('/manual-search/<int(signed=True):meal_id>/<int:menu_id>', methods=['GET', 'POST'])
+def manual_search(meal_id=None, menu_id=None):
+    if meal_id and menu_id:
+        session['manual_search'] = {'meal_id': meal_id, 'menu_id': menu_id}
+
     favs = request.args.get('show_favorites')
     favorite_ids = []
     if favs == '1':
@@ -908,16 +910,14 @@ def manual_search(meal_index = None, menu_id = None):
     category_id = request.args.get('category')
     params = []
     query = "SELECT * FROM Recipes WHERE"
-    # todo FIX  IFS BECAUSE THEY CAN BE ONLY IN RANGE(1, 7) OR ELSE
-    # Initialize base query
-    if meal_index in range(0, 7):  # Ensure meal_index is valid
-        meal_type_id = meals_from_db[meal_index]['id']  # Get meal_id from the meals list based on index
-        col = match_meal_to_recipe(meal_type_id, recipe_model.columns)
+
+    valid_meal_ids = {m['id'] for m in meals_from_db}
+    if meal_id in valid_meal_ids:
+        col = match_meal_to_recipe(meal_id, recipe_model.columns)
         query += f" {col} = 1"
     else:
-        query += " 1=1"  # Default to no meal filter if meal_index is somehow None (shouldn't happen due to route setup)
+        query += " 1=1"
 
-    # Apply filters
     if search_query:
         query += " AND name LIKE %s"
         params.append(f"%{search_query}%")
@@ -927,10 +927,7 @@ def manual_search(meal_index = None, menu_id = None):
         params.append(category_id)
 
     if favorite_ids:
-        # 1. Create a string like "%s, %s, %s" based on how many IDs you have
         placeholders = ', '.join(['%s'] * len(favorite_ids))
-
-        # 2. Plug those placeholders into the IN clause
         query += f" AND id IN ({placeholders})"
         params.extend(favorite_ids)
 
@@ -941,10 +938,11 @@ def manual_search(meal_index = None, menu_id = None):
     return render_template('manual_search.html',
                            recipes=recipes,
                            categories=categories,
-                           meal_index=meal_index,
+                           meal_id=meal_id,
                            search_query=search_query,
                            favorite_ids=favorite_ids,
-                           menu_id=menu_id)
+                           menu_id=menu_id,
+                           user_id=current_user.id if current_user.is_authenticated else None)
 
 @app.route('/select-recipe/<int:meal_index>/<int:recipe_id>/<int:menu_id>', methods=['POST'])
 @login_required
@@ -1048,7 +1046,7 @@ def api_add_ingredient():
 
 @app.route('/add-recipe', methods=['GET', 'POST'])
 @login_required
-def add_recipe():
+def add_recipe(meals_from_db=meals_from_db):
     # 1. Get the context from session so we know which menu slot we are filling
     manual_search_data = session.get('manual_search')
 
@@ -1108,9 +1106,10 @@ def add_recipe():
 @app.route('/update-menu-item', methods=['POST'])
 @login_required
 def update_menu_item():
+    # TODO fix meal_id/meal_index bug.
     recipe_id = request.form.get('recipe_id')
     menu_id = request.form.get('menu_id')
-    meal_index = int(request.form.get('meal_index'))
+    meal_index = int(request.form.get('meal_id'))
 
     meal_type_id = meals_from_db[meal_index]['id']
 
@@ -1369,9 +1368,9 @@ def shopping_list(menu_id=None, shop_list_id=None):
                     LEFT JOIN Ingredients_categories_map icm ON ri.ingredient_id = icm.ingredient_id
                     WHERE mm.menu_id = %s
                     GROUP BY ri.ingredient_id, u.name, icm.category_id"""
-                
-                select_items = recipe_model.run_query(select_items_query, (shopping_list_id, menu_id))  
-                final_shop_list = consolidate_by_ingredient(select_items)             
+
+                select_items = recipe_model.run_query(select_items_query, (shopping_list_id, menu_id))
+                final_shop_list = consolidate_by_ingredient(select_items)
                 # RUN SNAPSHOT ONLY HERE (inside the 'else')
                 snapshot_sql = """
                     INSERT INTO Shopping_list_ingredients (shop_list_id, ingredient_id, measure, units, category_id)
@@ -1396,8 +1395,10 @@ def shopping_list(menu_id=None, shop_list_id=None):
         names = request.form.getlist('item_names[]')
         measures = request.form.getlist('item_measures[]')
         units = request.form.getlist('item_units[]')
+
         checked_values = request.form.getlist('item_checked[]')
         checked_ints = [int(v) if v != '' else 0 for v in checked_values]
+
         cat_ids = request.form.getlist('item_category_ids[]')
         shop_list_name = request.form.get('shop_list_name', '').strip()
 
@@ -1414,9 +1415,7 @@ def shopping_list(menu_id=None, shop_list_id=None):
             ing = recipe_model.run_query("SELECT id FROM Ingredients WHERE LOWER(name) = LOWER(%s)", (name,))
 
             if ing:
-                print(f'checked ing {checked_ints[i]}')
-                # Existing Ingredient: use its ID (Schema requires ingredient_id NOT NULL usually,
-                # but if your schema allows NULL for custom items, update your SQL accordingly)
+                # Existing Ingredient: ingredient_id set, item_name left NULL (default)
                 shopping_list_items_model.run_query(
                     """INSERT INTO Shopping_list_ingredients
                        (shop_list_id, ingredient_id, measure, units, if_checked, category_id)
@@ -1424,15 +1423,14 @@ def shopping_list(menu_id=None, shop_list_id=None):
                     (shopping_list_id, ing[0]['id'], measures[i], units[i], checked_ints[i], cat_ids[i])
                 )
             else:
-                # Custom Item: Set ingredient_id to a dummy value (like 0) or update schema to allow NULL
+                # Custom Item: ingredient_id must be NULL to satisfy chk_ingredient_or_custom
                 if not cat_ids[i] or cat_ids[i] == 'null':
                     cat_ids[i] = 0
-                # Since your schema says NOT NULL for ingredient_id, ensure you handle that or ALTER TABLE to allow NULL
                 shopping_list_items_model.run_query(
                     """INSERT INTO Shopping_list_ingredients
                        (shop_list_id, ingredient_id, item_name, measure, units, if_checked, category_id)
                        VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-                    (shopping_list_id, 0, name, measures[i], units[i].strip().lower(), checked_ints[i], cat_ids[i])
+                    (shopping_list_id, None, name, measures[i], units[i].strip().lower(), checked_ints[i], cat_ids[i])
                 )
         return redirect(url_for('shopping_list', shop_list_id=shopping_list_id, shop_list_name=shop_list_name))
 
@@ -1457,6 +1455,8 @@ def shopping_list(menu_id=None, shop_list_id=None):
     # Full list of categories (ID and Name)
     all_cats = recipe_model.run_query("SELECT id, name FROM Ingredient_categories ORDER BY name")
 
+    all_units = recipe_model.run_query("SELECT id, name FROM Units ORDER BY name")
+
     # Full list of ingredients for the datalist search
     all_ingredients = recipe_model.run_query("SELECT name FROM Ingredients ORDER BY name ASC")
 
@@ -1473,6 +1473,7 @@ def shopping_list(menu_id=None, shop_list_id=None):
                            menu_id=menu_id,
                            all_ingredients=all_ingredients,
                            all_cats_full=all_cats,
+                           all_units=all_units,
                            ing_map=ing_category_map,
                            shop_list_id=shopping_list_id,
                            shop_list_name=shop_list_name,)
