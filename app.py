@@ -1335,12 +1335,14 @@ def history():
 
 @app.route('/shopping-list', methods=['GET', 'POST'])
 @app.route('/shopping-lists/<int:shop_list_id>', methods=['GET', 'POST'])
+@app.route('/shopping-lists/<int:shop_list_id>', methods=['GET', 'POST'])
 @app.route('/shopping-list/<int:menu_id>', methods=['GET', 'POST'])
 @login_required
 def shopping_list(menu_id=None, shop_list_id=None):
     # 1. Handle Timezone & Persistence
     user_tz = request.form.get('user_timezone', users_model.select_by_id(current_user.id)['timezone'] or 'UTC')
     utc_start, utc_end, user_now = local_time_to_utc_range(user_tz, return_now=True)
+    is_shared = request.args.get('is_shared', 'false').lower() == 'true'
     shopping_list_id = None
 
     if not shop_list_id:
@@ -1486,7 +1488,8 @@ def shopping_list(menu_id=None, shop_list_id=None):
                            all_units=all_units,
                            ing_map=ing_category_map,
                            shop_list_id=shopping_list_id,
-                           shop_list_name=shop_list_name,)
+                           shop_list_name=shop_list_name,
+                           is_shared=is_shared)
 
 @app.route('/merge_menus_to_shopping_list', methods=['POST', 'GET'])
 def merge_menus_to_shopping_list():
@@ -1629,14 +1632,14 @@ def save_shared_list(shopping_list_id):
     )
     if existing_share:
         flash('You already have access to this shopping list.', 'info')
-        return redirect(url_for('shopping_list', shop_list_id=shopping_list_id))
+        return redirect(url_for('shopping_list', shop_list_id=shopping_list_id, is_shared=True))
 
     recipe_model.run_query(
         "INSERT INTO Shopping_list_shares (shopping_list_id, user_id) VALUES (%s, %s)",
         (shopping_list_id, user_id)
     )
     flash('Shopping list saved to your account.', 'success')
-    return redirect(url_for('shopping_list', shop_list_id=shopping_list_id))
+    return redirect(url_for('shopping_list', shop_list_id=shopping_list_id, is_shared=True))
 
 @app.route('/shopping-lists/<int:shop_list_id>/pdf')
 @login_required
