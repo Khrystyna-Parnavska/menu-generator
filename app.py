@@ -1620,7 +1620,7 @@ def join_shopping_list(token):
     if invite['expires_at'] < datetime.utcnow():
         abort(410)  # gone/expired
 
-    return redirect(url_for('shopping_list', shop_list_id=invite['shopping_list_id']))
+    return redirect(url_for('shopping_list', shop_list_id=invite['shopping_list_id'], is_shared=True))
 
 @app.route('/save-shared-list/<int:shopping_list_id>', methods=['POST'])
 def save_shared_list(shopping_list_id):
@@ -1640,6 +1640,7 @@ def save_shared_list(shopping_list_id):
     )
     flash('Shopping list saved to your account.', 'success')
     return redirect(url_for('shopping_list', shop_list_id=shopping_list_id, is_shared=True))
+
 
 @app.route('/shopping-lists/<int:shop_list_id>/pdf')
 @login_required
