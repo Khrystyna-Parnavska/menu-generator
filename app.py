@@ -1563,7 +1563,7 @@ def manage_shopping_lists():
         shopping_lists = []
 
     shared_lists = shopping_list_model.run_query("""
-        SELECT sl.id, sl.name as name, u.name as owner_name, sls.shared_at as shared_at
+        SELECT sl.id, sl.name as name, u.user_name as owner_name, sls.shared_at as shared_at
         FROM Shopping_list_shares sls
         JOIN Shopping_list sl ON sls.shopping_list_id = sl.id
         JOIN Users u ON sl.user_id = u.id
