@@ -1491,6 +1491,7 @@ def shopping_list(menu_id=None, shop_list_id=None):
                            is_shared=is_shared)
 
 @app.route('/merge_menus_to_shopping_list', methods=['POST', 'GET'])
+@login_required
 def merge_menus_to_shopping_list():
     # Use getlist to pick up multiple checked boxes
     selected_ids = request.form.getlist('menu_ids')
@@ -1622,6 +1623,7 @@ def join_shopping_list(token):
     return redirect(url_for('shopping_list', shop_list_id=invite['shopping_list_id'], is_shared=True))
 
 @app.route('/save-shared-list/<int:shopping_list_id>', methods=['POST'])
+@login_required
 def save_shared_list(shopping_list_id):
     user_id = current_user.id
     # Check if the user already has access
@@ -1638,7 +1640,7 @@ def save_shared_list(shopping_list_id):
         (shopping_list_id, user_id)
     )
     flash('Shopping list saved to your account.', 'success')
-    return redirect(url_for('shopping_list', shop_list_id=shopping_list_id, is_shared=True))
+    return redirect(url_for('shopping_list', shop_list_id=shopping_list_id))
 
 
 @app.route('/shopping-lists/<int:shop_list_id>/pdf')
