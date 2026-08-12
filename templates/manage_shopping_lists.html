@@ -14,7 +14,7 @@
             <div class="menu-row-card">
                 <div class="menu-info">
                     <h3 style="margin: 0; color: white;">{{ list.name }}</h3>
-                    <small style="color: var(--text-pink);">Created: {{ list.date_created }}</small>
+                    <small style="color: var(--text-pink);">Created: {{ list.date_created }} . Shared {{ list.shared_times }} times</small>
                 </div>
                 <div class="action-group" style="flex-direction: row;">
                     <a href="{{ url_for('shopping_list', shop_list_id=list.id) }}" class="action-btn" style="background: var(--bright-purple); text-decoration: none; padding: 8px 15px;">View</a>
@@ -26,7 +26,25 @@
             <p style="text-align: center; opacity: 0.6;">No shopping lists found. Start by creating one below!</p>
         {% endif %}
     </div>
-
+    <h2 style="text-align: center; color: var(--text-pink);">Shared With You</h2>
+    <div class="meal-card" style="display: block; min-height: auto; margin-bottom: 40px; padding: 20px;">
+        {% if shared_lists %}
+            {% for list in shared_lists %}
+            <div class="menu-row-card">
+                <div class="menu-info">
+                    <h3 style="margin: 0; color: white;">{{ list.name }}</h3>
+                    <small style="color: var(--text-pink);">Shared by {{ list.owner_name }} · {{ list.shared_at }}</small>
+                </div>
+                <div class="action-group" style="flex-direction: row;">
+                    <a href="{{ url_for('shopping_list', shop_list_id=list.id) }}" class="action-btn" style="background: var(--bright-purple); text-decoration: none; padding: 8px 15px;">View</a>
+                    <a href="{{ url_for('delete_shared_list', shop_list_id=list.id) }}" class="action-btn" style="background: #ff4d4d; text-decoration: none; padding: 8px 15px;">Delete from Shared</a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p style="text-align: center; opacity: 0.6;">No shopping lists have been shared with you yet.</p>
+        {% endif %}
+    </div>
     <div class="meal-card" style="display: block; min-height: auto; border: 2px dashed var(--accent-purple); background: transparent;">
         <h2 style="text-align: center; color: var(--text-pink); margin-top: 10px;">Create New List</h2>
         

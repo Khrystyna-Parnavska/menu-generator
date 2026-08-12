@@ -2,7 +2,7 @@ from tracemalloc import start
 from urllib.parse import quote
 from database.models import BaseModel
 
-from flask import Flask, flash, jsonify, render_template, redirect, url_for, request, session
+from flask import Flask, abort, flash, jsonify, render_template, redirect, url_for, request, session
 from flask_mail import Mail, Message
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask import make_response
@@ -14,10 +14,20 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from zoneinfo import ZoneInfo
 
-import random
-import os
-import re
+from io import BytesIO
+from flask import send_file
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+
 import atexit
+import random
+import re
+import os
+import secrets
+
 
 UPLOAD_FOLDER = 'static/uploads'
 
@@ -1455,7 +1465,7 @@ def shopping_list(menu_id=None, shop_list_id=None):
     # Full list of categories (ID and Name)
     all_cats = recipe_model.run_query("SELECT id, name FROM Ingredient_categories ORDER BY name")
 
-    all_units = recipe_model.run_query("SELECT id, name FROM Units ORDER BY name")
+    all_units = recipe_model.run_query("SELECT name FROM Units ORDER BY name")
 
     # Full list of ingredients for the datalist search
     all_ingredients = recipe_model.run_query("SELECT name FROM Ingredients ORDER BY name ASC")
@@ -1541,17 +1551,178 @@ def delete_shopping_list(shop_list_id):
 @app.route('/manage-shopping-lists', methods=['GET', 'POST'])
 @login_required
 def manage_shopping_lists():
-
     user_tz = users_model.select_by_id(current_user.id)['timezone'] or 'UTC'
     user_now = local_time_to_utc_range(user_tz, return_now=True)[2]
-    shopping_lists = shopping_list_model.run_query("SELECT *, DATE(created_at) as date_created FROM Shopping_list ORDER BY date_created DESC")
-    for sh_list in shopping_lists:
-        sh_list['date_created'] = local_time_to_utc_range(user_tz, sh_list['created_at'])[2].strftime("%B %d, %Y")
+    shopping_lists = shopping_list_model.run_query("SELECT *, DATE(created_at) as date_created FROM Shopping_list WHERE user_id = %s ORDER BY date_created DESC", 
+                                                   (current_user.id,))
+    if isinstance(shopping_lists, list):
+        for sh_list in shopping_lists:
+            sh_list['date_created'] = local_time_to_utc_range(user_tz, sh_list['created_at'])[2].strftime("%B %d, %Y")
+            sh_list['shared_times'] = shopping_list_model.run_query("SELECT COUNT(*) as count FROM Shopping_list_shares WHERE shopping_list_id = %s", (sh_list['id'],))[0]['count']
+    else:
+        shopping_lists = []
+
+    shared_lists = shopping_list_model.run_query("""
+        SELECT sl.id, sl.name as name, u.name as owner_name, sls.shared_at as shared_at
+        FROM Shopping_list_shares sls
+        JOIN Shopping_list sl ON sls.shopping_list_id = sl.id
+        JOIN Users u ON sl.user_id = u.id
+        WHERE sls.user_id = %s
+    """, (current_user.id,))
+
+    if isinstance(shared_lists, list):
+        for sh_list in shared_lists:
+            sh_list['shared_at'] = local_time_to_utc_range(user_tz, sh_list['shared_at'])[2].strftime("%B %d, %Y")
+    else:
+        shared_lists = []
 
     menus = menu_model.run_query("SELECT id, menu_date FROM Menus WHERE user_id = %s AND menu_date >= %s", (current_user.id, user_now.date(),))
 
-    return render_template('manage_shopping_lists.html', shopping_lists=shopping_lists, menus=menus)
+    return render_template('manage_shopping_lists.html', 
+                           shopping_lists=shopping_lists, 
+                           shared_lists=shared_lists, 
+                           menus=menus)
 
+
+@app.route('/shopping-list/<int:shop_list_id>/delete_shared_list', methods=['POST'])
+@login_required
+def delete_shared_list(shop_list_id):
+    shopping_list_model.run_query("DELETE FROM Shopping_list_shares WHERE shopping_list_id = %s AND user_id = %s", (shop_list_id, current_user.id))
+    return redirect(url_for('manage_shopping_lists'))
+
+
+@app.route('/shopping-list/<int:list_id>/share-link', methods=['POST'])
+@login_required
+def create_share_link(list_id):
+    token = secrets.token_urlsafe(24)
+    expires_at = datetime.utcnow() + timedelta(hours=24)
+
+    recipe_model.run_query(
+        "INSERT INTO Shopping_list_invites (shopping_list_id, token, created_by, expires_at) VALUES (%s, %s, %s, %s)",
+        (list_id, token, current_user.id, expires_at))
+    share_url = url_for('join_shopping_list', token=token, _external=True)
+    return jsonify({"share_url": share_url})
+
+
+@app.route('/shopping-list/join/<token>')
+@login_required
+def join_shopping_list(token):
+    invite = recipe_model.run_query(
+        "SELECT * FROM Shopping_list_invites WHERE token = %s", (token,)
+    )
+    if not invite:
+        abort(404)
+    invite = invite[0]
+
+    if invite['expires_at'] < datetime.utcnow():
+        abort(410)  # gone/expired
+
+    return redirect(url_for('shopping_list', shop_list_id=invite['shopping_list_id']), is_shared=True)
+
+@app.route('/save-shared-list/<int:shopping_list_id>', methods=['POST'])
+def save_shared_list(shopping_list_id):
+    user_id = current_user.id
+    # Check if the user already has access
+    existing_share = recipe_model.run_query(
+        "SELECT * FROM Shopping_list_shares WHERE shopping_list_id = %s AND user_id = %s",
+        (shopping_list_id, user_id)
+    )
+    if existing_share:
+        flash('You already have access to this shopping list.', 'info')
+        return redirect(url_for('shopping_list', shop_list_id=shopping_list_id))
+
+    recipe_model.run_query(
+        "INSERT INTO Shopping_list_shares (shopping_list_id, user_id) VALUES (%s, %s)",
+        (shopping_list_id, user_id)
+    )
+    flash('Shopping list saved to your account.', 'success')
+    return redirect(url_for('shopping_list', shop_list_id=shopping_list_id))
+
+@app.route('/shopping-lists/<int:shop_list_id>/pdf')
+@login_required
+def save_pdf(shop_list_id):
+    # 1. Verify the user has access (owner OR shared collaborator)
+    list_row = shopping_list_model.run_query(
+        "SELECT * FROM Shopping_list WHERE id = %s", (shop_list_id,)
+    )
+    if not list_row:
+        abort(404)
+    list_row = list_row[0]
+
+    is_owner = list_row['user_id'] == current_user.id
+    is_shared = shopping_list_model.run_query(
+        "SELECT 1 FROM Shopping_list_users WHERE shopping_list_id = %s AND user_id = %s",
+        (shop_list_id, current_user.id)
+    )
+    if not is_owner and not is_shared:
+        abort(403)
+
+    # 2. Fetch items (same query pattern as the GET view)
+    db_query = """
+        SELECT
+            COALESCE(i.name, sli.item_name) as name,
+            sli.measure, sli.units, sli.if_checked,
+            ic.name as category,
+            sli.category_id
+        FROM Shopping_list_ingredients sli
+        LEFT JOIN Ingredients i ON sli.ingredient_id = i.id
+        LEFT JOIN Ingredient_categories ic ON sli.category_id = ic.id
+        WHERE sli.shop_list_id = %s
+        ORDER BY category, name
+    """
+    items = shopping_list_items_model.run_query(db_query, (shop_list_id,))
+    grouped_items = group_by_category(items)
+    list_name = list_row['name'] or "My Shopping List"
+
+    # 3. Build the PDF in memory
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer, pagesize=letter,
+        topMargin=0.6 * inch, bottomMargin=0.6 * inch,
+        leftMargin=0.7 * inch, rightMargin=0.7 * inch
+    )
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle('ListTitle', parent=styles['Title'], fontSize=20, spaceAfter=6)
+    category_style = ParagraphStyle('Category', parent=styles['Heading2'], spaceBefore=16, spaceAfter=6,
+                                     textColor=colors.HexColor('#7b2ff7'))
+
+    story = [Paragraph(list_name, title_style), Spacer(1, 12)]
+
+    for category, cat_items in grouped_items.items():
+        story.append(Paragraph(category or "Other", category_style))
+
+        table_data = [["", "Item", "Qty", "Unit"]]
+        for item in cat_items:
+            checkbox = "[x]" if item['if_checked'] else "[ ]"
+            table_data.append([
+                checkbox,
+                item['name'],
+                str(item['measure']) if item['measure'] not in (None, '') else '',
+                item['units'] or ''
+            ])
+
+        table = Table(table_data, colWidths=[0.4 * inch, 3.6 * inch, 0.8 * inch, 1 * inch])
+        table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
+            ('LINEBELOW', (0, 0), (-1, 0), 0.5, colors.grey),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.whitesmoke, colors.white]),
+            ('TOPPADDING', (0, 1), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 4),
+        ]))
+        story.append(table)
+
+    doc.build(story)
+    buffer.seek(0)
+
+    safe_name = "".join(c if c.isalnum() or c in " -_" else "" for c in list_name).strip() or "shopping-list"
+    return send_file(
+        buffer,
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=f"{safe_name}.pdf"
+    )
 
 @app.route('/signin', methods=['GET', 'POST'])
 def signin():
@@ -1890,6 +2061,10 @@ def page_not_found(e):
 @app.errorhandler(500)
 def internal_server_error(e):
     return render_template('500.html'), 500
+
+@app.errorhandler(410)
+def gone(e):
+    return render_template('410.html'), 410
 
 if __name__ == '__main__':
     app.run(debug=True)

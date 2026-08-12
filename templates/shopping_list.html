@@ -14,7 +14,17 @@
 </datalist>
 
 <div class="selection-container" style="max-width: 900px; margin: 0 auto; padding: 10px;">
-    
+    {% if is_shared %}
+        <p style="margin-top: 10px; font-size: 0.9em; color: #e0e0e0; opacity: 0.8; text-align: center;">
+            You are viewing a shared shopping list. Changes you make will be visible to others with access.<br>
+            Save this list to your account by clicking "Save to My Lists".
+        </p>
+        {% if not shared_id %}
+        <form method="POST" action="{{ url_for('save_shared_list', shop_list_id=shop_list_id) }}" style="text-align: center; margin-bottom: 20px;">
+            <button type="submit" class="submit-btn" style="margin-top: 10px;">Save to My Lists</button>
+        </form>
+        {% endif %}
+    {% endif %}
     <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 15px; padding: 20px; margin-bottom: 30px; box-sizing: border-box;">
         <div style="display: flex; flex-direction: column; gap: 15px; width: 100%;">
             
@@ -55,6 +65,7 @@
     </div>
 
     <form id="shopping-form" method="POST">
+        <input type="hidden" name="shop_list_id" value="{{ shop_list_id }}">
         <div class="form-group" style="margin-bottom: 30px; max-width: 500px; margin-left: auto; margin-right: auto;">
         <label class="custom-label">Shopping List Name</label>
         <input type="text" name="shop_list_name" class="custom-input" 
@@ -104,13 +115,30 @@
             </div>
             {% endfor %}
         </div>
-        <button type="submit" class="submit-btn" style="margin-top: 20px; width: 100%;">Save Changes</button>
+        <div style="display: flex; gap: 10px; margin-top: 20px; width: 100%;">
+            <button type="submit" class="submit-btn" style="flex: 1; margin: 0;">Save Changes</button>
+            <div class="share-wrapper" style="position: relative; flex: 1;">
+                <button type="button" onclick="toggleShareMenu()" class="submit-btn" style="width: 100%; margin: 0;">
+                    Share
+                </button>
+                <div id="share-menu" style="display:none; position: absolute; bottom: 110%; left: 0; right: 0; background: #1e1e1e; border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; padding: 8px; z-index: 20; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
+                    <button type="button" onclick="savePdf()" style="display:block; width:100%; text-align:left; background:none; border:none; color:white; padding:10px; cursor:pointer; border-radius:6px;">
+                        📄 Save as PDF
+                    </button>
+                    <button type="button" onclick="shareAsLink()" style="display:block; width:100%; text-align:left; background:none; border:none; color:white; padding:10px; cursor:pointer; border-radius:6px;">
+                        🔗 Share as Link
+                    </button>
+                </div>
+            </div>
+        </div>
     </form>
+    
 </div>
 
 <script>
 // Logic fix: Ensure variable name matches Python's 'ing_map'
 const ingMap = {{ ing_map | tojson | safe }};
+const shopListId = {{ shop_list_id | tojson | safe }};
 
 function validateAndMatchCategory(input) {
     const val = input.value.toLowerCase().trim();
@@ -213,6 +241,41 @@ function toggleCheck(checkbox) {
         row.style.textDecoration = "none";
         hiddenInput.value = "0";
     }
+}
+function toggleShareMenu() {
+    const menu = document.getElementById('share-menu');
+    menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+}
+
+document.addEventListener('click', function(e) {
+    const wrapper = document.querySelector('.share-wrapper');
+    const menu = document.getElementById('share-menu');
+    if (wrapper && !wrapper.contains(e.target)) {
+        menu.style.display = 'none';
+    }
+});
+
+async function shareAsLink() {
+    try {
+        const res = await fetch(`/shopping-list/${shopListId}/share-link`, { method: 'POST' });
+        const data = await res.json();
+        await navigator.clipboard.writeText(data.share_url);
+        alert('Link copied to clipboard!');
+    } catch (err) {
+        alert('Could not create share link.');
+        console.error(err);
+    }
+    document.getElementById('share-menu').style.display = 'none';
+}
+
+function savePdf() {
+    const link = document.createElement('a');
+    link.href = `/shopping-lists/${shopListId}/pdf`;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    document.getElementById('share-menu').style.display = 'none';
 }
 </script>
 {% endblock %}

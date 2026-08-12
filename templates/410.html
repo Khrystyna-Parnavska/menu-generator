@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="selection-container" style="max-width: 600px; margin: 100px auto; text-align: center; padding: 40px;">
+    <div style="font-size: 8rem; color: var(--text-pink); text-shadow: 0 0 20px var(--text-pink); line-height: 1;">
+        410
+    </div>
+    <h2 style="color: white; margin-top: 20px;">Whoops! This invite has gone stale.</h2>
+    <p style="color: #e0e0e0; font-size: 1.1em; opacity: 0.8; margin-bottom: 30px;">
+        This link's past its expiration date, like that yogurt in the back of the fridge. Ask whoever shared it to send you a fresh one.
+    </p>
+    
+    <div class="meal-card" style="padding: 20px; background: var(--bg-medium); border: 2px dashed var(--accent-purple);">
+        <p style="font-style: italic;">"I checked the invite for <code>{{ request.path }}</code> and it's already expired."</p>
+    </div>
+
+    <div style="margin-top: 40px;">
+        <a href="{{ url_for('menu') }}" class="submit-btn" style="text-decoration: none; display: inline-block;">
+            Take me back to the Menu
+        </a>
+    </div>
+</div>
+{% endblock %}

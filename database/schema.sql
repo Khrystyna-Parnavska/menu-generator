@@ -168,6 +168,26 @@ CREATE TABLE `Shopping_list_ingredients`(
     `if_checked` BOOLEAN DEFAULT FALSE
 );
 
+CREATE TABLE Shopping_list_shares (
+    `shopping_list_id` BIGINT UNSIGNED NOT NULL,
+    `user_id` BIGINT UNSIGNED NOT NULL,
+    `shared_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`shopping_list_id`, `user_id`),
+    FOREIGN KEY (`shopping_list_id`) REFERENCES Shopping_list(`id`) ON DELETE SET NULL,
+    FOREIGN KEY (`user_id`) REFERENCES Users(`id`) ON DELETE SET NULL
+);
+
+CREATE TABLE Shopping_list_invites (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `shopping_list_id` BIGINT UNSIGNED NOT NULL,
+    `token` CHAR(32) NOT NULL UNIQUE,
+    `created_by` BIGINT UNSIGNED NOT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `expires_at` TIMESTAMP NULL,
+    FOREIGN KEY (`shopping_list_id`) REFERENCES Shopping_list(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`created_by`) REFERENCES Users(`id`)
+);
+
 CREATE TABLE `Ingredient_categories`(
     `id` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `name` TEXT NOT NULL,
