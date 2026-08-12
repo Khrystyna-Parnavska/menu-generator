@@ -1335,7 +1335,6 @@ def history():
 
 @app.route('/shopping-list', methods=['GET', 'POST'])
 @app.route('/shopping-lists/<int:shop_list_id>', methods=['GET', 'POST'])
-@app.route('/shopping-lists/<int:shop_list_id>', methods=['GET', 'POST'])
 @app.route('/shopping-list/<int:menu_id>', methods=['GET', 'POST'])
 @login_required
 def shopping_list(menu_id=None, shop_list_id=None):
