@@ -51,6 +51,8 @@ app = Flask(__name__)
 
 app.config['SECRET_KEY'] = os.getenv('app_key')
 
+app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=30)
+
 app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
 app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT'))
 app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS').lower() == 'true'
@@ -1749,7 +1751,7 @@ def signin():
                 flash('Please verify your email before logging in.', 'info')
                 return redirect(url_for('verify_email'))
 
-            login_user(user)
+            login_user(user, remember=True, duration=timedelta(days=30))
             return redirect(url_for('menu'))
 
         flash('Invalid email or password.', 'error')
