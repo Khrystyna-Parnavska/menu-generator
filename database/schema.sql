@@ -153,7 +153,6 @@ CREATE TABLE `Shopping_list`(
     `name` VARCHAR(255) NOT NULL DEFAULT 'My Shopping List',
     `user_id` BIGINT UNSIGNED NULL,
     `menu_id` BIGINT UNSIGNED NULL,
-    `is_menu` BOOLEAN NOT NULL DEFAULT 0,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -165,14 +164,16 @@ CREATE TABLE `Shopping_list_ingredients`(
     `category_id` SMALLINT UNSIGNED NULL,
     `measure` DECIMAL(6,2) UNSIGNED NOT NULL,
     `units` TEXT NOT NULL,
+    `price` DECIMAL(10,2) UNSIGNED NULL,
     `if_checked` BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE Shopping_list_shares (
-    `shopping_list_id` BIGINT UNSIGNED NOT NULL,
-    `user_id` BIGINT UNSIGNED NOT NULL,
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `shopping_list_id` BIGINT UNSIGNED DEFAULT NULL,
+    `user_id` BIGINT UNSIGNED DEFAULT NULL,
     `shared_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (`shopping_list_id`, `user_id`),
+    UNIQUE KEY `uniq_list_user` (`shopping_list_id`, `user_id`),
     FOREIGN KEY (`shopping_list_id`) REFERENCES Shopping_list(`id`) ON DELETE SET NULL,
     FOREIGN KEY (`user_id`) REFERENCES Users(`id`) ON DELETE SET NULL
 );

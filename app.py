@@ -1406,6 +1406,7 @@ def shopping_list(menu_id=None, shop_list_id=None):
         names = request.form.getlist('item_names[]')
         measures = request.form.getlist('item_measures[]')
         units = request.form.getlist('item_units[]')
+        prices = request.form.getlist('item_prices[]')
 
         checked_values = request.form.getlist('item_checked[]')
         checked_ints = [int(v) if v != '' else 0 for v in checked_values]
@@ -1420,6 +1421,7 @@ def shopping_list(menu_id=None, shop_list_id=None):
 
         for i in range(len(names)):
             name = names[i].strip().lower()
+            unit = units[i].strip().lower()
             if not name: continue
 
             # Check if ingredient exists in DB
@@ -1429,9 +1431,9 @@ def shopping_list(menu_id=None, shop_list_id=None):
                 # Existing Ingredient: ingredient_id set, item_name left NULL (default)
                 shopping_list_items_model.run_query(
                     """INSERT INTO Shopping_list_ingredients
-                       (shop_list_id, ingredient_id, measure, units, if_checked, category_id)
-                       VALUES (%s, %s, %s, %s, %s, %s)""",
-                    (shopping_list_id, ing[0]['id'], measures[i], units[i], checked_ints[i], cat_ids[i])
+                       (shop_list_id, ingredient_id, measure, units, price, if_checked, category_id)
+                       VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+                    (shopping_list_id, ing[0]['id'], measures[i], unit, prices[i], checked_ints[i], cat_ids[i])
                 )
             else:
                 # Custom Item: ingredient_id must be NULL to satisfy chk_ingredient_or_custom
@@ -1439,9 +1441,9 @@ def shopping_list(menu_id=None, shop_list_id=None):
                     cat_ids[i] = 0
                 shopping_list_items_model.run_query(
                     """INSERT INTO Shopping_list_ingredients
-                       (shop_list_id, ingredient_id, item_name, measure, units, if_checked, category_id)
-                       VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-                    (shopping_list_id, None, name, measures[i], units[i].strip().lower(), checked_ints[i], cat_ids[i])
+                       (shop_list_id, ingredient_id, item_name, measure, units, price, if_checked, category_id)
+                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
+                    (shopping_list_id, None, name, measures[i], unit, prices[i], checked_ints[i], cat_ids[i])
                 )
         return redirect(url_for('shopping_list', shop_list_id=shopping_list_id, shop_list_name=shop_list_name))
 
@@ -1450,7 +1452,7 @@ def shopping_list(menu_id=None, shop_list_id=None):
     db_query = """
         SELECT
             COALESCE(i.name, sli.item_name) as name,
-            sli.measure, sli.units, sli.if_checked,
+            sli.measure, sli.units, sli.price, sli.if_checked,
             ic.name as category,
             sli.category_id
         FROM Shopping_list_ingredients sli
@@ -1656,7 +1658,7 @@ def save_pdf(shop_list_id):
 
     is_owner = list_row['user_id'] == current_user.id
     is_shared = shopping_list_model.run_query(
-        "SELECT 1 FROM Shopping_list_users WHERE shopping_list_id = %s AND user_id = %s",
+        "SELECT 1 FROM Shopping_list_shares WHERE shopping_list_id = %s AND user_id = %s",
         (shop_list_id, current_user.id)
     )
     if not is_owner and not is_shared:
@@ -1666,7 +1668,7 @@ def save_pdf(shop_list_id):
     db_query = """
         SELECT
             COALESCE(i.name, sli.item_name) as name,
-            sli.measure, sli.units, sli.if_checked,
+            sli.measure, sli.units, sli.price, sli.if_checked,
             ic.name as category,
             sli.category_id
         FROM Shopping_list_ingredients sli
@@ -1696,17 +1698,18 @@ def save_pdf(shop_list_id):
     for category, cat_items in grouped_items.items():
         story.append(Paragraph(category or "Other", category_style))
 
-        table_data = [["", "Item", "Qty", "Unit"]]
+        table_data = [["", "Item", "Qty", "Unit", "Price"]]
         for item in cat_items:
             checkbox = "[x]" if item['if_checked'] else "[ ]"
             table_data.append([
                 checkbox,
                 item['name'],
                 str(item['measure']) if item['measure'] not in (None, '') else '',
-                item['units'] or ''
+                item['units'] or '',
+                f"${item['price']:.2f}" if item['price'] is not None else ""
             ])
 
-        table = Table(table_data, colWidths=[0.4 * inch, 3.6 * inch, 0.8 * inch, 1 * inch])
+        table = Table(table_data, colWidths=[0.4 * inch, 3.6 * inch, 0.8 * inch, 1 * inch, 0.8 * inch])
         table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, -1), 10),

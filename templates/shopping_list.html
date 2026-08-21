@@ -20,7 +20,7 @@
             Save this list to your account by clicking "Save to My Lists".
         </p>
         {% if not shared_id %}
-        <form method="POST" action="{{ url_for('save_shared_list', shop_list_id=shop_list_id) }}" style="text-align: center; margin-bottom: 20px;">
+        <form method="POST" action="{{ url_for('save_shared_list', shopping_list_id=shop_list_id) }}" style="text-align: center; margin-bottom: 20px;">
             <button type="submit" class="submit-btn" style="margin-top: 10px;">Save to My Lists</button>
         </form>
         {% endif %}
@@ -56,7 +56,10 @@
                     <label class="custom-label">Unit</label>
                     <input type="text" id="manual-unit" class="custom-input" list="existing-units" placeholder="Unit" style="width: 100%; box-sizing: border-box;">
                 </div>
-                
+                <div style="flex: 1;">
+                    <label class="custom-label">Price</label>
+                    <input type="number" step="0.01" id="manual-price" class="custom-input" placeholder="Price" style="width: 100%; box-sizing: border-box;">
+                </div>
                 <button type="button" onclick="addManualItem()" class="submit-btn" style="height: 44px; flex: 1; margin: 0; padding: 0 20px;">
                     Add to List
                 </button>
@@ -101,6 +104,16 @@
                                             text-align: left; font-size: 16px; font-weight: 500; 
                                             width: 60px; /* Increased width so it's not cut off */
                                             padding: 8px 0; margin-right: 5px;">
+                                <input type="number" 
+                                    step="0.01" 
+                                    name="item_prices[]" 
+                                    value="{{ '%.2f'|format(item.price) if item.price is not none else '' }}"
+                                    placeholder="€"
+                                    oninput="updateTotal()"
+                                    style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15); 
+                                            border-radius: 6px; color: var(--text-pink); text-align: center; 
+                                            font-size: 16px; font-weight: bold; width: 65px; padding: 8px 2px;
+                                            -webkit-appearance: none; -moz-appearance: textfield; margin: 0;">
                             </div>
                         </div>
 
@@ -108,12 +121,15 @@
                         <input type="hidden" name="item_category_ids[]" value="{{ item.category_id }}">
                         <input type="hidden" name="item_checked[]" value="{{ 1 if item.if_checked else 0 }}">
                         
-                        <button type="button" onclick="this.closest('.shopping-row').remove()">&times;</button>
+                        <button type="button" onclick="this.closest('.shopping-row').remove(); updateTotal();">&times;</button>
                     </div>
                     {% endfor %}
                 </div>
             </div>
             {% endfor %}
+            <div id="total-price" style="text-align: right; font-weight: bold; color: var(--text-pink); margin: 10px 0;">
+                Total: €0.00
+            </div>
         </div>
         <div style="display: flex; gap: 10px; margin-top: 20px; width: 100%;">
             <button type="submit" class="submit-btn" style="flex: 1; margin: 0;">Save Changes</button>
@@ -167,26 +183,23 @@ function addManualItem() {
     const name = document.getElementById('manual-name').value;
     const catSelect = document.getElementById('manual-category');
     const catId = catSelect.value;
-    const catName = catSelect.options[catSelect.selectedIndex].text; // Get the category name
+    const catName = catSelect.options[catSelect.selectedIndex].text;
     const measure = document.getElementById('manual-measure').value || 0;
     const unit = document.getElementById('manual-unit').value || '';
+    const price = document.getElementById('manual-price').value || '';
 
     if (!name || !catId) {
         alert("Please enter a name and select a category.");
         return;
     }
 
-    // 1. Try to find the container
     let section = document.querySelector(`.category-section[data-category-id="${catId}"]`);
-    
-    // 2. If the section doesn't exist, CREATE IT
     if (!section) {
         const container = document.getElementById('shopping-list-container');
         section = document.createElement('div');
         section.className = 'category-section';
         section.dataset.categoryId = catId;
         section.id = `section-${catName.toLowerCase().replace(/\s+/g, '-')}`;
-        
         section.innerHTML = `
             <h4 style="color: var(--accent-purple); border-bottom: 1px solid rgba(255,255,255,0.1); margin-top:20px;">${catName}</h4>
             <div class="items-container"></div>
@@ -196,36 +209,50 @@ function addManualItem() {
 
     const itemsContainer = section.querySelector('.items-container');
 
-    // 3. Create the row
     const row = document.createElement("div");
     row.className = "shopping-row";
     row.style = "display: flex; align-items: center; padding: 8px 0;";
-    
+
     row.innerHTML = `
         <input type="checkbox" onclick="toggleCheck(this)">
         <div style="display: flex; flex: 1; justify-content: space-between; margin-left: 10px; align-items: center;">
             <span style="font-size: 16px; color: white;">${name}</span>
-            <div style="display: flex; gap: 8px; align-items: center; min-width: 140px; justify-content: flex-end;">
+            <div style="display: flex; gap: 8px; align-items: center; min-width: 200px; justify-content: flex-end;">
                 <input type="number" step="0.01" name="item_measures[]" value="${measure}" 
                        style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: var(--text-pink); text-align: center; font-size: 16px; font-weight: bold; width: 65px; padding: 8px 2px;">
                 <input type="text" name="item_units[]" value="${unit}" 
                        style="background: transparent; border: none; color: white; text-align: left; font-size: 16px; font-weight: 500; width: 60px; padding: 8px 0;">
+                <input type="number" step="0.01" name="item_prices[]" value="${price}" placeholder="€" oninput="updateTotal()"
+                       style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: var(--text-pink); text-align: center; font-size: 16px; font-weight: bold; width: 65px; padding: 8px 2px;">
             </div>
         </div>
         <input type="hidden" name="item_names[]" value="${name}">
         <input type="hidden" name="item_category_ids[]" value="${catId}">
         <input type="hidden" name="item_checked[]" value="0">
-        <button type="button" onclick="this.closest('.shopping-row').remove()" style="background:none; border:none; color:#ff4d4d; cursor:pointer; margin-left:10px; font-size: 20px;">&times;</button>
+        <button type="button" onclick="this.closest('.shopping-row').remove(); updateTotal();" style="background:none; border:none; color:#ff4d4d; cursor:pointer; margin-left:10px; font-size: 20px;">&times;</button>
     `;
 
     itemsContainer.prepend(row);
-    
-    // Clear inputs
+    updateTotal();
+
     document.getElementById('manual-name').value = '';
     document.getElementById('manual-measure').value = '';
     document.getElementById('manual-unit').value = '';
+    document.getElementById('manual-price').value = '';
     document.getElementById('manual-category').value = '';
 }
+
+function updateTotal() {
+    const priceInputs = document.querySelectorAll('input[name="item_prices[]"]');
+    let total = 0;
+    priceInputs.forEach(input => {
+        const val = parseFloat(input.value);
+        if (!isNaN(val)) total += val;
+    });
+    document.getElementById('total-price').textContent = `Total: €${total.toFixed(2)}`;
+}
+
+document.addEventListener('DOMContentLoaded', updateTotal);
 
 function toggleCheck(checkbox) {
     const row = checkbox.closest('.shopping-row');
