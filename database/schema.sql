@@ -245,6 +245,20 @@ CREATE TABLE Journal (
 `notified` BOOLEAN NOT NULL DEFAULT 0
 );
 
+CREATE TABLE Feedback (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    page_ref VARCHAR(100) NOT NULL,
+    category VARCHAR(50) NOT NULL,
+    rating SMALLINT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes to filter feedback submissions efficiently
+CREATE INDEX idx_feedback_page_ref ON Feedback(page_ref);
+CREATE INDEX idx_feedback_category ON Feedback(category);
+
 ALTER TABLE
     `Ingredient_restrictions` ADD CONSTRAINT `ingredient_restrictions_restriction_id_foreign` FOREIGN KEY(`restriction_id`) REFERENCES `Restrictions`(`id`);
 ALTER TABLE

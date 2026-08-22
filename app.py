@@ -45,6 +45,7 @@ source_model = BaseModel('Data_sources')
 shopping_list_model = BaseModel('Shopping_list')
 shopping_list_items_model = BaseModel('Shopping_list_ingredients')
 units_model = BaseModel('Units')
+feedback_model = BaseModel('Feedback')
 
 
 app = Flask(__name__)
@@ -58,6 +59,7 @@ app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT'))
 app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS').lower() == 'true'
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['ADMIN_EMAIL'] = os.getenv('ADMIN_EMAIL')  # Add this line to get the admin email from environment variables
 
 mail = Mail(app)
 
@@ -1425,7 +1427,7 @@ def shopping_list(menu_id=None, shop_list_id=None):
             unit = units[i].strip().lower()
             price = float(prices[i]) if prices[i] != '' else 0.0
             checked = int(checked_values[i]) if checked_values[i] != '' else 0
-            
+
             if not name: continue
 
             # Check if ingredient exists in DB
@@ -2053,6 +2055,36 @@ def create_journal_entry():
     
 
     return redirect(url_for('journal'))
+
+@app.route('/user-feedback', methods=['GET', 'POST'])
+@login_required
+def user_feedback():
+    if request.method == 'POST':
+        page_ref = request.form.get('page_ref')
+        category = request.form.get('category')
+        rating = request.form.get('rating')
+        message = request.form.get('message')
+
+        try:
+            feedback_model.run_query(
+                "INSERT INTO Feedback (user_id, page_ref, category, rating, message) VALUES (%s, %s, %s, %s, %s)",
+                (current_user.id, page_ref, category, rating, message)
+            )
+            flash('Feedback submitted successfully!', 'success')
+        except Exception as e:
+            print(f"Error submitting feedback: {e}")
+            flash('An error occurred while submitting feedback. Please try again.', 'error')
+
+    #send email notification to admin
+    try:
+        msg = Message("USER FEEDBACK", recipients=[app.config['ADMIN_EMAIL']], sender=app.config['MAIL_USERNAME'])
+        msg.body = f"User ID: {current_user.id}\nPage Reference: {page_ref}\nCategory: {category}\nRating: {rating}\nMessage: {message}"
+        mail.send(msg)
+    except Exception as e:
+        print(f"Error sending feedback email: {e}")
+        flash('An error occurred while sending feedback notification. Please try again.', 'error')
+
+    return render_template('user_feedback.html')
 
 @app.route('/preferences')
 @login_required

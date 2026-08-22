@@ -14,10 +14,17 @@
                 <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Menu Generator" style="height: 64px; border-radius: 8px; margin-right: 8px;">
                 <span style="font-size: 1.5rem;">Menu Generator</span>
         </div>
-            
-        <div class="header-profile"><a href="{{ url_for('signup') }}" style="color:var(--text-pink);">Sign up </a> 
-                                    <a href="{{ url_for('signin') }}" style="color:var(--text-pink);">Log in </a> 
-                                    <a href="{{ url_for('profile') }}" style="color:var(--text-pink);">Profile</a></div>
+        <div class="header-profile">
+            {% if current_user.is_authenticated %}
+                <span style="color:var(--text-pink);">Hello, {{ current_user.username }}!</span>
+                <a href="{{ url_for('profile') }}" style="color:var(--text-pink);">Profile</a>
+                <a href="{{ url_for('logout') }}" style="color:var(--text-blue);">Logout</a>
+                <a href="{{ url_for('user_feedback') }}" style="color:var(--text-pink);">Send Feedback </a>
+            {% else %}
+                <a href="{{ url_for('signup') }}" style="color:var(--text-pink);">Sign up</a>
+                <a href="{{ url_for('signin') }}" style="color:var(--text-pink);">Log in</a>
+            {% endif %}
+        </div>
     </header>
 
     <div class="app-container">

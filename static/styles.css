@@ -721,6 +721,39 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     flex-direction: column; /* Stack Regenerate and Pick Manually vertically */
     gap: 10px; /* Space between the buttons */
 }
+/* Styling specifically for the rating pills */
+    .rating-group {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        width: 100%;
+        margin-bottom: 15px;
+    }
+    .rating-option {
+        flex: 1;
+        text-align: center;
+    }
+    .rating-option input[type="radio"] {
+        display: none;
+    }
+    .rating-option label {
+        display: block;
+        padding: 10px 0;
+        background-color: var(--bg-dark);
+        border: 2px solid var(--accent-purple);
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.2s ease;
+    }
+    .rating-option input[type="radio"]:checked + label {
+        background-color: var(--text-pink);
+        border-color: var(--text-pink);
+        color: white;
+    }
+    .rating-option label:hover {
+        border-color: var(--bright-purple);
+    }
 /* --- Mobile Responsive Rules --- */
 
 /* This triggers for screens smaller than 768px (most phones) */

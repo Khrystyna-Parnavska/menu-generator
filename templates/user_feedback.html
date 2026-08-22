@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block head %}
+    <title>Send Feedback - Menu Generator</title>
+{% endblock %}
+
+{% block body %}
+<div class="profile-form-container">
+    <div class="form-box">
+        <h2 style="text-align: center; color: var(--text-pink); margin-top: 0;">Share Your Feedback</h2>
+        
+        <form action="{{ url_for('user_feedback') }}" method="POST">
+
+            <div class="form-group">
+                <label class="custom-label" for="page_ref">Related Page / Feature</label>
+                <select id="page_ref" name="page_ref" class="custom-input" required>
+                    <option value="general">Entire Website / General</option>
+                    
+                    <optgroup label="Recipes & Planning">
+                        <option value="menu.html">My Daily Menu</option>
+                        <option value="recipe_details.html">Recipe Details</option>
+                        <option value="manual_search.html">Explore</option>
+                        <option value="add_recipe.html">Add Recipe</option>
+                        <option value="edit_recipe.html">Edit Recipe</option>
+                        <option value="favorites.html">Favorites</option>
+                        <option value="history.html">History</option>
+                        <option value="journal.html">Journal</option>
+                    </optgroup>
+
+                    <optgroup label="Shopping Lists">
+                        <option value="shopping_list.html">Shopping List</option>
+                        <option value="manage_shopping_lists.html">Manage Lists</option>
+                    </optgroup>
+
+                    <optgroup label="Account & Settings">
+                        <option value="profile.html">Profile</option>
+                        <option value="preferences.html">Preferences</option>
+                        <option value="signin.html">Sign In</option>
+                        <option value="signup.html">Sign Up</option>
+                        <option value="forgot_password.html">Forgot Password</option>
+                        <option value="reset_password.html">Reset Password</option>
+                        <option value="verify_email.html">Verify Email</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="custom-label" for="category">Topic</label>
+                <select id="category" name="category" class="custom-input" required>
+                    <option value="Bug">Bug Report</option>
+                    <option value="Feature">Feature Request</option>
+                    <option value="Design">UI / Design Feedback</option>
+                    <option value="General">General Comment</option>
+                    <option value="Praise">Praise</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="custom-label">Overall Experience</label>
+                <div class="rating-group">
+                    <div class="rating-option">
+                        <input type="radio" id="rate-1" name="rating" value="1" required>
+                        <label for="rate-1">1 ★</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" id="rate-2" name="rating" value="2">
+                        <label for="rate-2">2 ★</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" id="rate-3" name="rating" value="3">
+                        <label for="rate-3">3 ★</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" id="rate-4" name="rating" value="4">
+                        <label for="rate-4">4 ★</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" id="rate-5" name="rating" value="5">
+                        <label for="rate-5">5 ★</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="custom-label" for="message">Message</label>
+                <textarea id="message" name="message" class="custom-input" rows="5" placeholder="Tell us what happened or how we can improve..." style="border-radius: 15px; resize: vertical;" required></textarea>
+            </div>
+
+            <button type="submit" class="submit-btn" style="width: 100%; margin-top: 15px;">Send Feedback</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
