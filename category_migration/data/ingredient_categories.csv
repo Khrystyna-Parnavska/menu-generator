@@ -1,0 +1,68 @@
+id,name,group_id
+101,Fruits,1
+102,Vegetables,1
+103,Salads & Leafy Greens,1
+104,Fresh Herbs,1
+105,Mushrooms,1
+106,Potatoes & Root Vegetables,1
+201,Bread,2
+202,Rolls & Buns,2
+203,Pastries & Cakes,2
+204,"Flatbreads, Tortillas & Wrappers",2
+301,Milk,3
+302,Yogurt & Skyr,3
+303,Cheese,3
+304,Butter & Margarine,3
+305,Cream & Crème Fraîche,3
+306,Eggs,3
+307,Plant-Based Alternatives,3
+308,Lactose-Free Dairy,3
+401,"Beef, Pork & Lamb",4
+402,Poultry,4
+403,Sausages,4
+404,Cold Cuts & Cured Meats,4
+405,Offal,4
+501,Fresh Fish,5
+502,Shellfish,5
+503,Smoked & Cured Fish,5
+601,Frozen Vegetables & Fruit,6
+602,Frozen Meals,6
+603,Ice Cream & Desserts,6
+604,Frozen Meat & Fish,6
+605,Frozen Bakery,6
+701,"Pasta, Rice & Grains",7
+702,Legumes & Beans,7
+703,Canned & Jarred Goods,7
+704,Sauces & Condiments,7
+705,"Oils, Vinegars & Fats",7
+706,Baking,7
+707,Dried Herbs & Spices,7
+708,Breakfast Cereals & Muesli,7
+709,Nuts & Seeds,7
+710,"Sugar, Syrups & Sweeteners",7
+711,Stocks & Bouillon,7
+712,Chocolate & Cocoa,7
+713,Jams & Spreads,7
+714,Dried Fruit,7
+801,Chips & Crisps,8
+802,Confectionery & Sweets,8
+803,Cookies & Biscuits,8
+804,Sports Nutrition,8
+901,Water,9
+902,Juice & Soft Drinks,9
+903,Coffee & Tea,9
+904,Beer,9
+905,Wine & Cider,9
+906,Spirits & Liqueurs,9
+1001,Prepared Meals,10
+1101,Baby Food,11
+1102,Formula,11
+1103,Diapers & Wipes,11
+1201,Hygiene & Toiletries,12
+1202,Pharmacy / OTC,12
+1203,Cosmetics,12
+1301,Cleaning Supplies,13
+1302,Paper Products,13
+1303,Pet Food,13
+1304,Pet Supplies,13
+1401,Other,14

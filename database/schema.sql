@@ -189,10 +189,17 @@ CREATE TABLE Shopping_list_invites (
     FOREIGN KEY (`created_by`) REFERENCES Users(`id`)
 );
 
-CREATE TABLE `Ingredient_categories`(
+CREATE TABLE `Category_groups` (
     `id` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `name` VARCHAR(100) NOT NULL,
+    `description` TEXT NULL
+);
+
+CREATE TABLE `Ingredient_categories`(
+    `id` SMALLINT UNSIGNED NOT NULL PRIMARY KEY,
     `name` TEXT NOT NULL,
     `description` TEXT NULL,
+    `group_id` SMALLINT UNSIGNED NOT NULL,
     `subcategories_wweia` TEXT NULL,
     `source_id` SMALLINT UNSIGNED NULL
 );
@@ -290,6 +297,8 @@ ALTER TABLE
     `Ingredients_categories_map` ADD CONSTRAINT `ingredients_categories_map_user_id_foreign` FOREIGN KEY(`user_id`) REFERENCES `Users`(`id`);
 ALTER TABLE
     `Ingredients_categories_map` ADD CONSTRAINT `ingredients_categories_map_source_id_foreign` FOREIGN KEY(`source_id`) REFERENCES `Data_sources`(`id`);
+ALTER TABLE
+    `Ingredient_categories` ADD CONSTRAINT `ingredient_categories_group_id_foreign` FOREIGN KEY(`group_id`) REFERENCES `Category_groups`(`id`);
 ALTER TABLE
     `Ingredient_categories` ADD CONSTRAINT `ingredient_categories_source_id_foreign` FOREIGN KEY(`source_id`) REFERENCES `Data_sources`(`id`);
 ALTER TABLE

@@ -1,0 +1,15 @@
+id,name,description
+1,Fruit & Vegetables,"Fresh fruits, vegetables, herbs, mushrooms and salad items, typically at the store entrance."
+2,Bakery,"Bread, rolls, pastries and flatbreads, often baked on-site."
+3,Dairy & Eggs,"Milk, cheese, yogurt, butter, cream, eggs and plant-based alternatives."
+4,"Meat, Poultry & Deli","Fresh meat, poultry, sausages, cold cuts and offal."
+5,Fish & Seafood,"Fresh, smoked and shellfish seafood."
+6,Frozen,Items kept at sub-zero temperatures.
+7,Pantry & Dry Goods,"Shelf-stable staples: grains, legumes, canned goods, sauces, oils, spices, baking supplies."
+8,Snacks & Sweets,"Crisps, confectionery, cookies and sports nutrition."
+9,Beverages,"Water, juice, coffee/tea, beer, wine and spirits."
+10,Ready-to-Eat,Ready-to-eat or heat-and-serve dishes.
+11,Baby,"Baby food, formula, diapers and wipes."
+12,Health & Personal Care,"Hygiene, pharmacy and cosmetic products."
+13,Household & Pet,"Cleaning supplies, paper products and pet items."
+14,Other,Anything that doesn't fit elsewhere.

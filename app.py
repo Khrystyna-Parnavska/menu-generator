@@ -1409,9 +1409,8 @@ def shopping_list(menu_id=None, shop_list_id=None):
         measures = request.form.getlist('item_measures[]')
         units = request.form.getlist('item_units[]')
         prices = request.form.getlist('item_prices[]')
-
         checked_values = request.form.getlist('item_checked[]')
-        checked_ints = [int(v) if v != '' else 0 for v in checked_values]
+    
 
         cat_ids = request.form.getlist('item_category_ids[]')
         shop_list_name = request.form.get('shop_list_name', '').strip()
@@ -1424,6 +1423,9 @@ def shopping_list(menu_id=None, shop_list_id=None):
         for i in range(len(names)):
             name = names[i].strip().lower()
             unit = units[i].strip().lower()
+            price = float(prices[i]) if prices[i] != '' else 0.0
+            checked = int(checked_values[i]) if checked_values[i] != '' else 0
+            
             if not name: continue
 
             # Check if ingredient exists in DB
@@ -1435,7 +1437,7 @@ def shopping_list(menu_id=None, shop_list_id=None):
                     """INSERT INTO Shopping_list_ingredients
                        (shop_list_id, ingredient_id, measure, units, price, if_checked, category_id)
                        VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-                    (shopping_list_id, ing[0]['id'], measures[i], unit, prices[i], checked_ints[i], cat_ids[i])
+                    (shopping_list_id, ing[0]['id'], measures[i], unit, price, checked, cat_ids[i])
                 )
             else:
                 # Custom Item: ingredient_id must be NULL to satisfy chk_ingredient_or_custom
@@ -1445,7 +1447,7 @@ def shopping_list(menu_id=None, shop_list_id=None):
                     """INSERT INTO Shopping_list_ingredients
                        (shop_list_id, ingredient_id, item_name, measure, units, price, if_checked, category_id)
                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
-                    (shopping_list_id, None, name, measures[i], unit, prices[i], checked_ints[i], cat_ids[i])
+                    (shopping_list_id, None, name, measures[i], unit, price, checked, cat_ids[i])
                 )
         return redirect(url_for('shopping_list', shop_list_id=shopping_list_id, shop_list_name=shop_list_name))
 

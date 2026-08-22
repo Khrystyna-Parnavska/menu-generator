@@ -70,11 +70,16 @@
     <form id="shopping-form" method="POST">
         <input type="hidden" name="shop_list_id" value="{{ shop_list_id }}">
         <div class="form-group" style="margin-bottom: 30px; max-width: 500px; margin-left: auto; margin-right: auto;">
-        <label class="custom-label">Shopping List Name</label>
-        <input type="text" name="shop_list_name" class="custom-input" 
-               placeholder="e.g., Weekly Groceries, BBQ Party..." 
-               value="{{ shop_list_name if shop_list_name else '' }}" required 
-               style="text-align: center; font-weight: bold; border: 1px solid var(--accent-purple);">
+            <label class="custom-label">Shopping List Name</label>
+            
+            <input type="text" name="shop_list_name" class="custom-input" 
+                placeholder="e.g., Weekly Groceries, BBQ Party..." 
+                value="{{ shop_list_name if shop_list_name else '' }}" required 
+                style="text-align: center; font-weight: bold; border: 1px solid var(--accent-purple);">
+            
+            <div id="total-price" style="text-align: right; font-weight: bold; color: var(--text-pink); margin: 10px 0;">
+                Total: €0.00
+            </div>
         </div>
         <div id="shopping-list-container">
             {% for category, items in grouped_items.items() %}
@@ -127,9 +132,6 @@
                 </div>
             </div>
             {% endfor %}
-            <div id="total-price" style="text-align: right; font-weight: bold; color: var(--text-pink); margin: 10px 0;">
-                Total: €0.00
-            </div>
         </div>
         <div style="display: flex; gap: 10px; margin-top: 20px; width: 100%;">
             <button type="submit" class="submit-btn" style="flex: 1; margin: 0;">Save Changes</button>
