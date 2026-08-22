@@ -96,7 +96,7 @@ def main():
         cursor.execute("SET FOREIGN_KEY_CHECKS = 0")
 
         groups = load_csv(DATA_DIR / "category_groups.csv")
-        insert_rows(cursor, "category_groups", groups, ["id", "name", "description"])
+        insert_rows(cursor, "Category_groups", groups, ["id", "name", "description"])
         print(f"  category_groups: inserted {len(groups)} rows")
 
         subcats = load_csv(DATA_DIR / "ingredient_categories.csv")
