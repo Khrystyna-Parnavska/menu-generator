@@ -2059,6 +2059,7 @@ def create_journal_entry():
 @app.route('/user-feedback', methods=['GET', 'POST'])
 @login_required
 def user_feedback():
+    page_ref = None
     if request.method == 'POST':
         page_ref = request.form.get('page_ref')
         category = request.form.get('category')
@@ -2075,14 +2076,14 @@ def user_feedback():
             print(f"Error submitting feedback: {e}")
             flash('An error occurred while submitting feedback. Please try again.', 'error')
 
-    #send email notification to admin
-    try:
-        msg = Message("USER FEEDBACK", recipients=[app.config['ADMIN_EMAIL']], sender=app.config['MAIL_USERNAME'])
-        msg.body = f"User ID: {current_user.id}\nPage Reference: {page_ref}\nCategory: {category}\nRating: {rating}\nMessage: {message}"
-        mail.send(msg)
-    except Exception as e:
-        print(f"Error sending feedback email: {e}")
-        flash('An error occurred while sending feedback notification. Please try again.', 'error')
+        #send email notification to admin
+        try:
+            msg = Message("USER FEEDBACK", recipients=[app.config['ADMIN_EMAIL']], sender=app.config['MAIL_USERNAME'])
+            msg.body = f"User ID: {current_user.id}\nPage Reference: {page_ref}\nCategory: {category}\nRating: {rating}\nMessage: {message}"
+            mail.send(msg)
+        except Exception as e:
+            print(f"Error sending feedback email: {e}")
+            flash('An error occurred while sending feedback notification. Please try again.', 'error')
 
     return render_template('user_feedback.html')
 

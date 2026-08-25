@@ -39,7 +39,10 @@
                 <a href="#" class="nav-btn">Statistics</a>
                 <a href="{{ url_for('profile') }}" class="nav-btn">Profile</a>
             {% if current_user.is_authenticated %}
-                <a href="{{ url_for('logout') }}" style="color:var(--text-blue); text-align:center;">Logout</a>
+                <span style="color:var(--text-pink);">Hello, {{ current_user.username }}!</span>
+                <a href="{{ url_for('profile') }}" style="color:var(--text-pink);">Profile</a>
+                <a href="{{ url_for('logout') }}" style="color:var(--text-blue);">Logout</a>
+                <a href="{{ url_for('user_feedback') }}" style="color:var(--text-pink);">Send Feedback </a>
             {% else %}
                 <a href="{{ url_for('signin') }}" style="color:var(--text-pink); text-align:center;">Sign in</a>
             {% endif %}
