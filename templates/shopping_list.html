@@ -87,47 +87,55 @@
                 <h4 style="color: var(--accent-purple); border-bottom: 1px solid rgba(255,255,255,0.1);">{{ category }}</h4>
                 <div class="items-container">
                     {% for item in items %}
-                    <div class="shopping-row" style="display: flex; align-items: center; padding: 8px 0; {% if item.if_checked %}opacity: 0.4; text-decoration: line-through;{% endif %}">
-                        <input type="checkbox" {% if item.if_checked %}checked{% endif %} onclick="toggleCheck(this)">
-                        <div style="display: flex; flex: 1; justify-content: space-between; margin-left: 10px;">
-                            <span style="font-size: 16px; color: white;">{{ item.name }}</span>
-                            <div style="display: flex; gap: 8px; align-items: center; min-width: 140px; justify-content: flex-end;">
-                                <input type="number" 
-                                    step="0.01" 
-                                    name="item_measures[]" 
-                                    value="{{ item.measure }}"
-                                    style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15); 
-                                            border-radius: 6px; color: var(--text-pink); text-align: center; 
-                                            font-size: 16px; font-weight: bold; width: 65px; padding: 8px 2px;
-                                            -webkit-appearance: none; -moz-appearance: textfield; margin: 0;">
+                    <div class="shopping-row" style="
+                        display: grid;
+                        grid-template-columns: 24px minmax(0, 1fr) 56px 48px 64px 28px;
+                        align-items: center;
+                        gap: 6px;
+                        padding: 8px 4px;
+                        border-bottom: 1px solid rgba(255,255,255,0.08);
+                    ">
+                        <!-- checkbox -->
+                        <input type="checkbox" name="item_checked_display[]" {{ 'checked' if item.if_checked else '' }}
+                            style="width: 18px; height: 18px; margin: 0;">
 
-                                <input type="text" 
-                                    name="item_units[]" 
-                                    value="{{ item.units }}"
-                                    placeholder="unit"
-                                    style="background: transparent; border: none; color: white; 
-                                            text-align: left; font-size: 16px; font-weight: 500; 
-                                            width: 60px; /* Increased width so it's not cut off */
-                                            padding: 8px 0; margin-right: 5px;">
-                                <input type="number" 
-                                    step="0.01" 
-                                    name="item_prices[]" 
-                                    value="{{ '%.2f'|format(item.price) if item.price is not none else '' }}"
-                                    placeholder="€"
-                                    oninput="updateTotal()"
-                                    style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15); 
-                                            border-radius: 6px; color: var(--text-pink); text-align: center; 
-                                            font-size: 16px; font-weight: bold; width: 65px; padding: 8px 2px;
-                                            -webkit-appearance: none; -moz-appearance: textfield; margin: 0;">
-                            </div>
-                        </div>
+                        <!-- name: truncates instead of pushing other columns -->
+                        <span onclick="this.style.whiteSpace = this.style.whiteSpace === 'normal' ? 'nowrap' : 'normal'"
+                            style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; color: white; cursor: pointer;">
+                            {{ item.name }}
+                        </span>
 
-                        <input type="hidden" name="item_names[]" value="{{ item.name }}">
-                        <input type="hidden" name="item_category_ids[]" value="{{ item.category_id }}">
-                        <input type="hidden" name="item_checked[]" value="{{ 1 if item.if_checked else 0 }}">
-                        
-                        <button type="button" onclick="this.closest('.shopping-row').remove(); updateTotal();">&times;</button>
+                        <!-- measure -->
+                        <input type="number" step="0.01" name="item_measures[]" value="{{ item.measure }}"
+                            style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
+                                    border-radius: 4px; color: var(--text-pink); text-align: center;
+                                    font-size: 16px; font-weight: bold; width: 100%; min-width: 0;
+                                    padding: 8px 2px; -webkit-appearance: none; -moz-appearance: textfield; margin: 0;">
+
+                        <!-- unit -->
+                        <input type="text" name="item_units[]" value="{{ item.units }}" list="existing-units" placeholder="unit"
+                            style="background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.15);
+                                    color: white; text-align: center; font-size: 13px;
+                                    width: 100%; min-width: 0; padding: 8px 2px;">
+
+                        <!-- price -->
+                        <input type="number" step="0.01" name="item_prices[]"
+                            value="{{ '%.2f'|format(item.price) if item.price is not none else '' }}"
+                            placeholder="€" oninput="updateTotal()"
+                            style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
+                                    border-radius: 4px; color: var(--text-pink); text-align: center;
+                                    font-size: 16px; font-weight: bold; width: 100%; min-width: 0;
+                                    padding: 8px 2px; -webkit-appearance: none; -moz-appearance: textfield;">
+
+                        <!-- delete -->
+                        <button type="button" onclick="this.closest('.shopping-row').remove(); updateTotal();"
+                            style="background: none; border: none; color: rgba(255,255,255,0.5); font-size: 16px;
+                                    width: 100%; padding: 0;">&times;</button>
                     </div>
+
+                    <input type="hidden" name="item_names[]" value="{{ item.name }}">
+                    <input type="hidden" name="item_category_ids[]" value="{{ item.category_id }}">
+                    <input type="hidden" name="item_checked[]" value="{{ 1 if item.if_checked else 0 }}">
                     {% endfor %}
                 </div>
             </div>
@@ -213,28 +221,45 @@ function addManualItem() {
 
     const row = document.createElement("div");
     row.className = "shopping-row";
-    row.style = "display: flex; align-items: center; padding: 8px 0;";
+    row.style = "display: grid; grid-template-columns: 24px minmax(0, 1fr) 56px 48px 64px 28px; align-items: center; gap: 6px; padding: 8px 4px; border-bottom: 1px solid rgba(255,255,255,0.08);";
 
     row.innerHTML = `
-        <input type="checkbox" onclick="toggleCheck(this)">
-        <div style="display: flex; flex: 1; justify-content: space-between; margin-left: 10px; align-items: center;">
-            <span style="font-size: 16px; color: white;">${name}</span>
-            <div style="display: flex; gap: 8px; align-items: center; min-width: 200px; justify-content: flex-end;">
-                <input type="number" step="0.01" name="item_measures[]" value="${measure}" 
-                       style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: var(--text-pink); text-align: center; font-size: 16px; font-weight: bold; width: 65px; padding: 8px 2px;">
-                <input type="text" name="item_units[]" value="${unit}" 
-                       style="background: transparent; border: none; color: white; text-align: left; font-size: 16px; font-weight: 500; width: 60px; padding: 8px 0;">
-                <input type="number" step="0.01" name="item_prices[]" value="${price}" placeholder="€" oninput="updateTotal()"
-                       style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: var(--text-pink); text-align: center; font-size: 16px; font-weight: bold; width: 65px; padding: 8px 2px;">
-            </div>
-        </div>
-        <input type="hidden" name="item_names[]" value="${name}">
-        <input type="hidden" name="item_category_ids[]" value="${catId}">
-        <input type="hidden" name="item_checked[]" value="0">
-        <button type="button" onclick="this.closest('.shopping-row').remove(); updateTotal();" style="background:none; border:none; color:#ff4d4d; cursor:pointer; margin-left:10px; font-size: 20px;">&times;</button>
+        <input type="checkbox" onclick="toggleCheck(this)" style="width: 18px; height: 18px; margin: 0;">
+
+        <span onclick="this.style.whiteSpace = this.style.whiteSpace === 'normal' ? 'nowrap' : 'normal'"
+            style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; color: white; cursor: pointer;">
+            ${escapeHtml(name)}
+        </span>
+
+        <input type="number" step="0.01" name="item_measures[]" value="${measure}"
+               style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
+                      border-radius: 4px; color: var(--text-pink); text-align: center;
+                      font-size: 16px; font-weight: bold; width: 100%; min-width: 0;
+                      padding: 8px 2px; -webkit-appearance: none; -moz-appearance: textfield; margin: 0;">
+
+        <input type="text" name="item_units[]" value="${unit}"
+               style="background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.15);
+                      color: white; text-align: center; font-size: 13px;
+                      width: 100%; min-width: 0; padding: 8px 2px;">
+
+        <input type="number" step="0.01" name="item_prices[]" value="${price}" placeholder="€" oninput="updateTotal()"
+               style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
+                      border-radius: 4px; color: var(--text-pink); text-align: center;
+                      font-size: 16px; font-weight: bold; width: 100%; min-width: 0;
+                      padding: 8px 2px; -webkit-appearance: none; -moz-appearance: textfield;">
+
+        <button type="button" onclick="this.closest('.shopping-row').remove(); updateTotal();"
+                style="background: none; border: none; color: rgba(255,255,255,0.5); font-size: 16px; width: 100%; padding: 0;">&times;</button>
     `;
 
     itemsContainer.prepend(row);
+
+    row.insertAdjacentHTML('beforeend', `
+        <input type="hidden" name="item_names[]" value="${name}">
+        <input type="hidden" name="item_category_ids[]" value="${catId}">
+        <input type="hidden" name="item_checked[]" value="0">
+    `);
+
     updateTotal();
 
     document.getElementById('manual-name').value = '';
@@ -305,6 +330,12 @@ function savePdf() {
     link.click();
     link.remove();
     document.getElementById('share-menu').style.display = 'none';
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
 }
 </script>
 {% endblock %}
