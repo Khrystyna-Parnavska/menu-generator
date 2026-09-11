@@ -143,11 +143,13 @@
                         <button type="button" onclick="this.closest('.shopping-row').remove(); updateTotal();"
                             style="background: none; border: none; color: rgba(255,255,255,0.5); font-size: 16px;
                                     width: 100%; padding: 0;">&times;</button>
+                                    
+                        <!-- hidden inputs -->
+                        <input type="hidden" name="item_names[]" value="{{ item.name }}">
+                        <input type="hidden" name="item_category_ids[]" value="{{ item.category_id }}">
+                        <input type="hidden" name="item_checked[]" value="{{ 1 if item.if_checked else 0 }}">
                     </div>
 
-                    <input type="hidden" name="item_names[]" value="{{ item.name }}">
-                    <input type="hidden" name="item_category_ids[]" value="{{ item.category_id }}">
-                    <input type="hidden" name="item_checked[]" value="{{ 1 if item.if_checked else 0 }}">
                     {% endfor %}
                 </div>
             </div>
@@ -180,32 +182,43 @@ const shopListId = {{ shop_list_id | tojson | safe }};
 
 function validateAndMatchCategory(input) {
     const val = input.value.toLowerCase().trim();
-    const catSelect = document.getElementById('manual-category');             
+    const categoryIdInput = document.getElementById('categoryId');
+    const trigger = document.querySelector('.select-trigger');
     const warning = document.getElementById('manual-warning');
     
     if (val === "") {
         warning.style.display = 'none';
-        input.style.borderColor = ""; // Reset border
+        input.style.borderColor = "";
         return;
     }
 
     if (ingMap[val]) {
         // ITEM EXISTS: Auto-select category and hide warning
-        catSelect.value = ingMap[val];
+        const catId = ingMap[val];
+        categoryIdInput.value = catId;
+
+        // Find the matching option to restore its label + highlight it
+        const matchedOption = document.querySelector(`.option[data-value="${catId}"]`);
+        if (matchedOption) {
+            document.querySelectorAll('.option.selected').forEach(o => o.classList.remove('selected'));
+            matchedOption.classList.add('selected');
+            trigger.textContent = matchedOption.textContent;
+        }
+
         warning.style.display = 'none';
-        input.style.borderColor = ""; // Normal border
+        input.style.borderColor = "";
     } else {
         // ITEM IS NEW: Show warning and highlight the input
         warning.style.display = 'block';
-        input.style.borderColor = "var(--text-pink)"; // Visual cue
+        input.style.borderColor = "var(--text-pink)";
     }
 }
 
 function addManualItem() {
     const name = document.getElementById('manual-name').value;
-    const catSelect = document.getElementById('manual-category');
-    const catId = catSelect.value;
-    const catName = catSelect.options[catSelect.selectedIndex].text;
+    const catId = document.getElementById('categoryId').value;
+    const selectedOption = document.querySelector('.option.selected');
+    const catName = selectedOption ? selectedOption.textContent : '';
     const measure = document.getElementById('manual-measure').value || 0;
     const unit = document.getElementById('manual-unit').value || '';
     const price = document.getElementById('manual-price').value || '';
@@ -249,7 +262,7 @@ function addManualItem() {
                       font-size: 16px; font-weight: bold; width: 100%; min-width: 0;
                       padding: 8px 2px; -webkit-appearance: none; -moz-appearance: textfield; margin: 0;">
 
-        <input type="text" name="item_units[]" default="Pcs" value="${unit || 'pcs'}" list="existing-units" placeholder="unit"
+        <input type="text" name="item_units[]" value="${unit || 'Pcs'}" list="existing-units" placeholder="unit"
                style="background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.15);
                       color: white; text-align: center; font-size: 13px;
                       width: 100%; min-width: 0; padding: 8px 2px;">
@@ -278,9 +291,11 @@ function addManualItem() {
     document.getElementById('manual-measure').value = '';
     document.getElementById('manual-unit').value = '';
     document.getElementById('manual-price').value = '';
-    document.getElementById('manual-category').value = '';
-}
 
+    document.getElementById('categoryId').value = '';
+    document.querySelector('.select-trigger').textContent = '-- Pick Category --';
+    document.querySelectorAll('.option.selected').forEach(o => o.classList.remove('selected'));
+}
 function updateTotal() {
     const priceInputs = document.querySelectorAll('input[name="item_prices[]"]');
     let total = 0;
