@@ -39,12 +39,24 @@
             
             <div style="width: 100%;">
                 <label class="custom-label">Category</label>
-                <select id="manual-category" class="custom-input" style="width: 100%; box-sizing: border-box;">
-                    <option value="">-- Pick Category --</option>
-                    {% for cat in all_cats_full %}
-                        <option value="{{ cat.id }}">{{ cat.name }}</option>
-                    {% endfor %}
-                </select>
+                <div class="custom-select">
+                    <div class="select-trigger" onclick="toggleDropdown()">-- Pick Category --</div>
+                    <div class="select-panel" id="categoryPanel" style="display: none;">
+                        {% for main_name, subcats in grouped_categories.items() %}
+                        <div class="group collapsed">
+                            <div class="group-header" onclick="toggleGroup(this)">
+                                <span class="arrow">▾</span> {{ main_name }}
+                            </div>
+                            <div class="group-items">
+                                {% for cat in subcats %}
+                                <div class="option" data-value="{{ cat.id }}" onclick="selectOption(this)">{{ cat.name }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" name="category_id" id="categoryId">
+                </div>
             </div>
 
             <div style="display: flex; gap: 10px; align-items: flex-end; width: 100%;">
@@ -54,7 +66,7 @@
                 </div>
                 <div style="flex: 1;">
                     <label class="custom-label">Unit</label>
-                    <input type="text" id="manual-unit" class="custom-input" list="existing-units" placeholder="Unit" style="width: 100%; box-sizing: border-box;">
+                    <input type="text" id="manual-unit" class="custom-input" list="existing-units" style="width: 100%; box-sizing: border-box;">
                 </div>
                 <div style="flex: 1;">
                     <label class="custom-label">Price</label>
@@ -106,14 +118,14 @@
                         </span>
 
                         <!-- measure -->
-                        <input type="number" step="0.01" name="item_measures[]" value="{{ item.measure }}"
+                        <input type="number" step="0.01" default="1" name="item_measures[]" value="{{ item.measure  or '1'}}" oninput="updateTotal()"
                             style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
                                     border-radius: 4px; color: var(--text-pink); text-align: center;
                                     font-size: 16px; font-weight: bold; width: 100%; min-width: 0;
                                     padding: 8px 2px; -webkit-appearance: none; -moz-appearance: textfield; margin: 0;">
 
                         <!-- unit -->
-                        <input type="text" name="item_units[]" value="{{ item.units }}" list="existing-units" placeholder="unit"
+                        <input type="text" name="item_units[]" value="{{ item.units  or 'Pcs'}}" list="existing-units" placeholder="unit"
                             style="background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.15);
                                     color: white; text-align: center; font-size: 13px;
                                     width: 100%; min-width: 0; padding: 8px 2px;">
@@ -231,13 +243,13 @@ function addManualItem() {
             ${escapeHtml(name)}
         </span>
 
-        <input type="number" step="0.01" name="item_measures[]" value="${measure}"
+        <input type="number" step="0.01" name="item_measures[]" value="${measure || '1'}" oninput="updateTotal()"
                style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
                       border-radius: 4px; color: var(--text-pink); text-align: center;
                       font-size: 16px; font-weight: bold; width: 100%; min-width: 0;
                       padding: 8px 2px; -webkit-appearance: none; -moz-appearance: textfield; margin: 0;">
 
-        <input type="text" name="item_units[]" value="${unit}"
+        <input type="text" name="item_units[]" default="Pcs" value="${unit || 'pcs'}" list="existing-units" placeholder="unit"
                style="background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.15);
                       color: white; text-align: center; font-size: 13px;
                       width: 100%; min-width: 0; padding: 8px 2px;">
@@ -337,5 +349,36 @@ function escapeHtml(str) {
     div.textContent = str;
     return div.innerHTML;
 }
+
+function toggleGroup(header) {
+    header.closest('.group').classList.toggle('collapsed');
+}
+
+function selectOption(el) {
+    document.querySelectorAll('.option.selected').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('categoryId').value = el.dataset.value;
+    document.querySelector('.select-trigger').textContent = el.textContent;
+    document.querySelector('.custom-select').classList.remove('open');
+    document.getElementById('categoryPanel').style.display = 'none';
+}
+
+function toggleDropdown() {
+    const panel = document.getElementById('categoryPanel');
+    const isOpen = panel.style.display === 'block';
+    panel.style.display = isOpen ? 'none' : 'block';
+    document.querySelector('.custom-select').classList.toggle('open', !isOpen);
+}
+
+// Close when clicking outside
+document.addEventListener('click', (e) => {
+    const wrapper = document.querySelector('.custom-select');
+    if (!wrapper.contains(e.target)) {
+        document.getElementById('categoryPanel').style.display = 'none';
+        wrapper.classList.remove('open');
+    }
+});
+
+document.querySelectorAll('.group').forEach(g => g.classList.add('collapsed'));
 </script>
 {% endblock %}

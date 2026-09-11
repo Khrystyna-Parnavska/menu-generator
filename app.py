@@ -1348,6 +1348,7 @@ def shopping_list(menu_id=None, shop_list_id=None):
     is_shared = request.args.get('is_shared', 'false').lower() == 'true'
     shopping_list_id = None
 
+    # fetch the shopping list
     if not shop_list_id:
         if menu_id:
             # 1. Check if list already exists for this menu today
@@ -1405,7 +1406,7 @@ def shopping_list(menu_id=None, shop_list_id=None):
     else:
         shopping_list_id = shop_list_id
 
-    # 2. Handle Saving (POST)
+    # Handle Saving (POST)
     if request.method == 'POST':
         names = request.form.getlist('item_names[]')
         measures = request.form.getlist('item_measures[]')
@@ -1424,7 +1425,7 @@ def shopping_list(menu_id=None, shop_list_id=None):
 
         for i in range(len(names)):
             name = names[i].strip().lower()
-            unit = units[i].strip().lower()
+            unit = units[i].strip().lower() if units[i] else None
             price = float(prices[i]) if prices[i] != '' else 0.0
             checked = int(checked_values[i]) if checked_values[i] != '' else 0
 
@@ -1471,8 +1472,16 @@ def shopping_list(menu_id=None, shop_list_id=None):
     shop_list_name = shopping_list_model.run_query("SELECT name FROM Shopping_list WHERE id = %s", (shopping_list_id,))[0]['name'] or "My Shopping List"
 
     # 2. Fetch Data for Selects and Datalists
-    # Full list of categories (ID and Name)
-    all_cats = recipe_model.run_query("SELECT id, name FROM Ingredient_categories ORDER BY name")
+    # grouping categories for display
+    query = """SELECT c.id, c.name, cg.name as main_category_name
+                    FROM Ingredient_categories c
+                    JOIN Category_groups cg ON c.group_id = cg.id
+                    ORDER BY cg.name, c.name"""
+            
+    rows = recipe_model.run_query(query)
+    grouped_categories = {}
+    for row in rows if rows else []:
+        grouped_categories.setdefault(row['main_category_name'], []).append(row)
 
     all_units = recipe_model.run_query("SELECT name FROM Units ORDER BY name")
 
@@ -1486,12 +1495,24 @@ def shopping_list(menu_id=None, shop_list_id=None):
         JOIN Ingredients_categories_map icm ON i.id = icm.ingredient_id
     """)
 
+    raw_item_data = shopping_list_items_model.run_query("""
+        SELECT item_name as name, category_id
+        FROM Shopping_list_ingredients
+        WHERE item_name IS NOT NULL
+        ORDER BY item_name DESC
+    """)
+
     ing_category_map = {row['name']: row['category_id'] for row in raw_ing_data}
+    for row in raw_item_data:
+        if row['name'] not in all_ingredients:
+            all_ingredients.insert(0, {'name': row['name']})
+            ing_category_map[row['name']] = row['category_id']
+    print(f"DEBUG: raw_ing_data has {len(raw_ing_data)} entries, raw_item_data has {len(raw_item_data)} entries, ing_category_map has {len(ing_category_map)} entries.")
     return render_template('shopping_list.html',
                            grouped_items=group_by_category(items),
                            menu_id=menu_id,
-                           all_ingredients=all_ingredients,
-                           all_cats_full=all_cats,
+                           all_ingredients=all_ingredients, # TODO remove and use only inc_category_map for auto-select?
+                           grouped_categories=grouped_categories,
                            all_units=all_units,
                            ing_map=ing_category_map,
                            shop_list_id=shopping_list_id,
@@ -1639,7 +1660,11 @@ def save_shared_list(shopping_list_id):
         "SELECT * FROM Shopping_list_shares WHERE shopping_list_id = %s AND user_id = %s",
         (shopping_list_id, user_id)
     )
-    if existing_share:
+    is_creator = recipe_model.run_query(
+        "SELECT * FROM Shopping_list WHERE id = %s AND user_id = %s",
+        (shopping_list_id, user_id)
+    )
+    if existing_share or is_creator:
         flash('You already have access to this shopping list.', 'info')
         return redirect(url_for('shopping_list', shop_list_id=shopping_list_id, is_shared=True))
 
