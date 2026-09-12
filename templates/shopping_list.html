@@ -108,12 +108,14 @@
                         border-bottom: 1px solid rgba(255,255,255,0.08);
                     ">
                         <!-- checkbox -->
+                        
                         <input type="checkbox" name="item_checked_display[]" {{ 'checked' if item.if_checked else '' }}
+                            onchange="toggleCheck(this)"
                             style="width: 18px; height: 18px; margin: 0;">
 
                         <!-- name: truncates instead of pushing other columns -->
-                        <span onclick="this.style.whiteSpace = this.style.whiteSpace === 'normal' ? 'nowrap' : 'normal'"
-                            style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; color: white; cursor: pointer;">
+                        <span class="item-name-text" onclick="this.style.whiteSpace = this.style.whiteSpace === 'normal' ? 'nowrap' : 'normal'"
+                            style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; color: white; cursor: pointer; {{ 'text-decoration: line-through; opacity: 0.5;' if item.if_checked else '' }}">
                             {{ item.name }}
                         </span>
 
@@ -310,19 +312,22 @@ document.addEventListener('DOMContentLoaded', updateTotal);
 
 function toggleCheck(checkbox) {
     const row = checkbox.closest('.shopping-row');
-    // Find the hidden input responsible for the checked state
-    const hiddenInput = row.querySelector('input[name="item_checked[]"]');
-    
-    if (checkbox.checked) {
-        row.style.opacity = "0.4";
-        row.style.textDecoration = "line-through";
-        hiddenInput.value = "1";
-    } else {
-        row.style.opacity = "1";
-        row.style.textDecoration = "none";
-        hiddenInput.value = "0";
+    if (!row) return;
+
+    // sync the hidden field that actually gets submitted
+    const hiddenChecked = row.querySelector('input[name="item_checked[]"]');
+    if (hiddenChecked) {
+        hiddenChecked.value = checkbox.checked ? '1' : '0';
+    }
+
+    // visual feedback: strike through the name when checked
+    const nameSpan = row.querySelector('.item-name-text');
+    if (nameSpan) {
+        nameSpan.style.textDecoration = checkbox.checked ? 'line-through' : 'none';
+        nameSpan.style.opacity = checkbox.checked ? '0.5' : '1';
     }
 }
+
 function toggleShareMenu() {
     const menu = document.getElementById('share-menu');
     menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
