@@ -37,10 +37,9 @@
                 <a href="{{ url_for('preferences') }}" class="nav-btn">Preferences</a>
                 <a href="{{ url_for('favorites') }}" class="nav-btn">Favorites</a>
                 <a href="#" class="nav-btn">Statistics</a>
-                <a href="{{ url_for('profile') }}" class="nav-btn">Profile</a>
             {% if current_user.is_authenticated %}
-                <span style="color:var(--text-pink); margin: 15px;">Hello, {{ current_user.username }}!</span>
-                <a href="{{ url_for('profile') }}" class="nav-link">Profile</a>
+                <span style="color:var(--text-pink); text-align: center; margin: 15px 0 15px 0;">Hello, {{ current_user.username }}!</span>
+                <a href="{{ url_for('profile') }}" class="nav-btn" style="margin-bottom: 15px;">Profile</a>
                 <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
                 <a href="{{ url_for('user_feedback') }}" class="nav-link">Send Feedback </a>
             {% else %}

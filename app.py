@@ -1852,7 +1852,7 @@ def signup():
             flash('An internal error occurred. Please try again.', 'error')
             return redirect(url_for('signup'))
 
-    return render_template('signup.html')
+    return redirect(url_for('profile', user_id=current_user.id) if current_user.is_authenticated else render_template('signup.html'))
 
 
 @app.route('/verify_email', methods=['GET', 'POST'])
@@ -2118,11 +2118,36 @@ def preferences():
     return render_template('preferences.html')
 
 
-@app.route('/profile')
+@app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    return render_template('profile.html')
-
+    countries = recipe_model.run_query("SELECT id, name FROM Countries ORDER BY name")
+    user_data = users_model.select_by_id(current_user.id)
+    
+    if request.method == 'POST':
+        new_username = request.form.get('new_name')
+        print(f"DEBUG: Received new username: {new_username} for user_id {current_user.id}")
+        if new_username and new_username != current_user.username:
+            try:
+                users_model.update(current_user.id, {'user_name': new_username})
+            except Exception as e:
+                print(f"Error updating username for user_id {current_user.id}: {e}")
+                flash('An error occurred while updating your username. Please try again.', 'error')
+        country_id = request.form.get('country_id')
+        birthday = request.form.get('birthday')
+        gender = request.form.get('gender')
+        try:
+            users_model.update(current_user.id, {
+                'country_id': country_id,
+                'birth_date': birthday,
+                'gender': gender
+            })
+            flash('Profile updated successfully!', 'success')
+        except Exception as e:
+            print(f"Error updating profile for user_id {current_user.id}: {e}")
+            flash('An error occurred while updating your profile. Please try again.', 'error')
+    print(f"DEBUG: Updated profile for user_id {current_user.id} with country_id {user_data['country_id']}, birthday {user_data['birth_date']}, gender {user_data['gender']}")
+    return render_template('profile.html', countries=countries, user_data=user_data)
 
 @app.errorhandler(404)
 def page_not_found(e):

@@ -62,7 +62,7 @@ header {
     transition: 0.3s;
 }
 .nav-link {
-    margin-left: 15px;
+    text-align: center;
     color: var(--bright-purple);
 }
 
