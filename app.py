@@ -945,7 +945,6 @@ def manual_search(meal_id=None, menu_id=None):
         query += f" AND id IN ({placeholders})"
         params.extend(favorite_ids)
 
-    print(f"DEBUG QUERY: {query} with PARAMS: {params}")
     recipes = recipe_model.run_query(query, tuple(params))
     categories = recipe_categories_model.select_all()
 
@@ -958,7 +957,7 @@ def manual_search(meal_id=None, menu_id=None):
                            menu_id=menu_id,
                            user_id=current_user.id if current_user.is_authenticated else None)
 
-@app.route('/select-recipe/<int:meal_index>/<int:recipe_id>/<int:menu_id>', methods=['POST'])
+'''@app.route('/select-recipe/<int:meal_index>/<int:recipe_id>/<int:menu_id>', methods=['POST'])
 @login_required
 def select_recipe(meal_index, recipe_id, menu_id):
     print(f"Selecting recipe {recipe_id} for meal_index {meal_index} in menu_id {menu_id}")
@@ -981,7 +980,7 @@ def select_recipe(meal_index, recipe_id, menu_id):
         """
         menu_meals_model.run_query(update_query, (recipe_id, menu_id, draft_menu['meal_id']))
 
-    return redirect(url_for('menu'))
+    return redirect(url_for('menu'))'''
 
 @app.route('/recipe/<int:recipe_id>', methods=['GET', 'POST'])
 @app.route('/recipe/<int:recipe_id>/<int:menu_id>', methods=['GET', 'POST'])
@@ -1121,14 +1120,14 @@ def add_recipe(meals_from_db=meals_from_db):
 @login_required
 def update_menu_item():
     # TODO fix meal_id/meal_index bug.
-    recipe_id = request.form.get('recipe_id')
-    menu_id = request.form.get('menu_id')
-    meal_index = int(request.form.get('meal_id'))
+    recipe_id = int(request.form.get('recipe_id'))
+    menu_id = int(request.form.get('menu_id'))
 
-    meal_type_id = meals_from_db[meal_index]['id']
+
+    meal_id = int(request.form.get('meal_id'))
 
     query = "UPDATE Menu_meals SET recipe_id = %s, if_picked_manually = 1 WHERE menu_id = %s AND meal_id = %s"
-    menu_meals_model.run_query(query, (recipe_id, menu_id, meal_type_id))
+    menu_meals_model.run_query(query, (recipe_id, menu_id, meal_id))
 
     flash("Menu updated!", "success")
     return redirect(url_for('menu'))
