@@ -1494,20 +1494,22 @@ def shopping_list(menu_id=None, shop_list_id=None):
         FROM Ingredients i
         JOIN Ingredients_categories_map icm ON i.id = icm.ingredient_id
     """)
-
+    print(current_user.id)
     raw_item_data = shopping_list_items_model.run_query("""
-        SELECT item_name as name, category_id
-        FROM Shopping_list_ingredients
-        WHERE item_name IS NOT NULL
-        ORDER BY item_name DESC
-    """)
+        SELECT DISTINCT sli.item_name AS name, sli.category_id
+        FROM Shopping_list_ingredients sli
+        JOIN Shopping_list sl ON sl.id = sli.shop_list_id
+        WHERE sli.item_name IS NOT NULL AND sl.user_id = %s
+        ORDER BY sli.item_name DESC
+    """, (current_user.id,))
 
     ing_category_map = {row['name']: row['category_id'] for row in raw_ing_data}
-    for row in raw_item_data:
-        if row['name'] not in all_ingredients:
-            all_ingredients.insert(0, {'name': row['name']})
-            ing_category_map[row['name']] = row['category_id']
-    print(f"DEBUG: raw_ing_data has {len(raw_ing_data)} entries, raw_item_data has {len(raw_item_data)} entries, ing_category_map has {len(ing_category_map)} entries.")
+    print(f"DEBUG: raw_item_data has {len(raw_item_data)} entries.")
+    if raw_item_data:
+        for row in raw_item_data:
+            if row['name'] not in all_ingredients:
+                all_ingredients.insert(0, {'name': row['name']})
+                ing_category_map[row['name']] = row['category_id']
     return render_template('shopping_list.html',
                            grouped_items=group_by_category(items),
                            menu_id=menu_id,
