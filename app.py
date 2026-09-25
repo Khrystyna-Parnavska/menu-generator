@@ -1122,8 +1122,6 @@ def update_menu_item():
     # TODO fix meal_id/meal_index bug.
     recipe_id = int(request.form.get('recipe_id'))
     menu_id = int(request.form.get('menu_id'))
-
-
     meal_id = int(request.form.get('meal_id'))
 
     query = "UPDATE Menu_meals SET recipe_id = %s, if_picked_manually = 1 WHERE menu_id = %s AND meal_id = %s"
