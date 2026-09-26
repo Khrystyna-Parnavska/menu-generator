@@ -156,9 +156,8 @@
 
     {% if history %}
         {% for entry in history %}
-            <div class="menu-row-card" style="opacity: 0.9; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); display: flex; flex-direction: column; align-items: center; gap: 15px;">
-                
-                <div style="display: flex; gap: 15px; flex-direction: row; align-items: center;">
+            <div class="menu-row-card" style="opacity: 0.9; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); display: flex; flex-direction: column; align-items: stretch; gap: 15px; width: 100%; box-sizing: border-box;">
+                <div style="display: flex; gap: 15px; flex-direction: row; align-items: center; width: 100%;">
                     <div class="menu-time-container" style="text-align: center; flex-shrink: 0;">
                         <div class="time-badge" style="background: var(--bg-dark); border: 1px solid var(--text-pink); min-width: 45px; justify-content: center; margin-bottom: 0;">
                             {{ entry.mood }}
